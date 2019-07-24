@@ -1,0 +1,167 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <stdio.h>
+#include "io.h"
+#include "PointModel.h"
+#include "Shader.h"
+#include "ProgramShader.h"
+#include "messages.h"
+#define glCheckError() glCheckError_(__FILE__, __LINE__)
+
+using namespace std;
+
+int keyPressed[512];
+bool captured = false;
+int winWidth = 1280;
+int winHeight = 720;
+
+// region Callbacks
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    float amount = 0.01;
+    if (action == GLFW_PRESS) {
+        keyPressed[key] = 1;
+
+        if (key == GLFW_KEY_C) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            captured = true;
+        }
+
+        if (key == GLFW_KEY_ESCAPE) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            captured = false;
+        }
+    }
+
+    if (action == GLFW_RELEASE)
+        keyPressed[key] = 0;
+
+}
+
+//dt is in seconds
+void keyHeldCallback(double dt) {
+    float dtf = (float) dt;
+
+
+}
+
+double lxpos, lypos;
+double a_xpos = 0.0f, a_ypos = 0.0f;
+float mouseSensitivity = 0.001;
+
+static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
+
+    if (!captured) {
+        lxpos = xpos;
+        lypos = ypos;
+        return;
+    }
+
+
+    double dy = lypos - ypos;//inverted Y
+    double dx = lxpos - xpos;//inverted X
+
+
+    lxpos = xpos;
+    lypos = ypos;
+}
+
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            captured = !captured;
+            glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        }
+    }
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+
+}
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+    winWidth = width;
+    winHeight = height;
+    glViewport(0, 0, width, height);
+}
+
+void errorCallback(int error, const char *description) {
+    fprintf(stderr, "GLFW error %d: %s\n", error, description);
+}
+// endregion
+
+
+
+GLFWwindow *initialize() {
+    int glfwInitRes = glfwInit();
+    if (!glfwInitRes) {
+        fprintf(stderr, "Unable to initialize GLFW\n");
+        return nullptr;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "GraphKat", nullptr, nullptr);
+    if (!window) {
+        fprintf(stderr, "Unable to create GLFW window\n");
+        glfwTerminate();
+        return nullptr;
+    }
+
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursor_pos_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    glfwMakeContextCurrent(window);
+
+    int gladInitRes = gladLoadGL();
+    if (!gladInitRes) {
+        fprintf(stderr, "Unable to initialize glad\n");
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return nullptr;
+    }
+
+    return window;
+}
+
+void initPoints()
+{
+    PointModel screen(winWidth, winHeight);
+
+}
+
+int main(int argc, char *argv[]) {
+    glfwSetErrorCallback(errorCallback);
+
+    GLFWwindow *window = initialize();
+    if (!window) {
+        return 0;
+    }
+
+    PointModel screen(2*winWidth, 2*winHeight);
+    Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
+    Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
+    ProgramShader baseShader(vertShader, fragShader);
+    glCheckError();
+    // Set the clear color to a nice green
+    glClearColor(0.15f, 0.6f, 0.4f, 1.0f);
+
+    while (!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        baseShader.use();
+        screen.draw();
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
+
+    return 0;
+}
