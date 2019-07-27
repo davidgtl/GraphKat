@@ -6,6 +6,8 @@
 #include "Shader.h"
 #include "ProgramShader.h"
 #include "messages.h"
+#include <thread>
+#include <chrono>
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
 using namespace std;
@@ -14,6 +16,13 @@ int keyPressed[512];
 bool captured = false;
 int winWidth = 1280;
 int winHeight = 720;
+
+bool invalidated = true;
+bool resized = true;
+
+void invalidate(){
+    invalidated = true;
+}
 
 // region Callbacks
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -74,14 +83,17 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
+float t;
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-
+    t += xoffset;
+    invalidate();
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     winWidth = width;
     winHeight = height;
     glViewport(0, 0, width, height);
+    resized = true;
 }
 
 void errorCallback(int error, const char *description) {
@@ -148,15 +160,24 @@ int main(int argc, char *argv[]) {
     Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
     ProgramShader baseShader(vertShader, fragShader);
     glCheckError();
-    // Set the clear color to a nice green
+
     glClearColor(0.15f, 0.6f, 0.4f, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
+        if(resized){
+            screen = PointModel(2*winWidth, 2*winHeight);
+        }
+        if(invalidated) {
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        baseShader.use();
-        screen.draw();
-        glfwSwapBuffers(window);
+            screen.update(t);
+            baseShader.use();
+            screen.draw();
+
+            glfwSwapBuffers(window);
+            invalidated = false;
+        }
+        //this_thread::sleep_for(std::chrono::milliseconds(10));
         glfwPollEvents();
     }
 

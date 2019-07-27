@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <glm/glm.hpp>
-
+#include <glad/glad.h>
 
 class PointModel
 {
@@ -14,6 +14,9 @@ public:
 	~PointModel();
 
 	void draw();
+	void update(float t);
 
+private:
+    GLfloat *colors;
 };
 

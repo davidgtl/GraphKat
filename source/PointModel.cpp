@@ -6,7 +6,9 @@
 #include <glad/glad.h>
 #include "messages.h"
 #include <glm/glm.hpp>
+#include <chrono>
 
+using namespace std::chrono;
 using namespace glm;
 
 PointModel::PointModel() {
@@ -35,7 +37,7 @@ PointModel::PointModel(int width, int height) {
 
 
     auto *vertices_position = new GLfloat[width * height * 2];
-
+    colors = new GLfloat[width * height * 3];
 
     for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++) {
@@ -46,37 +48,47 @@ PointModel::PointModel(int width, int height) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo_pos);
     glBufferData(GL_ARRAY_BUFFER, width * height * sizeof(float) * 2, vertices_position, GL_STATIC_DRAW);
 
+    update(0.0);
 
-    auto *colors = new GLfloat[width * height * 3];
-
-   const float len = 15;
-   const float mod_freq = 0.5;
-   const float mod_phase = 0.5;
-    for (int y = 0; y < height; y++)
-        for (int x = 0; x < width; x++) {
-            float dx = width / 2.0 - x;
-            float dy = height / 2.0 - y;
-            float r = sqrt(dx * dx + dy * dy);
-            colors[y * width * 3 + x * 3 + 0] = (sin(r / 3.14 / (len + mod_freq) - mod_phase) + 1.0) / 2;
-            colors[y * width * 3 + x * 3 + 1] = (sin(r / 3.14 / (len + 0) - mod_phase) + 1.0) / 2;
-            colors[y * width * 3 + x * 3 + 2] = (sin(r / 3.14 / (len - mod_freq)) + 1.0) / 2;
-        }
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_cols);
-    glBufferData(GL_ARRAY_BUFFER, width * height * sizeof(float) * 3, colors, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     delete[] vertices_position;
-    delete[] colors;
 }
 
 
-PointModel::~PointModel()
-= default;
+PointModel::~PointModel(){
+    delete[] colors;
+}
 
 
 void PointModel::draw() {
     glBindVertexArray(vao);
     glDrawArrays(GL_POINTS, 0, width * height);
+}
+
+void PointModel::update(float t){
+
+    auto start = high_resolution_clock::now();
+
+    const float len = 15;
+    const float mod_freq = 0.5;
+    const float mod_phase = 0.5;
+    for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++) {
+            float dx = width / 2.0 - x;
+            float dy = height / 2.0 - y;
+            float r = sqrt(dx * dx + dy * dy);
+            int index = (y * width + x) * 3;
+            colors[index + 0] = (sin((r + t) / 3.14 / (len + mod_freq) - mod_phase) + 1.0) / 2;
+            colors[index + 1] = (sin((r + t) / 3.14 / (len + 0) - mod_phase) + 1.0) / 2;
+            colors[index + 2] = (sin((r + t)/ 3.14 / (len - mod_freq)) + 1.0) / 2;
+        }
+
+    auto stop = high_resolution_clock::now();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_cols);
+    glBufferData(GL_ARRAY_BUFFER, width * height * sizeof(float) * 3, colors, GL_STREAM_DRAW);
+
+    auto duration = duration_cast<milliseconds>(stop - start);
+    cout << duration.count() << endl;
 }
 
