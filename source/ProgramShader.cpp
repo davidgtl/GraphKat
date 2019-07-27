@@ -41,7 +41,9 @@ ProgramShader::ProgramShader(GLuint shader1, GLuint shader2)
 		GLchar log[10240];
 		GLsizei length;
 		glGetProgramInfoLog(id, 10239, &length, log);
+		glCheckError();
 		fprintf(stderr, "Linker log:\n%s\n", log);
+
 		fatal_error("");
 	}
 }

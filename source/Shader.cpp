@@ -2,13 +2,16 @@
 #include "io.h"
 #include "messages.h"
 #include <sys/types.h>
-#include <dirent.h>
 
 Shader::Shader(const char* filepath, GLint shaderType)
 {
 	this->filepath = filepath;
 	id = glCreateShader(shaderType);
-	const GLchar* source = loadStringFromFile(filepath).c_str();
+    ifstream t(filepath);
+
+    string str((istreambuf_iterator<char>(t)),
+               istreambuf_iterator<char>());
+	const GLchar* source = str.c_str();
 
 	if (source == NULL)
 	{
@@ -28,6 +31,7 @@ Shader::Shader(const char* filepath, GLint shaderType)
 		GLsizei length;
 		glGetShaderInfoLog(id, 10239, &length, log);
 		printf("Compiler log:\n%s\n", log);
+		glCheckError();
 		fatal_error("");
 	}
 }
