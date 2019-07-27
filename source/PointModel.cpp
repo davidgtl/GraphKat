@@ -56,9 +56,7 @@ PointModel::PointModel(int width, int height) {
 }
 
 
-PointModel::~PointModel(){
-    delete[] colors;
-}
+PointModel::~PointModel()=default;
 
 
 void PointModel::draw() {

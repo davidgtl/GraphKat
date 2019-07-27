@@ -8,7 +8,6 @@
 #include "messages.h"
 #include <thread>
 #include <chrono>
-#define glCheckError() glCheckError_(__FILE__, __LINE__)
 
 using namespace std;
 
@@ -162,6 +161,8 @@ int main(int argc, char *argv[]) {
     glCheckError();
 
     glClearColor(0.15f, 0.6f, 0.4f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     while (!glfwWindowShouldClose(window)) {
         if(resized){
@@ -177,7 +178,6 @@ int main(int argc, char *argv[]) {
             glfwSwapBuffers(window);
             invalidated = false;
         }
-        //this_thread::sleep_for(std::chrono::milliseconds(10));
         glfwPollEvents();
     }
 
