@@ -6,7 +6,8 @@
 #include "Shader.h"
 #include "ProgramShader.h"
 #include "messages.h"
-#define glCheckError() glCheckError_(__FILE__, __LINE__)
+#include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -14,6 +15,13 @@ int keyPressed[512];
 bool captured = false;
 int winWidth = 1280;
 int winHeight = 720;
+
+bool invalidated = true;
+bool resized = true;
+
+void invalidate(){
+    invalidated = true;
+}
 
 // region Callbacks
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -74,14 +82,18 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
+float offX, offY;
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-
+    offX -= xoffset * 0.01;
+    offY += yoffset * 0.01;
+    invalidate();
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     winWidth = width;
     winHeight = height;
     glViewport(0, 0, width, height);
+    resized = true;
 }
 
 void errorCallback(int error, const char *description) {
@@ -148,15 +160,29 @@ int main(int argc, char *argv[]) {
     Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
     ProgramShader baseShader(vertShader, fragShader);
     glCheckError();
-    // Set the clear color to a nice green
+
     glClearColor(0.15f, 0.6f, 0.4f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
+        if(resized){
+            screen = PointModel(2*winWidth, 2*winHeight);
+            resized = false;
+        }
+        if(invalidated) {
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        baseShader.use();
-        screen.draw();
-        glfwSwapBuffers(window);
+            //screen.update(offX, offY);
+            glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
+            baseShader.use();
+            screen.draw();
+
+            glfwSwapBuffers(window);
+            invalidated = false;
+        }else{
+            this_thread::sleep_for(chrono::milliseconds(10));
+        }
         glfwPollEvents();
     }
 

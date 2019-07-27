@@ -2,10 +2,11 @@
 
 #include <iostream>
 #include <GLFW/glfw3.h>
+#define glCheckError() glCheckError_(__FILE__, __LINE__)
+
 
 inline void fatal_error()
 {
-	system("pause");
 	glfwTerminate();
 	exit(-1);
 }
@@ -13,7 +14,6 @@ inline void fatal_error()
 inline void fatal_error(const char* message)
 {
 	std::cout << message << std::endl;
-	system("pause");
 	glfwTerminate();
 	exit(-1);
 }
