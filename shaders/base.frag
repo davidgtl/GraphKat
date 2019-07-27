@@ -5,8 +5,11 @@ in vec2 uv;
 
 out vec4 out_color;
 
+uniform vec2 offset;
 
 void main() {
-    vec3 final_color = vec3(uv * v_color.xy, v_color.z);
+    vec2 dv = abs(uv - vec2(0.5,0.5) + offset);
+
+    vec3 final_color = vec3(dv, 0.0);
     out_color = vec4(final_color, 1.0);
 }

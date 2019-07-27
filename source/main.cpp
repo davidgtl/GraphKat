@@ -82,9 +82,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-float t;
+float offX, offY;
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    t += xoffset;
+    offX -= xoffset * 0.01;
+    offY += yoffset * 0.01;
     invalidate();
 }
 
@@ -167,16 +168,20 @@ int main(int argc, char *argv[]) {
     while (!glfwWindowShouldClose(window)) {
         if(resized){
             screen = PointModel(2*winWidth, 2*winHeight);
+            resized = false;
         }
         if(invalidated) {
             glClear(GL_COLOR_BUFFER_BIT);
 
-            screen.update(t);
+            //screen.update(offX, offY);
+            glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
             baseShader.use();
             screen.draw();
 
             glfwSwapBuffers(window);
             invalidated = false;
+        }else{
+            this_thread::sleep_for(chrono::milliseconds(10));
         }
         glfwPollEvents();
     }
