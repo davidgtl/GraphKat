@@ -4,6 +4,7 @@
 #include "io.h"
 #include "PointModel.h"
 #include "Shader.h"
+#include "Plane.h"
 #include "ProgramShader.h"
 #include "messages.h"
 #include <thread>
@@ -94,6 +95,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     winHeight = height;
     glViewport(0, 0, width, height);
     resized = true;
+    invalidate();
 }
 
 void errorCallback(int error, const char *description) {
@@ -156,6 +158,9 @@ int main(int argc, char *argv[]) {
     }
 
     PointModel screen(2*winWidth, 2*winHeight);
+    Plane plane1 = Plane(vec2(0.1,0.1), vec2(0.8,0.8), 0.0);
+    Plane plane2 = Plane(vec2(0.0,0.0), vec2(0.5,0.5), 0.1);
+
     Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
     Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
     ProgramShader baseShader(vertShader, fragShader);
@@ -167,7 +172,7 @@ int main(int argc, char *argv[]) {
 
     while (!glfwWindowShouldClose(window)) {
         if(resized){
-            screen = PointModel(2*winWidth, 2*winHeight);
+            //screen.updateSize(2*winWidth, 2*winHeight);
             resized = false;
         }
         if(invalidated) {
@@ -176,7 +181,9 @@ int main(int argc, char *argv[]) {
             //screen.update(offX, offY);
             glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
             baseShader.use();
-            screen.draw();
+            //screen.draw();
+            plane1.draw();
+            plane2.draw();
 
             glfwSwapBuffers(window);
             invalidated = false;

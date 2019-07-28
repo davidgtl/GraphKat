@@ -15,6 +15,8 @@ public:
 
 	void draw();
 	void update(float tx, float ty);
+    void updateSize(int width, int height);
+
 
 private:
     GLfloat *colors;

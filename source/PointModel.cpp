@@ -43,6 +43,27 @@ PointModel::PointModel(int width, int height) {
     /* COLORS */
     colors = new GLfloat[width * height * 3];
 
+    updateSize(width, height);
+
+}
+
+
+PointModel::~PointModel()=default;
+
+
+void PointModel::draw() {
+    glBindVertexArray(vao);
+    glDrawArrays(GL_POINTS, 0, width * height);
+}
+
+void PointModel::updateSize(int width, int height){
+    /* COLORS */
+    this->width = width;
+    this->height = height;
+
+    delete[] colors;
+    colors = new GLfloat[width * height * 3];
+
     /*VERTICES */
     auto *vertices_position = new GLfloat[width * height * 2];
 
@@ -74,16 +95,6 @@ PointModel::PointModel(int width, int height) {
     update(0.0, 0.0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-}
-
-
-PointModel::~PointModel()=default;
-
-
-void PointModel::draw() {
-    glBindVertexArray(vao);
-    glDrawArrays(GL_POINTS, 0, width * height);
 }
 
 void PointModel::update(float tx, float ty){
