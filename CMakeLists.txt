@@ -7,7 +7,7 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
 set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/PointModel.cpp source/PointModel.h source/ProgramShader.cpp
         source/ProgramShader.h source/Shader.cpp source/Shader.h source/Plane.cpp source/Plane.h source/Texture.h source/Texture.cpp
-        source/main.cpp)
+        source/main.cpp source/FontRenderer.h source/FontRenderer.cpp)
 
 # Executable definition and properties
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
