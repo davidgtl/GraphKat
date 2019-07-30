@@ -5,15 +5,16 @@ project(GraphKat)
 # Source files
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
-set(SOURCES source/main.cpp source/io.h source/messages.h source/PointModel.cpp source/PointModel.h source/ProgramShader.cpp
-        source/ProgramShader.h source/Shader.cpp source/Shader.h source/Plane.cpp source/Plane.h)
+set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/PointModel.cpp source/PointModel.h source/ProgramShader.cpp
+        source/ProgramShader.h source/Shader.cpp source/Shader.h source/Plane.cpp source/Plane.h source/Texture.h source/Texture.cpp
+        source/main.cpp)
 
 # Executable definition and properties
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_REQUIRED_FLAGS "-O2 -std=c++14")
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 target_include_directories(${PROJECT_NAME} PUBLIC "${GLAD_DIR}/includes")
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_REQUIRED_FLAGS -std=c++14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 # GLFW
@@ -40,6 +41,8 @@ add_subdirectory("${GLM_DIR}")
 target_link_libraries(${PROJECT_NAME} "glm" "${GLM_LIBRARIES}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}/include")
 
-set(CMAKE_C_COMPILER "gcc")
-set(CMAKE_CXX_COMPILER "g++")
+# freetype
+find_package(Freetype REQUIRED)
+include_directories(${FREETYPE_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
 

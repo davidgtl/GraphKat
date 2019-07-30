@@ -24,8 +24,7 @@ public:
 	Texture(int width, int height);
 	~Texture();
 
-	void bindTexture(int unit);
-	void bindImage(int unit, int access = GL_WRITE_ONLY);
+    void bindTexture(int unit = 0);
 	void generateMipmap();
 	void clear();
 

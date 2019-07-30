@@ -1,6 +1,7 @@
 #include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+
+#include "../libraries/stb_image.h"
 #include <glad/glad.h>
 #include "messages.h"
 #include <vector>
@@ -10,7 +11,7 @@ std::map<std::string, std::map<int,int>> Texture::textures;
 Texture::Texture(const char * path)
 {
 	id = 0;
-	int width, height, nrChannels;//R"(D:\Projects\C++\KatEngine\Pukman\winter.jpg)"
+    int width, height, nrChannels;
 	unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 0);
 	if (!data)
 		fatal_error("Couldn't load texture image");
@@ -43,7 +44,8 @@ Texture::Texture(int width, int height)
 	unsigned char* data = (unsigned char*)malloc(sizeof(unsigned char) * width * height * 3);
 	memset(data, 0, sizeof(unsigned char) * width * height * 3);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	//glGenerateMipmap(GL_TEXTURE_2D);
 
 	free(data);
@@ -63,20 +65,6 @@ void Texture::bindTexture(int unit)
 {
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, id);
-}
-
-void Texture::bindImage(int unit, int access)
-{
-	/*
-	 * GLuint unit,
- 	GLuint texture,
- 	GLint level,
- 	GLboolean layered,
- 	GLint layer,
- 	GLenum access,
- 	GLenum format);
-	 */
-	glBindImageTexture(unit, id, 0, GL_FALSE, 0, access, GL_RGBA32F);
 }
 
 void Texture::generateMipmap()
