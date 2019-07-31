@@ -37,6 +37,7 @@ target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 
 # glm
 set(GLM_DIR "${LIB_DIR}/glm")
+set(GLM_TEST_ENABLE OFF)
 add_subdirectory("${GLM_DIR}")
 target_link_libraries(${PROJECT_NAME} "glm" "${GLM_LIBRARIES}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}/include")

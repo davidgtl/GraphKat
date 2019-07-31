@@ -1,5 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#define GLM_FORCE_SWIZZLE
+
+#include <glm/glm.hpp>
 #include <stdio.h>
 #include "io.h"
 #include "PointModel.h"
@@ -13,11 +17,12 @@
 #include <chrono>
 
 using namespace std;
+using namespace glm;
 
 int keyPressed[512];
 bool captured = false;
-int winWidth = 1280;
-int winHeight = 720;
+vec2 screenSize;
+vec2 windowSize;
 
 bool invalidated = true;
 bool resized = true;
@@ -94,9 +99,8 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-    winWidth = width;
-    winHeight = height;
     glViewport(0, 0, width, height);
+    windowSize = vec2(width, height);
     resized = true;
     invalidate();
 }
@@ -106,8 +110,22 @@ void errorCallback(int error, const char *description) {
 }
 //endregion
 
+void updateScreenSize() {
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
-GLFWwindow *initialize() {
+    screenSize = vec2(mode->width, mode->height);
+}
+
+vec2 sis(vec2 size) {
+    return size * (screenSize / 1000.0f / windowSize);
+}
+
+vec2 sis(float sx, float sy) {
+    return sis(vec2(sx, sy));
+}
+
+GLFWwindow *initialize(int width, int height) {
     int glfwInitRes = glfwInit();
     if (!glfwInitRes) {
         fprintf(stderr, "Unable to initialize GLFW\n");
@@ -119,7 +137,7 @@ GLFWwindow *initialize() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "GraphKat", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(width, height, "GraphKat", nullptr, nullptr);
     if (!window) {
         fprintf(stderr, "Unable to create GLFW window\n");
         glfwTerminate();
@@ -145,12 +163,15 @@ GLFWwindow *initialize() {
     return window;
 }
 
+vec4 *charBounds;
 void initFonts(Texture texture, int width, int height, int pt, int dpi) {
 
-    unsigned char *atlas = createFontAtlas(width, height, pt, dpi);
+    unsigned char *atlas;
+    createFontAtlas(width, height, pt, dpi, &atlas, &charBounds);
     texture.bindTexture();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED,
                     GL_UNSIGNED_BYTE, atlas);
+    delete[] atlas;
 
 }
 
@@ -193,17 +214,20 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 int main(int argc, char *argv[]) {
     glfwSetErrorCallback(errorCallback);
 
-    GLFWwindow *window = initialize();
+    windowSize = vec2(1280, 720);
+    GLFWwindow *window = initialize(windowSize.x, windowSize.y);
     if (!window) {
         return 0;
     }
+    updateScreenSize();
 
-    Texture fontAtlas(512, 512);
-    initFonts(fontAtlas, 512, 512, 20, 100);
+    int atlas_size = 512;
+    Texture fontAtlas(atlas_size, atlas_size);
+    initFonts(fontAtlas, atlas_size, atlas_size, 20, 200);
 
-    PointModel screen(2 * winWidth, 2 * winHeight);
     Plane plane1 = Plane(vec2(0.1, 0.1), vec2(0.8, 0.8), 0.0);
-    Plane plane2 = Plane(vec2(0.0, 0.0), vec2(512.0 / 1280.0, 512.0 / 720.0), 0.1, true);
+    Plane plane2 = Plane(vec2(0.0, 0.0), sis(100, 100), 0.1, true);
+    Plane plane3 = Plane(vec2(0.4, 0.4), vec2(charBounds['Z'].z, charBounds['Z'].w), 0.3, true);
 
     Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
     Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
@@ -219,9 +243,11 @@ int main(int argc, char *argv[]) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    resized = true;
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
-            //screen.updateSize(2*winWidth, 2*winHeight);
+            plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
+            plane3.updateVertices(vec2(0.4, 0.4), sis(10, 20));
             resized = false;
         }
         if (invalidated) {
@@ -236,7 +262,16 @@ int main(int argc, char *argv[]) {
             textShader.use();
             fontAtlas.bindTexture();
             glUniform4f(glGetUniformLocation(textShader, "color"), 0.0, 0.0, 0.0, 1.0);
+            glUniform4f(glGetUniformLocation(textShader, "charBounds"), 0.0, 0.0, 1.0, 1.0);
             plane2.draw();
+
+            glUniform4f(glGetUniformLocation(textShader, "color"), 1.0, 1.0, 1.0, 1.0);
+            glUniform4fv(glGetUniformLocation(textShader, "charBounds"), 1,
+                         reinterpret_cast<const GLfloat *>(&charBounds['Z']));
+            plane3.draw();
+
+
+
 
             glfwSwapBuffers(window);
             invalidated = false;

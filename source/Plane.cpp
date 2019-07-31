@@ -24,7 +24,7 @@ void Plane::init(vec2 origin, vec2 size, float z, bool invertY) {
 
     glBindVertexArray(vao);
 
-    updateVetices();
+    updateVertices(origin, size);
 
     int indices[] = {
             0, 1, 2,
@@ -68,7 +68,9 @@ void Plane::draw() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 }
 
-void Plane::updateVetices() {
+void Plane::updateVertices(vec2 origin, vec2 size) {
+    this->origin = origin;
+    this->size = size;
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);

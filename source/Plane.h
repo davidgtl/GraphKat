@@ -19,8 +19,8 @@ public:
 
 	void draw();
 
+    void updateVertices(vec2 origin, vec2 size);
 private:
-    void updateVetices();
 
     void init(vec2 origin, vec2 size, float z, bool invertY = false);
 };
