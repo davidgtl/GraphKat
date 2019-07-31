@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <glm/glm.hpp>
-#include FT_FREETYPE_H
+#include FT_FREETYPE_H"freetype/freetype.h"
 
 using namespace std;
 using namespace glm;

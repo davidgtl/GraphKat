@@ -5,9 +5,9 @@ project(GraphKat)
 # Source files
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
-set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/PointModel.cpp source/PointModel.h source/ProgramShader.cpp
-        source/ProgramShader.h source/Shader.cpp source/Shader.h source/Plane.cpp source/Plane.h source/Texture.h source/Texture.cpp
-        source/main.cpp source/FontRenderer.h source/FontRenderer.cpp)
+set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/ogl/PointModel.cpp source/ogl/PointModel.h source/ogl/ProgramShader.cpp
+        source/ogl/ProgramShader.h source/ogl/Shader.cpp source/ogl/Shader.h source/ogl/Plane.cpp source/ogl/Plane.h source/ogl/Texture.h source/ogl/Texture.cpp
+        source/main.cpp source/ogl/FontRenderer.h source/ogl/FontRenderer.cpp source/wmgr/LayoutManager.cpp source/wmgr/LayoutManager.h)
 
 # Executable definition and properties
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)

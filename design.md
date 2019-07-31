@@ -1,6 +1,6 @@
 ## Window manager
 
-### Window element:
+### Window element
 - Shader:
   * One fragment shader / element type
 
@@ -13,11 +13,11 @@
   * Inactive background color
 
 - Can be of elementary type:
-  * [Rounded] Rectangle
-  * Ellipse
+  * [bordered] [rounded] Rectangle
+  * [bordered] Ellipse
   * Text
 
-#### Alignment:
+#### Alignment
 
 * center anchor
   - vertical
@@ -29,9 +29,7 @@
 * vertical
   - any two of: top/bottom/height
 
-### Height snapping
-
-### Linking properties:
+### Linking properties
 
 Start generating from the components that produce width and propagate values through the network  
 
@@ -40,4 +38,22 @@ Start generating from the components that produce width and propagate values thr
 Planes need to be updated when the linked attribute changes
 Attributes need to be encoded and decoded to be transmitted in a generalizable way => bindings > bind setWidth to on EndChanged
 
-**Flow:** window changes > update layout manager with windowsize
+**Flow:** window changes > update layout manager with windowSize
+
+### Graphical Desires
+
+* Multiple axis with ticks and dates/numbers
+* Scalable Graph view, static line size
+* Activate/Deactivate datasets
+* Scrolling
+* Zooming
+* Colors
+* Markers(circles, squares, bordered/filled, semi-transparent), SDF shaders?
+* Vertical colored ranges, semitransparent
+* Gridlines
+* Hover lines(projections on the axis)
+* Range measure between two vertical levels
+
+### Events
+
+### Animations

@@ -6,13 +6,14 @@
 #include <glm/glm.hpp>
 #include <stdio.h>
 #include "io.h"
-#include "PointModel.h"
-#include "Shader.h"
-#include "Plane.h"
-#include "Texture.h"
-#include "ProgramShader.h"
+#include "ogl/PointModel.h"
+#include "ogl/Shader.h"
+#include "ogl/Plane.h"
+#include "ogl/Texture.h"
+#include "ogl/ProgramShader.h"
 #include "messages.h"
-#include "FontRenderer.h"
+#include "ogl/FontRenderer.h"
+#include "wmgr/LayoutManager.h"
 #include <thread>
 #include <chrono>
 

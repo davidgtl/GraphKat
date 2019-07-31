@@ -1,7 +1,7 @@
 #include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 
-#include "../libraries/stb_image.h"
+#include "../../libraries/stb_image.h"
 #include <glad/glad.h>
 #include "messages.h"
 #include <vector>
