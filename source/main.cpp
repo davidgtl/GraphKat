@@ -100,7 +100,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-    glViewport(0, 0, width, height);
+    //glViewport(0, 0, width, height);
     windowSize = vec2(width, height);
     resized = true;
     invalidate();
@@ -119,11 +119,19 @@ void updateScreenSize() {
 }
 
 vec2 sis(vec2 size) {
-    return size * (screenSize / 1000.0f / windowSize);
+    return size * (screenSize.x / 1000.0f / windowSize);
 }
 
 vec2 sis(float sx, float sy) {
     return sis(vec2(sx, sy));
+}
+
+vec2 lsis(vec2 size, vec2 region) {
+    return size * (screenSize.x / 1000.0f / windowSize / region);
+}
+
+vec2 lsis(float sx, float sy, vec2 region) {
+    return lsis(vec2(sx, sy), region);
 }
 
 GLFWwindow *initialize(int width, int height) {
@@ -149,7 +157,8 @@ GLFWwindow *initialize(int width, int height) {
     glfwSetCursorPosCallback(window, cursor_pos_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetWindowSizeCallback(window, framebuffer_size_callback);
 
     glfwMakeContextCurrent(window);
 
@@ -161,10 +170,13 @@ GLFWwindow *initialize(int width, int height) {
         return nullptr;
     }
 
+    framebuffer_size_callback(window, windowSize.x, windowSize.y);
+
     return window;
 }
 
 vec4 *charBounds;
+
 void initFonts(Texture texture, int width, int height, int pt, int dpi) {
 
     unsigned char *atlas;
@@ -228,7 +240,7 @@ int main(int argc, char *argv[]) {
 
     Plane plane1 = Plane(vec2(0.1, 0.1), vec2(0.8, 0.8), 0.0);
     Plane plane2 = Plane(vec2(0.0, 0.0), sis(100, 100), 0.1, true);
-    Plane plane3 = Plane(vec2(0.4, 0.4), vec2(charBounds['Z'].z, charBounds['Z'].w), 0.3, true);
+    Plane plane3 = Plane(vec2(0.4, 0.4), vec2(charBounds['Z'].z, charBounds['Z'].w), 0.3, false);
 
     Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
     Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
@@ -240,15 +252,25 @@ int main(int argc, char *argv[]) {
     ProgramShader textShader(textVertShader, textFragShader);
     glCheckError();
 
+
+    Shader markerVertShader("shaders/base.vert", Shader::VERTEX_SHADER);
+    Shader markerFragShader("shaders/marker.frag", Shader::FRAGMENT_SHADER);
+    ProgramShader markerShader(markerVertShader, markerFragShader);
+    glCheckError();
+
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    vec2 p3_brd;
     resized = true;
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
+            printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
             plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
-            plane3.updateVertices(vec2(0.4, 0.4), sis(10, 20));
+            plane3.updateVertices(vec2(0.4, 0.4), sis(100, 100));
+            p3_brd = lsis(2, 2, plane3.size);
+
             resized = false;
         }
         if (invalidated) {
@@ -266,12 +288,11 @@ int main(int argc, char *argv[]) {
             glUniform4f(glGetUniformLocation(textShader, "charBounds"), 0.0, 0.0, 1.0, 1.0);
             plane2.draw();
 
-            glUniform4f(glGetUniformLocation(textShader, "color"), 1.0, 1.0, 1.0, 1.0);
-            glUniform4fv(glGetUniformLocation(textShader, "charBounds"), 1,
-                         reinterpret_cast<const GLfloat *>(&charBounds['Z']));
+            markerShader.use();
+            glUniform3f(glGetUniformLocation(markerShader, "color"), 0.3, 0.8, 1.0);
+            glUniform2fv(glGetUniformLocation(markerShader, "border_size"), 1,
+                         reinterpret_cast<const GLfloat *>(&p3_brd));
             plane3.draw();
-
-
 
 
             glfwSwapBuffers(window);

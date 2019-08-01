@@ -8,7 +8,7 @@ out vec4 out_color;
 uniform vec2 offset;
 
 void main() {
-    vec2 dv = abs(uv - vec2(0.5,0.5) + offset);
+    vec2 dv = abs(uv - vec2(0.5, 0.5) + offset);
 
     vec3 final_color = vec3(dv, 0.0);
     out_color = vec4(final_color, 1.0);

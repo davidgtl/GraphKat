@@ -1,19 +1,23 @@
 #pragma once
+
 #include <glad/glad.h>
 
-class ProgramShader
-{
+class ProgramShader {
 public:
-	GLuint id;
+    GLuint id;
 
-	ProgramShader(GLuint shader1, GLuint shader2, GLuint shader3);
-	ProgramShader();
-	ProgramShader(GLuint shader1, GLuint shader2);
-	ProgramShader(GLuint shader1);
-	~ProgramShader();
+    ProgramShader(GLuint shader1, GLuint shader2, GLuint shader3);
 
-	void use() const;
+    ProgramShader();
 
-	operator GLuint() const;
+    ProgramShader(GLuint shader1, GLuint shader2);
+
+    ProgramShader(GLuint shader1);
+
+    ~ProgramShader();
+
+    void use() const;
+
+    operator GLuint() const;
 };
 

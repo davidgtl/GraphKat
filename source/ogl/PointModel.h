@@ -1,20 +1,24 @@
 #pragma once
+
 #include <vector>
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 
-class PointModel
-{
+class PointModel {
 public:
 
-	unsigned int vao, vbo_pos, vbo_cols, vbo_uvs, width, height;
+    unsigned int vao, vbo_pos, vbo_cols, vbo_uvs, width, height;
 
     PointModel();
-    PointModel(int width, int height);
-	~PointModel();
 
-	void draw();
-	void update(float tx, float ty);
+    PointModel(int width, int height);
+
+    ~PointModel();
+
+    void draw();
+
+    void update(float tx, float ty);
+
     void updateSize(int width, int height);
 
 

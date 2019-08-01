@@ -48,7 +48,7 @@ PointModel::PointModel(int width, int height) {
 }
 
 
-PointModel::~PointModel()=default;
+PointModel::~PointModel() = default;
 
 
 void PointModel::draw() {
@@ -56,7 +56,7 @@ void PointModel::draw() {
     glDrawArrays(GL_POINTS, 0, width * height);
 }
 
-void PointModel::updateSize(int width, int height){
+void PointModel::updateSize(int width, int height) {
     /* COLORS */
     this->width = width;
     this->height = height;
@@ -97,7 +97,7 @@ void PointModel::updateSize(int width, int height){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void PointModel::update(float tx, float ty){
+void PointModel::update(float tx, float ty) {
 
     auto start = high_resolution_clock::now();
 
@@ -112,7 +112,7 @@ void PointModel::update(float tx, float ty){
             int index = (y * width + x) * 3;
             colors[index + 0] = (sin((r) / 3.14 / (len + mod_freq) - mod_phase) + 1.0) / 2;
             colors[index + 1] = (sin((r) / 3.14 / (len + 0) - mod_phase) + 1.0) / 2;
-            colors[index + 2] = (sin((r)/ 3.14 / (len - mod_freq)) + 1.0) / 2;
+            colors[index + 2] = (sin((r) / 3.14 / (len - mod_freq)) + 1.0) / 2;
         }
 
     auto stop = high_resolution_clock::now();
