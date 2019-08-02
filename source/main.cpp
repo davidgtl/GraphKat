@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
             plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
-            plane3.updateVertices(vec2(0.4, 0.4), sis(100, 100));
+            plane3.updateVertices(vec2(0.4, 0.2), sis(10, 10));
             p3_brd = lsis(2, 2, plane3.size);
 
             resized = false;
@@ -292,6 +292,8 @@ int main(int argc, char *argv[]) {
             glUniform3f(glGetUniformLocation(markerShader, "color"), 0.3, 0.8, 1.0);
             glUniform2fv(glGetUniformLocation(markerShader, "border_size"), 1,
                          reinterpret_cast<const GLfloat *>(&p3_brd));
+            glUniform1i(glGetUniformLocation(markerShader, "shape"), 1);
+            glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);
             plane3.draw();
 
 
