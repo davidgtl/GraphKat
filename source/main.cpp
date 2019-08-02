@@ -240,6 +240,7 @@ int main(int argc, char *argv[]) {
 
     Plane plane1 = Plane(vec2(0.1, 0.1), vec2(0.8, 0.8), 0.0);
     Plane plane2 = Plane(vec2(0.0, 0.0), sis(100, 100), 0.1, true);
+    Plane plane4 = Plane(vec2(0.2, 0.2), sis(500, 300), 0.2, false);
     Plane plane3 = Plane(vec2(0.4, 0.4), vec2(charBounds['Z'].z, charBounds['Z'].w), 0.3, false);
 
     Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
@@ -258,6 +259,11 @@ int main(int argc, char *argv[]) {
     ProgramShader markerShader(markerVertShader, markerFragShader);
     glCheckError();
 
+    Shader ghraphVertShader("shaders/base.vert", Shader::VERTEX_SHADER);
+    Shader ghraphFragShader("shaders/grapher.frag", Shader::FRAGMENT_SHADER);
+    ProgramShader ghraphShader(ghraphVertShader, ghraphFragShader);
+    glCheckError();
+
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -268,6 +274,7 @@ int main(int argc, char *argv[]) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
             plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
+            plane4.updateVertices(vec2(0.2, 0.2), sis(500, 300));
             plane3.updateVertices(vec2(0.4, 0.2), sis(10, 10));
             p3_brd = lsis(2, 2, plane3.size);
 
@@ -295,6 +302,9 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(markerShader, "shape"), 1);
             glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);
             plane3.draw();
+
+            ghraphShader.use();
+            plane4.draw();
 
 
             glfwSwapBuffers(window);
