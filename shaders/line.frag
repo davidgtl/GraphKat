@@ -32,11 +32,11 @@ void main() {
 
     vec2 p = (uv - vec2(0.5, 0.5));
 
-    float alpha = 1.0 * 20 / 180 * PI;
+    float alpha = 1.0 * 0 / 180 * PI;
 
     vec2 n = vec2(cos(alpha), sin(alpha));
 
-    float outv = length(p/length(p) - n*dot(uv, n))/2;
+    float outv = length(p/length(p));// - n*dot(uv, n));
 
     //vec2 n = (np-lp)/length(np-lp);
 
@@ -44,7 +44,7 @@ void main() {
     //float t_col = dot(uv - lp, np - lp)/length(np-lp);
 
     //t_col = smoothstep(width-blur, width, t_col);
-    //out_color = vec4(sdfPrev(vec3(1.0), outv, 0.1), 1.0);
-    out_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
+    out_color = vec4(sdfPrev(vec3(1.0), outv, 0.1), 1.0);
+    //ut_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
     //out_color = vec4(0.3, 0.7, 0.9, 1.0)*t_col + (1-t_col)*vec4(1.0, 1.0, 1.0, 0.3);
 }
