@@ -55,6 +55,10 @@ void Plane::init(vec2 origin, vec2 size, float z, bool invertY) {
 
     glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), uv, GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
 }
 
 
@@ -71,6 +75,7 @@ void Plane::draw() {
 void Plane::updateVertices(vec2 origin, vec2 size) {
     this->origin = origin;
     this->size = size;
+    glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
@@ -90,4 +95,5 @@ void Plane::updateVertices(vec2 origin, vec2 size) {
     };
 
     glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

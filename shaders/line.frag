@@ -33,16 +33,15 @@ void main() {
     float blur = 0.0001;
     float width = 0.006;
 
-    vec2 llp = vec2(1.0*(index-1)/len, values[(index-1)]);
-    vec2 lp = vec2(1.0*index/len, values[index]);
-    vec2 np = vec2(1.0*(index+1)/len, values[index+1]);
-    vec2 nnp = vec2(1.0*(index+2)/len, values[index+2]);
+    float med = 1.0;
+    vec2 lp, np;
+    for (int i = 1; i < 7; i++){
+        lp = vec2(1.0*i/len, values[i]);
+        np = vec2(1.0*(i+1)/len, values[i+1]);
+        med *= line(uv, lp, np);
+    }
 
-    float l0 = line(uv, llp, lp);
-    float l1 = line(uv, lp, np);
-    float l2 = line(uv, np, nnp);
-
-    float outv = 1 - pow(l0 * l1 * l2, 1.0/3);
+    float outv = 1 - pow(med, 1.0/3);
 
     //outv = smoothstep(width - blur, width, outv);
     //out_color = vec4(sdfPrev(vec3(1.0), outv, 0.05), 1.0);

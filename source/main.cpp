@@ -276,7 +276,7 @@ int main(int argc, char *argv[]) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
             plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
-            plane4.updateVertices(vec2(0.2, 0.2), sis(300, 300));
+            plane4.updateVertices(vec2(0.0, 0.0), sis(600, 500));
             plane3.updateVertices(vec2(0.4, 0.2), sis(10, 10));
             p3_brd = lsis(2, 2, plane3.size);
 
