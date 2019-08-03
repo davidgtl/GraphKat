@@ -13,11 +13,17 @@ vec3 sdfPrev(vec3 col, float t, float tick){
     return col * (mod(t, tick)/tick);
 }
 
+float line(vec2 p, vec2 a, vec2 b){
+    p = p - a;
+    vec2 n = (b - a)/length(b-a);
+    return sqrt(length(p)*length(p) - dot(p, n)*dot(p, n));
+}
+
 void main() {
-    float values[7] = float[](0.1, 0.1, 0.9, 0.5, 0.7, 0.6, 0.6);
+    float values[9] = float[](0.1, 0.1, 0.1, 0.9, 0.5, 0.7, 0.6, 0.6, 0.6);
     int len = 6;
 
-    int index = int(floor(uv.x * len));
+    int index = int(floor(uv.x * len) + 1);
 
     float t = mod(uv.x*len, 1.0);
 
@@ -27,24 +33,19 @@ void main() {
     float blur = 0.0001;
     float width = 0.006;
 
+    vec2 llp = vec2(1.0*(index-1)/len, values[(index-1)]);
     vec2 lp = vec2(1.0*index/len, values[index]);
     vec2 np = vec2(1.0*(index+1)/len, values[index+1]);
+    vec2 nnp = vec2(1.0*(index+2)/len, values[index+2]);
 
-    vec2 p = (uv - vec2(0.5, 0.5));
+    float l0 = line(uv, llp, lp);
+    float l1 = line(uv, lp, np);
+    float l2 = line(uv, np, nnp);
 
-    float alpha = 1.0 * 0 / 180 * PI;
+    float outv = pow(l0 * l1 * l2, 1.0/3);
 
-    vec2 n = vec2(cos(alpha), sin(alpha));
-
-    float outv = length(p/length(p));// - n*dot(uv, n));
-
-    //vec2 n = (np-lp)/length(np-lp);
-
-    //float t_col = length((uv - lp) - n * dot(uv - lp, n));
-    //float t_col = dot(uv - lp, np - lp)/length(np-lp);
-
-    //t_col = smoothstep(width-blur, width, t_col);
-    out_color = vec4(sdfPrev(vec3(1.0), outv, 0.1), 1.0);
-    //ut_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
+    //outv = smoothstep(width - blur, width, outv);
+    out_color = vec4(sdfPrev(vec3(1.0), outv, 0.05), 1.0);
+    //out_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
     //out_color = vec4(0.3, 0.7, 0.9, 1.0)*t_col + (1-t_col)*vec4(1.0, 1.0, 1.0, 0.3);
 }
