@@ -48,7 +48,7 @@ void main() {
     //out_color = vec4(sdfPrev(vec3(1.0), outv, 0.05), 1.0);
     out_color = clamp(vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0), 0, 1);
 
-    vec3 color = vec3(0.1, 0.5, 0.9);
+    vec3 color = vec3(0.1, 0.01, 1);
 
     out_color = vec4(pow(out_color.r, 1/color.r),
     pow(out_color.g, 1/color.g),
