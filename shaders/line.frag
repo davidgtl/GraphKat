@@ -56,10 +56,15 @@ float line(vec2 p, vec2 a, vec2 b){
     return res;
 }
 
-vec3 colormap(vec3 color, vec3 tint){
-    return vec3(pow(color.r, 1/tint.r),
-    pow(color.g, 1/tint.g),
-    pow(color.b, 1/tint.b));
+vec3 colorpow(vec3 color, float lum){
+    return vec3(pow(lum, 1/color.r),
+    pow(lum, 1/color.g),
+    pow(lum, 1/color.b));
+}
+
+vec3 colorscheme(vec3 color, vec3 shadows, float lum){
+    vec3 tint = mix(shadows, color, lum);
+    return colorpow(tint, pow(lum, 2));
 }
 
 void main() {
@@ -86,9 +91,9 @@ void main() {
     outv = smoothstep(width-blur, width, outv);
     out_color = mix(vec4(color, 1.0), vec4(0), outv);
 
-    vec2 p = uv - vec2(0.5, 0.5);
-    float plen = length(p);
-    vec3 col = vec3(p.y/plen/2 + 0.5, p.x/plen/2 + 0.5, 1-plen*2);
-    vec3 tint = vec3(0.1, 0.3, 1.0);
-    out_color = vec4(col, 1);
+    vec2 p = uv;// - vec2(0.5, 0.5);
+    float plen = mod(length(p), 0.1)/0.1;
+    vec3 tint1 = vec3(1.0, 0.5, 0.1);
+    vec3 tint2 = vec3(0.1, 0.1, 1.0)*1.5;
+    out_color = vec4(colorscheme(tint1, tint2, plen), 1);
 }
