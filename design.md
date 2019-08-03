@@ -53,6 +53,7 @@ Attributes need to be encoded and decoded to be transmitted in a generalizable w
 * Gridlines
 * Hover lines(projections on the axis)
 * Range measure between two vertical levels
+* Double graph lines with colored semitransparent under range
 
 ### Events
 

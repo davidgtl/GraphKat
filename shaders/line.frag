@@ -22,9 +22,9 @@ float line(vec2 p, vec2 a, vec2 b){
 
     float proj = dot(ap, n);
     if (proj < 0)
-    res = length(ap);
+    res = 0;//length(ap);
     else if (proj > balen)
-    res = length(p-b);
+    res = 0;//length(p-b);
     else
     res = sqrt(length(ap)*length(ap) - proj * proj);
 
@@ -42,23 +42,23 @@ void main() {
     float cv = mix(values[index], values[index+1], t);
     float dv = abs(values[index + 1] - values[index]);
 
-    float blur = 0.000002;
-    float width = 0.6;
+    float blur = 1.5;
+    float width = 100;
 
-    float med = 1.0;
+    float med = 0.0;
     vec2 lp, np;
     for (int i = 0; i <= 7; i++){
         lp = vec2(1.0*i/len, values[i]);
         np = vec2(1.0*(i+1)/len, values[i+1]);
-        med *= line(uv, lp, np);
+        med += line(uv, lp, np);
     }
 
-    float outv = 1 - pow(med, 1.0/len);
+    float outv = pow(med, 1.0/len);
 
-    outv = smoothstep(0.7, 1, outv);
     //outv = smoothstep(width-blur, width, outv);
-    //out_color = vec4(sdfPrev(vec3(1.0), outv, 0.05), 1.0);
-    out_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
+    //outv = smoothstep(width-blur, width, outv);
+    out_color = vec4(sdfPrev(vec3(1.0), outv, 0.1), 1.0);
+    //out_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
 
     vec3 color = vec3(1.0, 0.5, 0.1);
 
