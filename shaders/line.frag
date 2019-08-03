@@ -42,10 +42,17 @@ void main() {
     float l1 = line(uv, lp, np);
     float l2 = line(uv, np, nnp);
 
-    float outv = pow(l0 * l1 * l2, 1.0/3);
+    float outv = 1 - pow(l0 * l1 * l2, 1.0/3);
 
     //outv = smoothstep(width - blur, width, outv);
-    out_color = vec4(sdfPrev(vec3(1.0), outv, 0.05), 1.0);
-    //out_color = vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0);
+    //out_color = vec4(sdfPrev(vec3(1.0), outv, 0.05), 1.0);
+    out_color = clamp(vec4(1.0)*outv + (1-outv)*vec4(0, 0, 0, 1.0), 0, 1);
+
+    vec3 color = vec3(0.1, 0.5, 0.9);
+
+    out_color = vec4(pow(out_color.r, 1/color.r),
+    pow(out_color.g, 1/color.g),
+    pow(out_color.b, 1/color.b),
+    out_color.a);
     //out_color = vec4(0.3, 0.7, 0.9, 1.0)*t_col + (1-t_col)*vec4(1.0, 1.0, 1.0, 0.3);
 }
