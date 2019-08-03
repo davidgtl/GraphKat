@@ -254,14 +254,16 @@ int main(int argc, char *argv[]) {
     glCheckError();
 
 
-    Shader markerVertShader("shaders/base.vert", Shader::VERTEX_SHADER);
     Shader markerFragShader("shaders/marker.frag", Shader::FRAGMENT_SHADER);
-    ProgramShader markerShader(markerVertShader, markerFragShader);
+    ProgramShader markerShader(vertShader, markerFragShader);
     glCheckError();
 
-    Shader ghraphVertShader("shaders/base.vert", Shader::VERTEX_SHADER);
-    Shader ghraphFragShader("shaders/grapher.frag", Shader::FRAGMENT_SHADER);
-    ProgramShader ghraphShader(ghraphVertShader, ghraphFragShader);
+    Shader lineFragShader("shaders/line.frag", Shader::FRAGMENT_SHADER);
+    ProgramShader lineShader(vertShader, lineFragShader);
+    glCheckError();
+
+    Shader verticalRangeFragShader("shaders/verticalRange.frag", Shader::FRAGMENT_SHADER);
+    ProgramShader verticalRangeShader(vertShader, verticalRangeFragShader);
     glCheckError();
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -274,7 +276,7 @@ int main(int argc, char *argv[]) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
             plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
-            plane4.updateVertices(vec2(0.2, 0.2), sis(500, 300));
+            plane4.updateVertices(vec2(0.2, 0.2), sis(300, 300));
             plane3.updateVertices(vec2(0.4, 0.2), sis(10, 10));
             p3_brd = lsis(2, 2, plane3.size);
 
@@ -303,7 +305,7 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);
             plane3.draw();
 
-            ghraphShader.use();
+            lineShader.use();
             plane4.draw();
 
 

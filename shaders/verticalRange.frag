@@ -9,6 +9,7 @@ uniform vec2 offset;
 
 void main() {
     float values[7] = float[](0.1, 0.3, 0.8, 0.5, 0.7, 0.6, 0.6);
+    float ranges[7] = float[](0.3, 0.3, 0.1, 0.2, 0.4, 0.5, 0.6);
     int len = 6;
 
     int index = int(uv.x * len);
