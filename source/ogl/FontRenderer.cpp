@@ -12,7 +12,8 @@
 using namespace std;
 using namespace glm;
 
-void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, vec4 **charBounds) {
+void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, vec4 **charBounds,
+                     int *charHeight, int *charWidth) {
 
     *image = new unsigned char[width * height];
     *charBounds = new vec4[256];
@@ -53,9 +54,11 @@ void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **ima
     int scale = 100;
     pen.x = 0;
     pen.y = 0;
-    int height_max = 0;
+    int maxLineY = 0;
+    *charHeight = 0;
+    *charWidth = 0;
     const int char_padding = 2;
-    for (char c = ' '; c <= '~'; c++) {
+    for (char c = ' ' + 1; c <= '~'; c++) {
         FT_Set_Transform(face, &matrix, &pen);
 
         if (FT_Load_Char(face, c, FT_LOAD_RENDER))
@@ -63,8 +66,8 @@ void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **ima
 
         if (pen.x + slot->bitmap_left + slot->bitmap.width >= width) {
             pen.x = 0;
-            pen.y = height_max;
-            height_max = 0;
+            pen.y = maxLineY;
+            maxLineY = 0;
         }
 
         int x = pen.x;// + dpi - slot->bitmap_left;
@@ -88,10 +91,15 @@ void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **ima
                                 1.0 * (x_max - x) / width, 1.0 * (y_max - y) / height);
 
         pen.x += slot->bitmap.width + char_padding;
-        height_max = std::max(height_max, y_max);
+        maxLineY = std::max(maxLineY, y_max);
+        *charHeight = std::max(*charHeight, (int) slot->bitmap.rows);
+        *charWidth = std::max(*charWidth, (int) slot->bitmap.width);
         //printf("%c: %3d %3d %3d %5lu\n", c, slot->bitmap_left, slot->bitmap_top, slot->bitmap.width, slot->advance.x);
 
     }
+
+    (*charBounds)[' '] = vec4(1.0 * (width - *charWidth) / width, 1.0 * (height - *charHeight) / height,
+                              1.0 * (*charWidth) / width, 1.0 * (*charHeight) / height);
 
     FT_Done_Face(face);
     FT_Done_FreeType(library);

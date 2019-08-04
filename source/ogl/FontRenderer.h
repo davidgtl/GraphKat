@@ -5,4 +5,5 @@
 
 #pragma once
 
-void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, glm::vec4 **charBounds);
+void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, glm::vec4 **charBounds,
+                     int *charHeight, int *charWidth);

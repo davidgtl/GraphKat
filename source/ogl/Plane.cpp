@@ -2,8 +2,8 @@
 #include <glad/glad.h>
 
 
-Plane::Plane(bool invertY) {
-    init(vec2(0, 0), vec2(1, 1), 0, invertY);
+Plane::Plane(float zindex, bool invertY) {
+    init(vec2(0, 0), vec2(1, 1), z, invertY);
 }
 
 

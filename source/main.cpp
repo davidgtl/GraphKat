@@ -20,6 +20,9 @@
 using namespace std;
 using namespace glm;
 
+int atlas_size = 512;
+int atlas_charHeight, atlas_charWidth;
+
 int keyPressed[512];
 bool captured = false;
 vec2 screenSize;
@@ -57,7 +60,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 //dt is in seconds
 void keyHeldCallback(double dt) {
     float dtf = (float) dt;
-
 
 }
 
@@ -122,6 +124,10 @@ vec2 sis(vec2 size) {
     return size * (screenSize.x / 1000.0f / windowSize);
 }
 
+vec2 sis(float size) {
+    return vec2(size, size) * (screenSize.x / 1000.0f / windowSize);
+}
+
 vec2 sis(float sx, float sy) {
     return sis(vec2(sx, sy));
 }
@@ -177,10 +183,10 @@ GLFWwindow *initialize(int width, int height) {
 
 vec4 *charBounds;
 
-void initFonts(Texture texture, int width, int height, int pt, int dpi) {
+void initFonts(Texture texture, int width, int height, int *charHeight, int *charWidth, int pt, int dpi) {
 
     unsigned char *atlas;
-    createFontAtlas(width, height, pt, dpi, &atlas, &charBounds);
+    createFontAtlas(width, height, pt, dpi, &atlas, &charBounds, charHeight, charWidth);
     texture.bindTexture();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED,
                     GL_UNSIGNED_BYTE, atlas);
@@ -188,40 +194,43 @@ void initFonts(Texture texture, int width, int height, int pt, int dpi) {
 
 }
 
-void render_text(const char *text, float x, float y, float sx, float sy) {
-    /*struct point {
-        GLfloat x;
-        GLfloat y;
-        GLfloat s;
-        GLfloat t;
-    } coords[6 * strlen(text)];
+vec2 getCharsize(char character, float atlasSize, float charHeight, vec2 size) {
+    return charBounds[character].zw() * atlasSize / charHeight * size;
+}
 
-    int n = 0;
+void render_text(const char *text, vec2 origin, vec2 size, int align, Plane &textPlane, ProgramShader &textShader,
+                 Texture &fontAtlas) {
+    textShader.use();
+    fontAtlas.bindTexture();
 
-    for (const char *p = text; *p; p++) {
-        float x2 = x + c[*p].bl * sx;
-        float y2 = -y - c[*p].bt * sy;
-        float w = c[*p].bw * sx;
-        float h = c[*p].bh * sy;
+    glUniform4f(glGetUniformLocation(textShader, "color"), 0.0, 0.0, 0.0, 1.0);
 
-        x += c[*p].ax * sx;
-        y += c[*p].ay * sy;
+    vec2 pen;
+    float maxWidth = getCharsize(' ', atlas_size, atlas_charHeight, size).x;
 
-        if (!w || !h)
-            continue;
+    float textWidth = strlen(text) * maxWidth;
 
-        coords[n++] = (point) {x2, -y2, c[*p].tx, 0};
-        coords[n++] = (point) {x2 + w, -y2, c[*p].tx + c[*p].bw / atlas_width, 0};
-        coords[n++] = (point) {x2, -y2 - h, c[*p].tx, c[*p].bh / atlas_height};
-        coords[n++] = (point) {x2 + w, -y2, c[*p].tx + c[*p].bw / atlas_width, 0};
-        coords[n++] = (point) {x2, -y2 - h, c[*p].tx, c[*p].bh / atlas_height};
-        coords[n++] = (point) {x2 + w, -y2 - h, c[*p].tx + c[*p].bw / atlas_width, c[*p].bh / atlas_height};
+    if (align == 0)
+        pen = origin - vec2(textWidth / 2, 0);
+    else if (align == 1)
+        pen = origin - vec2(textWidth, 0);
+    else
+        pen = origin;
+
+    while (*text != 0) {
+        vec2 charSize = getCharsize(*text, atlas_size, atlas_charHeight, size);
+        float dw = maxWidth - charSize.x;
+        pen += vec2(dw / 2, 0);
+        textPlane.updateVertices(pen, charSize);
+
+        glUniform4fv(glGetUniformLocation(textShader, "charBounds"), 1, (GLfloat *) (&charBounds[*text]));
+
+        textPlane.draw();
+
+        text++;
+        pen += vec2(charSize.x, 0);
+        pen += vec2(dw - dw / 2, 0);
     }
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof coords, coords, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, n);
-
-    glCheckError();*/
 }
 
 int main(int argc, char *argv[]) {
@@ -234,14 +243,14 @@ int main(int argc, char *argv[]) {
     }
     updateScreenSize();
 
-    int atlas_size = 512;
     Texture fontAtlas(atlas_size, atlas_size);
-    initFonts(fontAtlas, atlas_size, atlas_size, 20, 200);
+    initFonts(fontAtlas, atlas_size, atlas_size, &atlas_charHeight, &atlas_charWidth, 20, 200);
 
     Plane plane1 = Plane(vec2(0.1, 0.1), vec2(0.8, 0.8), 0.0);
     Plane plane2 = Plane(vec2(0.0, 0.0), sis(100, 100), 0.1, true);
     Plane plane4 = Plane(vec2(0.2, 0.2), sis(500, 300), 0.2, false);
     Plane plane3 = Plane(vec2(0.4, 0.4), vec2(charBounds['Z'].z, charBounds['Z'].w), 0.3, false);
+    Plane textPlane = Plane(1, true);
 
     Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
     Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
@@ -278,6 +287,7 @@ int main(int argc, char *argv[]) {
             plane2.updateVertices(vec2(0.0, 0.0), sis(200, 200));
             plane4.updateVertices(vec2(0.0, 0.0), sis(600, 500));
             plane3.updateVertices(vec2(0.4, 0.2), sis(10, 10));
+
             p3_brd = lsis(2, 2, plane3.size);
 
             resized = false;
@@ -291,11 +301,6 @@ int main(int argc, char *argv[]) {
             //screen.draw();
             plane1.draw();
 
-            textShader.use();
-            fontAtlas.bindTexture();
-            glUniform4f(glGetUniformLocation(textShader, "color"), 0.0, 0.0, 0.0, 1.0);
-            glUniform4f(glGetUniformLocation(textShader, "charBounds"), 0.0, 0.0, 1.0, 1.0);
-            plane2.draw();
 
             markerShader.use();
             glUniform3f(glGetUniformLocation(markerShader, "color"), 0.3, 0.8, 1.0);
@@ -314,11 +319,14 @@ int main(int argc, char *argv[]) {
             GLfloat l[10] = {0.0, 0.05, 0.6, 0.4, 0.5, 0.3, 0.2, 0.6};
             GLfloat u[10] = {0.3, 0.2, 0.95, 0.6, 0.75, 0.7, 0.7, 0.6};
             glUniform1fv(glGetUniformLocation(lineShader, "values"), 8, v);
-            glUniform1i(glGetUniformLocation(lineShader, "vlength"), 8);
+            glUniform1i(glGetUniformLocation(lineShader, "vlength"), 7);
             glUniform1fv(glGetUniformLocation(lineShader, "lower"), 8, l);
             glUniform1fv(glGetUniformLocation(lineShader, "upper"), 8, u);
             plane4.draw();
 
+            render_text("Ana are mere", sis(0, 0), sis(20), -1, textPlane, textShader, fontAtlas);
+            render_text("Ana are mere", sis(200, 220), sis(20), 0, textPlane, textShader, fontAtlas);
+            render_text("Ana are mere", sis(200, 240), sis(20), 1, textPlane, textShader, fontAtlas);
 
             glfwSwapBuffers(window);
             invalidated = false;
