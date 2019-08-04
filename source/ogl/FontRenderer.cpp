@@ -3,16 +3,46 @@
 //
 #include "FontRenderer.h"
 #include "messages.h"
+
+#define GLM_FORCE_SWIZZLE
+
+#include <glm/glm.hpp>
 #include <ft2build.h>
 #include <math.h>
 #include <stdlib.h>
-#include <glm/glm.hpp>
-#include FT_FREETYPE_H"freetype/freetype.h"
+
+#include FT_FREETYPE_H
+#include "ogl/Plane.h"
+#include "ogl/Shader.h"
+#include "ogl/Texture.h"
+#include "ogl/ProgramShader.h"
 
 using namespace std;
 using namespace glm;
 
-void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, vec4 **charBounds,
+
+FontRenderer::FontRenderer(int atlas_size, int pt, int dpi) {
+    this->atlas_size = atlas_size;
+
+    fontAtlas = new Texture(atlas_size, atlas_size);
+    textPlane = new Plane(1, true);
+
+    Shader textVertShader("shaders/text.vert", Shader::VERTEX_SHADER);
+    Shader textFragShader("shaders/text.frag", Shader::FRAGMENT_SHADER);
+    textShader = ProgramShader(textVertShader, textFragShader);
+    glCheckError();
+
+    initFonts(*fontAtlas, atlas_size, atlas_size, &atlas_charHeight, &atlas_charWidth, pt, dpi);
+}
+
+
+FontRenderer::~FontRenderer() {
+    delete textPlane;
+    delete fontAtlas;
+}
+
+
+void FontRenderer::createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, vec4 **charBounds,
                      int *charHeight, int *charWidth) {
 
     *image = new unsigned char[width * height];
@@ -103,4 +133,53 @@ void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **ima
 
     FT_Done_Face(face);
     FT_Done_FreeType(library);
+}
+
+void FontRenderer::initFonts(Texture texture, int width, int height, int *charHeight, int *charWidth, int pt, int dpi) {
+
+    unsigned char *atlas;
+    createFontAtlas(width, height, pt, dpi, &atlas, &charBounds, charHeight, charWidth);
+    texture.bindTexture();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED,
+                    GL_UNSIGNED_BYTE, atlas);
+    delete[] atlas;
+
+}
+
+vec2 FontRenderer::getCharsize(char character, float atlasSize, float charHeight, vec2 size) {
+    return charBounds[character].zw() * atlasSize / charHeight * size;
+}
+
+void FontRenderer::drawText(const char *text, vec2 origin, vec2 size, vec4 color, int align) {
+    textShader.use();
+    fontAtlas->bindTexture();
+
+    glUniform4fv(glGetUniformLocation(textShader, "color"), 1, (GLfloat *) &color);
+
+    vec2 pen;
+    float maxWidth = getCharsize(' ', atlas_size, atlas_charHeight, size).x;
+
+    float textWidth = strlen(text) * maxWidth;
+
+    if (align == 0)
+        pen = origin - vec2(textWidth / 2, 0);
+    else if (align == 1)
+        pen = origin - vec2(textWidth, 0);
+    else
+        pen = origin;
+
+    while (*text != 0) {
+        vec2 charSize = getCharsize(*text, atlas_size, atlas_charHeight, size);
+        float dw = maxWidth - charSize.x;
+        pen += vec2(dw / 2, 0);
+        textPlane->updateVertices(pen, charSize);
+
+        glUniform4fv(glGetUniformLocation(textShader, "charBounds"), 1, (GLfloat *) (&charBounds[*text]));
+
+        textPlane->draw();
+
+        text++;
+        pen += vec2(charSize.x, 0);
+        pen += vec2(dw - dw / 2, 0);
+    }
 }
