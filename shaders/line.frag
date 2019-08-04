@@ -3,9 +3,14 @@
 in vec3 v_color;
 in vec2 uv;
 
-uniform vec3 color;
+uniform vec3 color_line;
+uniform vec3 color_region;
 uniform float width;
 uniform float blur;
+uniform float values[8];
+uniform float lower[8];
+uniform float upper[8];
+uniform int vlength;
 
 out vec4 out_color;
 
@@ -34,12 +39,13 @@ float sminp(float a, float b, float k)
     return pow((a*b)/(a+b), 1.0/k);
 }
 
-vec3 sdfPrev(vec3 col, float t, float tick){
-    return col * (mod(t, tick)/tick);
+float sdfPrev(float t, float tick){
+    return mod(t, tick)/tick;
 }
 
 float line(vec2 p, vec2 a, vec2 b){
-    float res;
+    //float res;
+    vec2 dortho;
     vec2 ap = p - a;
     float balen = 0.0000001+length(b-a);
 
@@ -47,13 +53,15 @@ float line(vec2 p, vec2 a, vec2 b){
 
     float proj = dot(ap, n);
     if (proj < 0)
-    res = length(ap);
+    dortho = ap;
     else if (proj > balen)
-    res = length(p-b);
+    dortho = p-b;
     else
-    res = sqrt(length(ap)*length(ap) - proj * proj);
+    dortho = ap - n*dot(ap, n);
 
-    return res;
+    //res = sqrt(length(ap)*length(ap) - proj * proj);
+
+    return sign(dortho.y) * length(dortho);
 }
 
 vec3 colorpow(vec3 color, float lum){
@@ -67,33 +75,74 @@ vec3 colorscheme(vec3 color, vec3 shadows, float lum){
     return colorpow(tint, pow(lum, 2));
 }
 
-void main() {
-    float values[8] = float[](0.1, 0.1, 0.9, 0.5, 0.7, 0.6, 0.6, 0.6);
-    int len = 6;
 
-    int index = int(floor(uv.x * len) + 1);
+//get line from uniforms
+float uline(int index, int wline){
+    if (index < 0)
+    index = 0;
+    if (index >= vlength)
+    index = vlength - 1;
 
-    float t = mod(uv.x*len, 1.0);
+    if (wline == 0)
+    return line(uv, vec2(1.0*index/vlength, values[index]), vec2(1.0*(index+1)/vlength, values[index+1]));
+    if (wline == -1)
+    return line(uv, vec2(1.0*index/vlength, lower[index]), vec2(1.0*(index+1)/vlength, lower[index+1]));
+    if (wline == 1)
+    return line(uv, vec2(1.0*index/vlength, upper[index]), vec2(1.0*(index+1)/vlength, upper[index+1]));
 
-    float cv = mix(values[index], values[index+1], t);
-    float dv = abs(values[index + 1] - values[index]);
+    return 0;
+}
 
-    float med = 1.0;
-    vec2 lp, np;
-    for (int i = 0; i <= 6; i++){
-        lp = vec2(1.0*i/len, values[i]);
-        np = vec2(1.0*(i+1)/len, values[i+1]);
-        med = min(line(uv, lp, np), med);
+float lerpLines(int index, int line, int mode){
+    float cl = uline(index, line);
+    float nl = uline(index-1, line);
+    float pl = uline(index+1, line);
+
+    float finalLine;
+    if (mode == 1){
+        finalLine = max(0.0, cl);
+        if (pl > 0)
+        finalLine = min(finalLine, pl);
+        if (nl > 0)
+        finalLine = min(finalLine, nl);
+    } else if (mode == -1){
+        finalLine = min(0.0, cl);
+        if (pl < 0)
+        finalLine = max(finalLine, pl);
+        if (nl < 0)
+        finalLine = max(finalLine, nl);
+    } else {
+        finalLine = min(abs(cl), min(abs(nl), abs(pl)));
     }
+    return finalLine;
+}
 
-    float outv = med;
+void main() {
 
-    outv = smoothstep(width-blur, width, outv);
-    out_color = mix(vec4(color, 1.0), vec4(0), outv);
+    vec4 cTransparent = vec4(0);
+    vec4 cLine = vec4(color_line, 1.0);
+    vec4 cRegBorder = vec4(color_region, 0.7);
+    vec4 cRegFill = vec4(color_region, 0.4);
 
-    vec2 p = uv;// - vec2(0.5, 0.5);
-    float plen = mod(length(p), 0.1)/0.1;
-    vec3 tint1 = vec3(1.0, 0.5, 0.1);
-    vec3 tint2 = vec3(0.1, 0.1, 1.0)*1.5;
-    out_color = vec4(colorscheme(tint1, tint2, plen), 1);
+
+    int index = int(floor(uv.x * vlength));
+
+    float line_lower = lerpLines(index, -1, 1);
+    float line_upper = lerpLines(index, 1, -1);
+    float line_current = lerpLines(index, 0, 0);
+
+    float region = min(abs(line_lower), abs(line_upper));
+
+    float cl_border = smoothstep(width/2-blur, width/2, line_current);
+    float reg_border = smoothstep(0, blur, region) - smoothstep(width, width+blur, region);
+    float reg_fill = smoothstep(width, width+blur, region);
+
+    vec4 final_color = mix(cTransparent, cRegBorder, reg_border) +
+    mix(cTransparent, cRegFill, reg_fill);
+    final_color = mix(final_color, cLine, 1-cl_border);
+    //float final_blend = max(lc_blend, reg_blend);
+
+    //out_color = vec4(sdfPrev(outv, 0.1)*vec3(1.0, 1, 1), 1);
+    //out_color += vec4(sdfPrev(med, 0.1)*vec3(0, 1.0, 0), 1);
+    out_color = final_color;
 }

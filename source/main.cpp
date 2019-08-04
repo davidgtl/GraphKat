@@ -306,9 +306,17 @@ int main(int argc, char *argv[]) {
             plane3.draw();
 
             lineShader.use();
-            glUniform3f(glGetUniformLocation(lineShader, "color"), 0.3, 0.8, 1.0);
-            glUniform1f(glGetUniformLocation(lineShader, "width"), sis(1, 1).x);
-            glUniform1f(glGetUniformLocation(lineShader, "blur"), sis(0.1, 0.1).x);
+            glUniform3f(glGetUniformLocation(lineShader, "color_line"), 0.3, 0.8, 1.0);
+            glUniform3f(glGetUniformLocation(lineShader, "color_region"), 1.0, 0.8, 0.3);
+            glUniform1f(glGetUniformLocation(lineShader, "width"), sis(2, 2).x);
+            glUniform1f(glGetUniformLocation(lineShader, "blur"), sis(0.5, 0.5).x);
+            GLfloat v[10] = {0.1, 0.1, 0.9, 0.5, 0.7, 0.6, 0.6, 0.6};
+            GLfloat l[10] = {0.0, 0.05, 0.6, 0.4, 0.5, 0.3, 0.2, 0.6};
+            GLfloat u[10] = {0.3, 0.2, 0.95, 0.6, 0.75, 0.7, 0.7, 0.6};
+            glUniform1fv(glGetUniformLocation(lineShader, "values"), 8, v);
+            glUniform1i(glGetUniformLocation(lineShader, "vlength"), 8);
+            glUniform1fv(glGetUniformLocation(lineShader, "lower"), 8, l);
+            glUniform1fv(glGetUniformLocation(lineShader, "upper"), 8, u);
             plane4.draw();
 
 
