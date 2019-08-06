@@ -21,7 +21,7 @@ using namespace std;
 using namespace glm;
 
 
-FontRenderer::FontRenderer(int atlas_size, int pt, int dpi) {
+FontRenderer::FontRenderer(const char *fontPath, const int atlas_size, int pt, int dpi) {
     this->atlas_size = atlas_size;
 
     fontAtlas = new Texture(atlas_size, atlas_size);
@@ -32,7 +32,7 @@ FontRenderer::FontRenderer(int atlas_size, int pt, int dpi) {
     textShader = ProgramShader(textVertShader, textFragShader);
     glCheckError();
 
-    initFonts(*fontAtlas, atlas_size, atlas_size, &atlas_charHeight, &atlas_charWidth, pt, dpi);
+    initFonts(fontPath, *fontAtlas, atlas_size, atlas_size, &atlas_charHeight, &atlas_charWidth, pt, dpi);
 }
 
 
@@ -42,8 +42,9 @@ FontRenderer::~FontRenderer() {
 }
 
 
-void FontRenderer::createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, vec4 **charBounds,
-                     int *charHeight, int *charWidth) {
+void FontRenderer::createFontAtlas(const char *fontPath, int width, int height, int pt, int dpi, unsigned char **image,
+                                   vec4 **charBounds,
+                                   int *charHeight, int *charWidth) {
 
     *image = new unsigned char[width * height];
     *charBounds = new vec4[256];
@@ -57,13 +58,10 @@ void FontRenderer::createFontAtlas(int width, int height, int pt, int dpi, unsig
     FT_Vector pen;                    /* untransformed origin  */
 
 
-    char filename[] = "fonts/Roboto_Mono/RobotoMono-Regular.ttf";                           /* first argument     */
-
-
     if (FT_Init_FreeType(&library))
         fatal_error("Could not initialize freetype");
 
-    if (FT_New_Face(library, filename, 0, &face))
+    if (FT_New_Face(library, fontPath, 0, &face))
         fatal_error("Could not load font");
 
     if (FT_Set_Char_Size(face, pt * 64, 0, dpi, 0))
@@ -135,10 +133,12 @@ void FontRenderer::createFontAtlas(int width, int height, int pt, int dpi, unsig
     FT_Done_FreeType(library);
 }
 
-void FontRenderer::initFonts(Texture texture, int width, int height, int *charHeight, int *charWidth, int pt, int dpi) {
+void
+FontRenderer::initFonts(const char *fontPath, Texture texture, int width, int height, int *charHeight, int *charWidth,
+                        int pt, int dpi) {
 
     unsigned char *atlas;
-    createFontAtlas(width, height, pt, dpi, &atlas, &charBounds, charHeight, charWidth);
+    createFontAtlas(fontPath, width, height, pt, dpi, &atlas, &charBounds, charHeight, charWidth);
     texture.bindTexture();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED,
                     GL_UNSIGNED_BYTE, atlas);

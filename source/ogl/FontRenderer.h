@@ -15,16 +15,19 @@ public:
     int atlas_size = 512;
     int atlas_charHeight, atlas_charWidth;
 
-    FontRenderer(int atlas_size, int pt, int dpi);
+    FontRenderer(const char *fontPath, int atlas_size, int pt, int dpi);
 
     ~FontRenderer();
 
     void drawText(const char *text, vec2 origin, vec2 size, vec4 color, int align);
 
 private:
-    void initFonts(Texture texture, int width, int height, int *charHeight, int *charWidth, int pt, int dpi);
+    void
+    initFonts(const char *fontPath, Texture texture, int width, int height, int *charHeight, int *charWidth, int pt,
+              int dpi);
 
-    void createFontAtlas(int width, int height, int pt, int dpi, unsigned char **image, vec4 **charBounds,
+    void createFontAtlas(const char *fontPath, int width, int height, int pt, int dpi, unsigned char **image,
+                         vec4 **charBounds,
                          int *charHeight, int *charWidth);
 
     vec2 getCharsize(char character, float atlasSize, float charHeight, vec2 size);

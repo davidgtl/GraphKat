@@ -178,6 +178,9 @@ GLFWwindow *initialize(int width, int height) {
     return window;
 }
 
+float randf() {
+    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
 
 int main(int argc, char *argv[]) {
     glfwSetErrorCallback(errorCallback);
@@ -195,7 +198,7 @@ int main(int argc, char *argv[]) {
     Plane plane4 = Plane(vec2(0.2, 0.2), sis(500, 300), 0.2, false);
     Plane plane3 = Plane(0.3, false);
 
-    FontRenderer textRenderer = FontRenderer(512, 20, 200);
+    FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
 
     Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
@@ -219,6 +222,29 @@ int main(int argc, char *argv[]) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int vlen = 300;
+    auto *values = new GLfloat[vlen];
+    auto *lower = new GLfloat[vlen];
+    auto *upper = new GLfloat[vlen];
+
+    srand(static_cast <unsigned> (time(0)));
+
+    values[0] = randf();
+    lower[0] = randf() * values[0];
+    upper[0] = randf() * (1 - values[0]) + values[0];
+
+    for (int i = 1; i < vlen; i++) {
+        values[i] = 0.2 * (randf() - 0.5) * values[i - 1] + values[i - 1];
+        lower[i] = values[i] - 0.2 * (randf()) * lower[i - 1];
+        upper[i] = values[i] + 0.2 * (randf()) * upper[i - 1];
+
+        upper[i] += upper[i - 1];
+        upper[i] /= 2;
+
+        lower[i] += lower[i - 1];
+        lower[i] /= 2;
+    }
 
     vec2 p3_brd;
     resized = true;
@@ -256,13 +282,11 @@ int main(int argc, char *argv[]) {
             glUniform3f(glGetUniformLocation(lineShader, "color_region"), 1.0, 0.8, 0.3);
             glUniform1f(glGetUniformLocation(lineShader, "width"), sis(2, 2).x);
             glUniform1f(glGetUniformLocation(lineShader, "blur"), sis(0.5, 0.5).x);
-            GLfloat v[10] = {0.1, 0.1, 0.9, 0.5, 0.7, 0.6, 0.6, 0.6};
-            GLfloat l[10] = {0.0, 0.05, 0.6, 0.4, 0.5, 0.3, 0.2, 0.6};
-            GLfloat u[10] = {0.3, 0.2, 0.95, 0.6, 0.75, 0.7, 0.7, 0.6};
-            glUniform1fv(glGetUniformLocation(lineShader, "values"), 8, v);
-            glUniform1i(glGetUniformLocation(lineShader, "vlength"), 7);
-            glUniform1fv(glGetUniformLocation(lineShader, "lower"), 8, l);
-            glUniform1fv(glGetUniformLocation(lineShader, "upper"), 8, u);
+
+            glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, values);
+            glUniform1i(glGetUniformLocation(lineShader, "vlength"), vlen - 1);
+            glUniform1fv(glGetUniformLocation(lineShader, "lower"), vlen, lower);
+            glUniform1fv(glGetUniformLocation(lineShader, "upper"), vlen, upper);
             plane4.draw();
 
 

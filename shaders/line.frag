@@ -1,5 +1,5 @@
 #version 330
-
+#define MAX_V 300
 in vec3 v_color;
 in vec2 uv;
 
@@ -7,9 +7,9 @@ uniform vec3 color_line;
 uniform vec3 color_region;
 uniform float width;
 uniform float blur;
-uniform float values[8];
-uniform float lower[8];
-uniform float upper[8];
+uniform float values[MAX_V];
+uniform float lower[MAX_V];
+uniform float upper[MAX_V];
 uniform int vlength;
 
 out vec4 out_color;
