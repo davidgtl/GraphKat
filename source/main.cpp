@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <stdio.h>
+#include <sstream>
 #include "io.h"
 #include "ogl/PointModel.h"
 #include "ogl/Shader.h"
@@ -27,6 +28,32 @@ vec2 windowSize;
 
 bool invalidated = true;
 bool resized = true;
+
+GLfloat *values;
+
+vec2 sis(vec2 size) {
+    return size * (screenSize.x / 1000.0f / windowSize);
+}
+
+vec2 sis(float size) {
+    return vec2(size, size) * (screenSize.x / 1000.0f / windowSize);
+}
+
+vec2 sis(float sx, float sy) {
+    return sis(vec2(sx, sy));
+}
+
+vec2 lsis(vec2 size, vec2 region) {
+    return size * (screenSize.x / 1000.0f / windowSize / region);
+}
+
+vec2 lsis(float sx, float sy, vec2 region) {
+    return lsis(vec2(sx, sy), region);
+}
+
+vec2 absToRel(vec2 win, vec2 compPos, vec2 compSize) {
+    return (win - compPos) / compSize;
+}
 
 void invalidate() {
     invalidated = true;
@@ -60,32 +87,53 @@ void keyHeldCallback(double dt) {
 
 }
 
+
 double lxpos, lypos;
+vec2 mp;
 double a_xpos = 0.0f, a_ypos = 0.0f;
 float mouseSensitivity = 0.001;
+
+void updateValues() {
+
+    vec2 local = absToRel(mp, vec2(0.0, 0.0), sis(600, 500));
+
+    double indv = mp.x / sis(600).x;
+    indv = indv < 0 ? 0 : indv;
+    indv = indv > 1 ? 1 : indv;
+
+    int index = (int) (indv * 299);
+
+    values[index] = local.y;
+}
 
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 
     if (!captured) {
         lxpos = xpos;
         lypos = ypos;
+        //invalidate();
         return;
     }
 
+    mp = vec2(xpos, ypos) / windowSize;
+    mp.y = 1 - mp.y;
 
     double dy = lypos - ypos;//inverted Y
     double dx = lxpos - xpos;//inverted X
 
 
+    updateValues();
     lxpos = xpos;
     lypos = ypos;
+    invalidate();
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
-    if (action == GLFW_PRESS) {
+    if (action == GLFW_PRESS || action == GLFW_RELEASE) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            cout << "mevent " << captured << endl;
             captured = !captured;
-            glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+            //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
         }
     }
 }
@@ -115,26 +163,6 @@ void updateScreenSize() {
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
     screenSize = vec2(mode->width, mode->height);
-}
-
-vec2 sis(vec2 size) {
-    return size * (screenSize.x / 1000.0f / windowSize);
-}
-
-vec2 sis(float size) {
-    return vec2(size, size) * (screenSize.x / 1000.0f / windowSize);
-}
-
-vec2 sis(float sx, float sy) {
-    return sis(vec2(sx, sy));
-}
-
-vec2 lsis(vec2 size, vec2 region) {
-    return size * (screenSize.x / 1000.0f / windowSize / region);
-}
-
-vec2 lsis(float sx, float sy, vec2 region) {
-    return lsis(vec2(sx, sy), region);
 }
 
 GLFWwindow *initialize(int width, int height) {
@@ -224,7 +252,7 @@ int main(int argc, char *argv[]) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     int vlen = 300;
-    auto *values = new GLfloat[vlen];
+    values = new GLfloat[vlen];
     auto *lower = new GLfloat[vlen];
     auto *upper = new GLfloat[vlen];
 
@@ -244,6 +272,8 @@ int main(int argc, char *argv[]) {
 
         lower[i] += lower[i - 1];
         lower[i] /= 2;
+
+        lower[i] = upper[i] = 0;
     }
 
     vec2 p3_brd;
@@ -266,7 +296,7 @@ int main(int argc, char *argv[]) {
             baseShader.use();
             glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
             //screen.draw();
-            plane1.draw();
+            //plane1.draw();
 
 
             markerShader.use();
@@ -289,8 +319,10 @@ int main(int argc, char *argv[]) {
             glUniform1fv(glGetUniformLocation(lineShader, "upper"), vlen, upper);
             plane4.draw();
 
+            stringstream str;
 
-            textRenderer.drawText("Ana are $50", sis(100, 100), sis(8), vec4(1, 0, 0.5, 1), -1);
+            str << "x: " << lxpos << ", y: " << lypos;
+            textRenderer.drawText(str.str().c_str(), sis(100, 100), sis(8), vec4(1, 0, 0.5, 1), -1);
 
             glfwSwapBuffers(window);
             invalidated = false;
