@@ -12,6 +12,7 @@ public:
     vec2 origin, size;
     float z;
 
+    Plane();
     Plane(float zindex, bool invertY = false);
 
     Plane(vec2 origin, vec2 size, float z, bool invertY = false);
@@ -21,6 +22,12 @@ public:
     void draw();
 
     void updateVertices(vec2 origin, vec2 size);
+
+    bool operator<(const Plane &obj) const {
+        if (obj.vao < this->vao)
+            return true;
+    }
+
 
 private:
 

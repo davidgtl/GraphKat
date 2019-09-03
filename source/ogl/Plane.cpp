@@ -3,7 +3,7 @@
 
 
 Plane::Plane(float zindex, bool invertY) {
-    init(vec2(0, 0), vec2(1, 1), z, invertY);
+    init(vec2(0, 0), vec2(1, 1), zindex, invertY);
 }
 
 
@@ -97,3 +97,6 @@ void Plane::updateVertices(vec2 origin, vec2 size) {
     glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+Plane::Plane() : vao(-1), vbo(-1), ebo(-1), uvs(-1), origin(-1, -1), size(-1, -1), z(-1) {}
+
