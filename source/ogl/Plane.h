@@ -26,6 +26,7 @@ public:
     bool operator<(const Plane &obj) const {
         if (obj.vao < this->vao)
             return true;
+        return false;
     }
 
 

@@ -90,7 +90,7 @@ float uline(int index, int wline){
     if (wline == 1)
     return line(uv, vec2(1.0*index/vlength, upper[index]), vec2(1.0*(index+1)/vlength, upper[index+1]));
 
-    return 0;
+    return 0.0;
 }
 
 float lerpLines(int index, int line, int mode){
