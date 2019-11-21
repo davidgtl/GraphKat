@@ -9,6 +9,10 @@
 #include "wsize.h"
 #include <iostream>
 #include <pugixml.hpp>
+#include <fstream>
+
+using namespace pugi;
+using namespace std;
 
 LayoutManager::LayoutManager() : screenSize(1, 1), windowSize(1, 1),
                                  hConstr(), vConstr(), parents() {
@@ -110,5 +114,22 @@ vec2 LayoutManager::sisc(float sx, float sy) {
 }
 
 LayoutManager::LayoutManager(const string layout_file) {
-    pugi::xml_node_type type;
+    pugi::xml_document doc;
+    ifstream stream(layout_file);
+    pugi::xml_parse_result result = doc.load(stream);
+
+    pugi::xpath_node_set tools = doc.select_nodes("/Profile/Tools/Tool[@AllowRemote='true' and @DeriveCaptionFrom='lastparam']");
+
+    std::cout << "Tools:\n";
+
+    for (pugi::xpath_node_set::const_iterator it = tools.begin(); it != tools.end(); ++it)
+    {
+        pugi::xpath_node node = *it;
+        std::cout << node.node().attribute("Filename").value() << "\n";
+    }
+
+    pugi::xpath_node build_tool = doc.select_node("//Tool[contains(Description, 'build system')]");
+
+    if (build_tool)
+        std::cout << "Build tool: " << build_tool.node().attribute("Filename").value() << "\n";
 }

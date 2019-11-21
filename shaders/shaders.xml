@@ -1,0 +1,18 @@
+<shaders>
+    <!--TODO: add common shaders-->
+    <program name="base">
+        <shader src="shaders/base.vert"/>
+        <shader src="shaders/base.frag"/>
+    </program>
+    <program name="marker">
+        <shader src="shaders/base.vert"/>
+        <shader src="shaders/marker.frag"/>
+    </program>
+    <program name="line">
+        <shader src="shaders/base.vert"/>
+        <shader src="shaders/line.frag"/>
+    </program>
+    <program name="verticalRange">
+        <shader src="shaders/verticalRange.frag"/>
+    </program>
+</shaders>

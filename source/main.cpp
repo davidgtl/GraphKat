@@ -14,6 +14,7 @@
 #include "ogl/ProgramShader.h"
 #include "messages.h"
 #include "ogl/FontRenderer.h"
+#include "ogl/ShaderLoader.h"
 #include "wmgr/LayoutManager.h"
 #include <thread>
 #include <chrono>
@@ -179,8 +180,8 @@ GLFWwindow *initialize(int width, int height) {
         return nullptr;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -247,24 +248,11 @@ int main(int argc, char *argv[]) {
 
     FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
+    auto shaders = ShaderLoader::LoadShaders("shaders/shaders.xml");
 
-    Shader vertShader("shaders/base.vert", Shader::VERTEX_SHADER);
-    Shader fragShader("shaders/base.frag", Shader::FRAGMENT_SHADER);
-    ProgramShader baseShader(vertShader, fragShader);
-    glCheckError();
-
-
-    Shader markerFragShader("shaders/marker.frag", Shader::FRAGMENT_SHADER);
-    ProgramShader markerShader(vertShader, markerFragShader);
-    glCheckError();
-
-    Shader lineFragShader("shaders/line.frag", Shader::FRAGMENT_SHADER);
-    ProgramShader lineShader(vertShader, lineFragShader);
-    glCheckError();
-
-    Shader verticalRangeFragShader("shaders/verticalRange.frag", Shader::FRAGMENT_SHADER);
-    ProgramShader verticalRangeShader(vertShader, verticalRangeFragShader);
-    glCheckError();
+    ProgramShader baseShader = shaders["base"];
+    ProgramShader markerShader = shaders["marker"];
+    ProgramShader lineShader = shaders["line"];
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_BLEND);

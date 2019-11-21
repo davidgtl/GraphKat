@@ -3,6 +3,13 @@
 #include "messages.h"
 #include <sys/types.h>
 
+const GLuint Shader::VERTEX_SHADER = GL_VERTEX_SHADER;
+const GLuint Shader::FRAGMENT_SHADER = GL_FRAGMENT_SHADER;
+const GLuint Shader::COMPUTE_SHADER = GL_COMPUTE_SHADER;
+const GLuint Shader::GEOMETRY_SHADER = GL_GEOMETRY_SHADER;
+
+Shader::Shader(const std::string& filepath, GLint shaderType) : Shader(filepath.c_str(), shaderType) {}
+
 Shader::Shader(const char *filepath, GLint shaderType) {
     this->filepath = filepath;
     id = glCreateShader(shaderType);

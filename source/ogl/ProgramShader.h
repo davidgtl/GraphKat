@@ -1,6 +1,10 @@
 #pragma once
 
 #include <glad/glad.h>
+#include "Shader.h"
+#include <vector>
+
+using namespace std;
 
 class ProgramShader {
 public:
@@ -13,6 +17,7 @@ public:
     ProgramShader(GLuint shader1, GLuint shader2);
 
     ProgramShader(GLuint shader1);
+    ProgramShader(const vector<Shader>& shaders);
 
     ~ProgramShader();
 
