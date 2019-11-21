@@ -8,6 +8,7 @@
 #include "LayoutManager.h"
 #include "wsize.h"
 #include <iostream>
+#include <pugixml.hpp>
 
 LayoutManager::LayoutManager() : screenSize(1, 1), windowSize(1, 1),
                                  hConstr(), vConstr(), parents() {
@@ -106,4 +107,8 @@ vec2 LayoutManager::sisc(float size) {
 
 vec2 LayoutManager::sisc(float sx, float sy) {
     return sisc(vec2(sx, sy));
+}
+
+LayoutManager::LayoutManager(const string layout_file) {
+    pugi::xml_node_type type;
 }

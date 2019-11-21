@@ -50,3 +50,7 @@ find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
 
+# pugixml
+set(PUGIXML_DIR "${LIB_DIR}/pugixml")
+add_subdirectory(${PUGIXML_DIR})
+target_link_libraries(${PROJECT_NAME} pugixml)

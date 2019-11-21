@@ -22,6 +22,7 @@ public:
     LayoutManager(vec2 screenSize, vec2 windowSize);
 
     LayoutManager();
+    LayoutManager(const string layout_file);
 
     ~LayoutManager() = default;
 

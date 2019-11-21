@@ -4,3 +4,6 @@
 [submodule "libraries/glfw"]
 	path = libraries/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "libraries/pugixml"]
+	path = libraries/pugixml
+	url = https://github.com/zeux/pugixml.git
