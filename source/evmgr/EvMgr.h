@@ -18,6 +18,9 @@ private:
     string context;
 
 public:
+
+    EvMgr();
+
     template <typename T>
     void createEndpoint(const string& name, T default_value);
 
@@ -39,5 +42,7 @@ public:
 
     void removeContext();
 };
+
+EvMgr gEvMgr;
 
 #endif //GRAPHKAT_EVMGR_H

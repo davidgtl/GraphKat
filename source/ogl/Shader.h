@@ -13,6 +13,7 @@ public:
     GLuint id;
     const char *filepath;
 
+    Shader();
     Shader(const char *filepath, GLint shaderType);
     Shader(const std::string& filepath, GLint shaderType);
 

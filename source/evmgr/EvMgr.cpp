@@ -47,3 +47,5 @@ T EvMgr::getValue(const string &name) {
     return endpoints[context + name];
 }
 
+EvMgr::EvMgr():endpoints (), listeners(), context("") {}
+

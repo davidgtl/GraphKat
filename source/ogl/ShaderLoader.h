@@ -7,6 +7,7 @@
 #include <string>
 #include <glad/glad.h>
 #include <map>
+#include <pugixml.hpp>
 #include "ProgramShader.h"
 
 using namespace std;
@@ -16,4 +17,8 @@ public:
     static map<string, ProgramShader> LoadShaders(const char *shaders_path);
 private:
     static map<std::string, GLuint> s_mapShaderType;
+    static map<string, ProgramShader> programMap;
+    static map<string, Shader> shaderMap;
+
+    static Shader resolveShader(pugi::xml_node shader_node);
 };

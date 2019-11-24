@@ -1,18 +1,24 @@
 <shaders>
-    <!--TODO: add common shaders-->
-    <program name="base">
-        <shader src="shaders/base.vert"/>
-        <shader src="shaders/base.frag"/>
-    </program>
-    <program name="marker">
-        <shader src="shaders/base.vert"/>
-        <shader src="shaders/marker.frag"/>
-    </program>
-    <program name="line">
-        <shader src="shaders/base.vert"/>
-        <shader src="shaders/line.frag"/>
-    </program>
-    <program name="verticalRange">
-        <shader src="shaders/verticalRange.frag"/>
-    </program>
+    <shaders>
+        <shader name="base" src="shaders/base.vert"/>
+    </shaders>
+
+    <programs>
+        <program name="base">
+            <shader ref="base"/>
+            <shader src="shaders/base.frag"/>
+        </program>
+        <program name="marker">
+            <shader ref="base"/>
+            <shader src="shaders/marker.frag"/>
+        </program>
+        <program name="line">
+            <shader ref="base"/>
+            <shader src="shaders/line.frag"/>
+        </program>
+        <program name="verticalRange">
+            <shader ref="base"/>
+            <shader src="shaders/verticalRange.frag"/>
+        </program>
+    </programs>
 </shaders>

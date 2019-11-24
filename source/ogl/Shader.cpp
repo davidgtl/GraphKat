@@ -49,3 +49,6 @@ Shader::~Shader() {
 Shader::operator GLuint() const {
     return id;
 }
+
+Shader::Shader():id(-1) {
+}
