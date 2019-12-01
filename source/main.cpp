@@ -18,6 +18,9 @@
 #include "wmgr/LayoutManager.h"
 #include <thread>
 #include <chrono>
+#include <map>
+#include <boost/any.hpp>
+
 
 using namespace std;
 using namespace glm;
@@ -146,6 +149,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 
 float offX, offY;
 
+void echo();
+
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     offX -= xoffset * 0.01;
     offY += yoffset * 0.01;
@@ -218,7 +223,11 @@ float randf() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
+
 int main(int argc, char *argv[]) {
+    cout << int();
+    exit(0);
+
     glfwSetErrorCallback(errorCallback);
 
     windowSize = vec2(1280, 720);

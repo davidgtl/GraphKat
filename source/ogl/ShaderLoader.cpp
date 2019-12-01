@@ -39,7 +39,7 @@ Shader ShaderLoader::resolveShader(pugi::xml_node shader_node) {
         fatal_error("Could not load referenced shader");
     } else if (a_src != NULL) {
         string src = a_src.value();
-        GLuint type = s_mapShaderType[src.substr(src.length() - 4, 4)];
+        GLuint type = s_mapShaderType[src.substr(src.length(  ) - 4, 4)];
 
         ifstream t(src);
 
