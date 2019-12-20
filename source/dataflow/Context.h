@@ -6,18 +6,16 @@
 #define GRAPHKAT_CONTEXT_H
 
 #include <string>
-#include <map>
 #include <boost/any.hpp>
 #include "Endpoint.h"
 
 using boost::any;
-using std::map, std::string;
+using std::unordered_map, std::string;
 
 class Context {
 private:
-    map<string, Endpoint> endpoints;
-    map<string, boost::any *> endpoint_ref;
-    map<string, Context *> children;
+    unordered_map<string, Endpoint> endpoints;
+    unordered_map<string, Context *> children;
     string context_name;
 
 public:
@@ -33,33 +31,37 @@ public:
      */
 
     /* Will be initialized with the first created Context */
-    static Context *GlobalContext;
+    static Context *GlobalRootContext;
+    static Context *CurrentContext;
+    static string CurrentPath;
 
     Context();
 
-    Context(string &name);
+    Context(const string &name);
 
     template<typename T>
-    void createEndpoint(const string &name, T default_value);
+    void createEndpoint(const string &name, T init_value);
 
     /* Initialized to null */
     void createEndpoint(const string &name);
 
-
     void removeEndpoint(const string &name);
 
-    void setContext(const string &name);
+    void linkContext(Context &context);
 
-    void removeContext();
+    void unlinkContext(Context &context);
 
-    Context *path(string &name);
+    void adoptContext(Context &context);
 
+    void disownContext(Context &context);
+
+    /* Path must end with /endpoint */
+    Context *path(string &path);
+
+    /* Path must end with /endpoint */
     Endpoint *getEndpoint(const string &path);
 
-    /* Path must end with an endpoint */
-    Endpoint *operator[](string &path);
+    static Context *createContext(const string &path);
 };
-
-Context *Context::GlobalContext = nullptr;
 
 #endif //GRAPHKAT_CONTEXT_H

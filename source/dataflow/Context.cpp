@@ -7,18 +7,14 @@
 #include <algorithm>
 #include "messages.h"
 
-void Context::setContext(const string &name) {
-    context_name = name;
-}
-
-void Context::removeContext() {
-    context_name = "";
-}
+Context *Context::GlobalRootContext = nullptr;
+Context *Context::CurrentContext = nullptr;
+string Context::CurrentPath = "/";
 
 template<typename T>
-void Context::createEndpoint(const string &name, T default_value) {
+void Context::createEndpoint(const string &name, T init_value) {
     endpoints[name] = Endpoint();
-    endpoints[name] = default_value;
+    endpoints[name] = init_value;
 }
 
 void Context::createEndpoint(const string &name) {
@@ -30,12 +26,14 @@ void Context::removeEndpoint(const string &name) {
 }
 
 Context::Context() : endpoints(), context_name(""), children() {
-    if (Context::GlobalContext == nullptr) {
-        Context::GlobalContext = this;
+    if (Context::GlobalRootContext == nullptr) {
+        Context::GlobalRootContext = this;
+        Context::CurrentPath = "/";
+        Context::CurrentContext = this;
     }
 }
 
-Context::Context(string &name) : endpoints(), context_name(name), children() {}
+Context::Context(const string &name) : endpoints(), context_name(name), children() {}
 
 Context *Context::path(string &path) {
     Context *current_context = nullptr;
@@ -46,6 +44,25 @@ Context *Context::path(string &path) {
             break;
 
         current_context = children[head];
+    }
+
+    return current_context;
+}
+
+/* Context path must begin and end with / endpoints end without */
+Context* Context::createContext(const string &path) {
+
+    auto [current_path, is_absolute] = ContextPath::makeRelative(path);
+    Context *current_context = is_absolute? Context::GlobalRootContext : Context::CurrentContext;
+
+    while (!current_path.empty()) {
+        auto[head, tail] = ContextPath::getHeadTail(current_path);
+
+        if (!current_context->children.count(head))
+            current_context->children[head] = new Context(head);
+
+        current_context = current_context->children[head];
+        current_path = tail;
     }
 
     return current_context;
@@ -74,9 +91,22 @@ Endpoint* Context::getEndpoint(const string &path) {
     return &current_context->endpoints[path];
 }
 
-Endpoint* Context::operator[](string &path) {
-    return getEndpoint(path);
+void Context::linkContext(Context &context) {
+    throw;
 }
+
+void Context::unlinkContext(Context &context) {
+    throw;
+}
+
+void Context::adoptContext(Context &context) {
+    this->children[context.context_name] = &context;
+}
+
+void Context::disownContext(Context &context) {
+    throw;
+}
+
 
 
 

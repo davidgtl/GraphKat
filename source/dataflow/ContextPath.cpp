@@ -31,3 +31,18 @@ tuple<string, string> ContextPath::getPathEndpoint(const string &path) {
     std::size_t found = path.find_last_of('/');
     return {path.substr(0, found), path.substr(found + 1)};
 }
+
+bool ContextPath::isRelative(const string &path) {
+    return path[0] != '/';
+}
+
+bool ContextPath::isAbsolute(const string &path) {
+    return path[0] == '/';
+}
+
+tuple<string, bool>  ContextPath::makeRelative(const string &path) {
+    if(isAbsolute(path))
+        return {path.substr(1), true};
+    return {string(path), false};
+}
+

@@ -9,32 +9,37 @@
 #include <map>
 #include <boost/any.hpp>
 
-using std::vector;
-using boost::any;
+using std::vector, std::map;
 
 class Endpoint {
-    any value;
+private:
+    boost::any value;
 
+    vector<void (*)(boost::any)> listeners;
+    vector<Endpoint *> linkedEndpoints;
     void handleOnChanged();
 
 public:
+    enum EndpointType : short;
+    static map<EndpointType, boost::any (*)(void)> initializers;
+
     bool hasChanged;
-    vector<void (*)(any)> listeners;
-    vector<Endpoint *> linkedEndpoints;
+    EndpointType type;
 
     Endpoint();
 
-    Endpoint &operator=(any &other);
+    void update(boost::any other);
 
-    operator any &();
+    operator boost::any &();
 
     void registerLink(Endpoint &endpoint);
 
     void unregisterLink(Endpoint &endpoint);
 
-    void unregisterListener(void (*delegate)(any));
+    void unregisterListener(void (*delegate)(boost::any));
 
-    void registerListener(void (*delegate)(any));
+    void registerListener(void (*delegate)(boost::any));
+
 };
 
 #endif //GRAPHKAT_ENDPOINT_H

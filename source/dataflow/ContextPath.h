@@ -19,6 +19,13 @@ public:
 
     static tuple<string, string> getPathEndpoint(const string &path);
 
+    /* !relative = absolute */
+    static bool isRelative(const string &path);
+
+    static bool isAbsolute(const string &path);
+
+    static tuple<std::string, bool> makeRelative(const string &path);
+
     static string getParent(const string &path);
 };
 

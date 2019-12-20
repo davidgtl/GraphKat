@@ -16,10 +16,13 @@
 #include "ogl/FontRenderer.h"
 #include "ogl/ShaderLoader.h"
 #include "wmgr/LayoutManager.h"
+#include "dataflow/ContextPath.h"
+#include "dataflow/Context.h"
 #include <thread>
 #include <chrono>
 #include <map>
 #include <boost/any.hpp>
+#include <boost/variant.hpp>
 
 
 using namespace std;
@@ -224,10 +227,36 @@ float randf() {
 }
 
 
-int main(int argc, char *argv[]) {
-    cout << int();
-    exit(0);
+class my_visitor : public boost::static_visitor<float> {
+public:
+    float operator()(int i) const {
+        return i;
+    }
 
+    float operator()(const std::string &str) const {
+        return str.length();
+    }
+};
+
+int main(int argc, char *argv[]) {
+
+    Context* slider_ctx = Context::createContext("/ui/slider/");
+    slider_ctx->createEndpoint("value");
+    slider_ctx->getEndpoint("value")->update(boost::any(0.123f));
+    cout << "value: " <<  boost::any_cast<float>(Context::GlobalRootContext->getEndpoint("/ui/dlider/value")) << endl;
+
+
+    int a = 1;
+
+    cout << "absolute: " << (("ana")[0]=='/') << endl;
+
+    boost::variant<int, std::string> u(7);
+    std::cout << u; // output: hello world
+
+    int result = boost::apply_visitor(my_visitor(), u);
+    std::cout << result; // output: 11 (i.e., length of "hello world")
+
+    exit(0);
     glfwSetErrorCallback(errorCallback);
 
     windowSize = vec2(1280, 720);
