@@ -78,7 +78,7 @@ map<string, ProgramShader> ShaderLoader::LoadShaders(const char *shaders_path) {
     pugi::xpath_node_set xpath_programs = doc.select_nodes("/shaders/programs/program");
 
     //WIP
-    //Endpoint * ctx = (*Context::GlobalRootContext)["/shaders/programs"];
+    //Endpoint * ctx = (*Context::Root)["/shaders/programs"];
 
     /* Load and compile root program shaders */
     for (auto xpath_program : xpath_programs) {

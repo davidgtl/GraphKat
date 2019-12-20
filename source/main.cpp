@@ -18,6 +18,7 @@
 #include "wmgr/LayoutManager.h"
 #include "dataflow/ContextPath.h"
 #include "dataflow/Context.h"
+#include "dataflow/Endpoint.h"
 #include <thread>
 #include <chrono>
 #include <map>
@@ -240,15 +241,16 @@ public:
 
 int main(int argc, char *argv[]) {
 
-    Context* slider_ctx = Context::createContext("/ui/slider/");
-    slider_ctx->createEndpoint("value");
-    slider_ctx->getEndpoint("value")->update(boost::any(0.123f));
-    cout << "value: " <<  boost::any_cast<float>(Context::GlobalRootContext->getEndpoint("/ui/dlider/value")) << endl;
+    Context *slider_ctx = Context::createContext("/ui/slider/");
+    slider_ctx->createEndpoint("value")->update(0.456);
+    Endpoint *endp = Context::Root->endpoint("/ui/slider/value");
+
+    cout << "value: " << endp->value<double>() << endl;
 
 
     int a = 1;
 
-    cout << "absolute: " << (("ana")[0]=='/') << endl;
+    cout << "absolute: " << (("ana")[0] == '/') << endl;
 
     boost::variant<int, std::string> u(7);
     std::cout << u; // output: hello world

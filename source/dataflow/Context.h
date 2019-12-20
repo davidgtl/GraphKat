@@ -10,7 +10,7 @@
 #include "Endpoint.h"
 
 using boost::any;
-using std::unordered_map, std::string;
+using std::unordered_map, std::string, std::ostream;
 
 class Context {
 private:
@@ -31,7 +31,7 @@ public:
      */
 
     /* Will be initialized with the first created Context */
-    static Context *GlobalRootContext;
+    static Context *Root;
     static Context *CurrentContext;
     static string CurrentPath;
 
@@ -43,7 +43,7 @@ public:
     void createEndpoint(const string &name, T init_value);
 
     /* Initialized to null */
-    void createEndpoint(const string &name);
+    Endpoint * createEndpoint(const string &name);
 
     void removeEndpoint(const string &name);
 
@@ -55,13 +55,17 @@ public:
 
     void disownContext(Context &context);
 
-    /* Path must end with /endpoint */
+    /* Path must end with /context/ */
     Context *path(string &path);
 
     /* Path must end with /endpoint */
-    Endpoint *getEndpoint(const string &path);
+    Endpoint *endpoint(const string &path);
 
     static Context *createContext(const string &path);
+
+    friend ostream &operator<<(ostream &os, const Context &c) {
+        return os << c.context_name;
+    }
 };
 
 #endif //GRAPHKAT_CONTEXT_H

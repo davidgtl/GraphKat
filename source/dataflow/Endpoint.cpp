@@ -4,19 +4,7 @@
 
 #include "Endpoint.h"
 
-Endpoint::Endpoint() : value(nullptr), hasChanged(false), listeners(), linkedEndpoints() {}
-
-void Endpoint::update(boost::any other) {
-    this->value = other;
-    handleOnChanged();
-    for (const auto &endpoint : linkedEndpoints)
-        endpoint->handleOnChanged();
-}
-
-Endpoint::operator boost::any &() {
-    hasChanged = false;
-    return this->value;
-}
+Endpoint::Endpoint() : _value(nullptr), hasChanged(false), listeners(), linkedEndpoints() {}
 
 void Endpoint::registerLink(Endpoint &endpoint) {
     linkedEndpoints.push_back(&endpoint);
@@ -38,7 +26,7 @@ void Endpoint::registerListener(void (*delegate)(boost::any)) {
 void Endpoint::handleOnChanged() {
     hasChanged = true;
     for (const auto &handler : listeners)
-        handler(value);
+        handler(_value);
 }
 
 enum Endpoint::EndpointType : short {
@@ -55,6 +43,8 @@ map<T, boost::any (*)(void)> Endpoint::initializers = {
         {T::Float,  []() { return bany(float(0.0)); }},
         {T::FloatV, []() { return bany(vector<float>()); }}
 };
+
+//template void foo<int>();
 
 
 
