@@ -9,15 +9,20 @@
 #include <map>
 #include <boost/any.hpp>
 #include <iostream>
+#include "ComputeNode.h"
 
 using std::vector, std::map;
+
+class ComputeNode;
 
 class Endpoint {
 private:
     boost::any _value;
 
-    vector<void (*)(boost::any)> listeners;
-    vector<Endpoint *> linkedEndpoints;
+    vector<ComputeNode *> listeners;
+    vector<Endpoint *> slaveLinks;
+    Endpoint *masterLink;
+
     void handleOnChanged();
 
 public:
@@ -31,9 +36,22 @@ public:
 
     template<typename T>
     void update(T val) {
+        if (masterLink != nullptr) {
+            masterLink->_value = val;
+            masterLink->handleOnChanged();
+        }
         this->_value = val;
         handleOnChanged();
-        for (const auto &endpoint : linkedEndpoints)
+        for (const auto &endpoint : slaveLinks)
+            endpoint->handleOnChanged();
+    }
+
+    void update() {
+        if (masterLink != nullptr)
+            masterLink->handleOnChanged();
+
+        handleOnChanged();
+        for (const auto &endpoint : slaveLinks)
             endpoint->handleOnChanged();
     }
 
@@ -44,13 +62,14 @@ public:
         return boost::any_cast<T>(this->_value);
     }
 
-    void registerLink(Endpoint &endpoint);
+    //TODO: implement reference transparent behaviour
+    void registerLink(Endpoint *endpoint);
 
-    void unregisterLink(Endpoint &endpoint);
+    void unregisterLink(Endpoint *endpoint);
 
-    void unregisterListener(void (*delegate)(boost::any));
+    void unregisterListener(ComputeNode *);
 
-    void registerListener(void (*delegate)(boost::any));
+    void registerListener(ComputeNode *);
 
 };
 

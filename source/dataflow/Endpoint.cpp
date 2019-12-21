@@ -4,29 +4,31 @@
 
 #include "Endpoint.h"
 
-Endpoint::Endpoint() : _value(nullptr), hasChanged(false), listeners(), linkedEndpoints() {}
+Endpoint::Endpoint() : _value(nullptr), hasChanged(false), listeners(), slaveLinks() {}
 
-void Endpoint::registerLink(Endpoint &endpoint) {
-    linkedEndpoints.push_back(&endpoint);
+void Endpoint::registerLink(Endpoint *endpoint) {
+    masterLink = endpoint;
+    endpoint->slaveLinks.push_back(endpoint);
 }
 
-void Endpoint::unregisterLink(Endpoint &endpoint) {
-    linkedEndpoints.erase(std::remove(linkedEndpoints.begin(), linkedEndpoints.end(), &endpoint),
-                          linkedEndpoints.end());
+void Endpoint::unregisterLink(Endpoint *endpoint) {
+    masterLink->slaveLinks.erase(std::remove(slaveLinks.begin(), slaveLinks.end(), endpoint),
+                                 slaveLinks.end());
+    masterLink = nullptr;
 }
 
-void Endpoint::unregisterListener(void (*delegate)(boost::any)) {
-    listeners.push_back(delegate);
+void Endpoint::registerListener(ComputeNode *node) {
+    listeners.push_back(node);
 }
 
-void Endpoint::registerListener(void (*delegate)(boost::any)) {
-    listeners.erase(std::remove(listeners.begin(), listeners.end(), delegate), listeners.end());
+void Endpoint::unregisterListener(ComputeNode *node) {
+    listeners.erase(std::remove(listeners.begin(), listeners.end(), node), listeners.end());
 }
 
 void Endpoint::handleOnChanged() {
     hasChanged = true;
     for (const auto &handler : listeners)
-        handler(_value);
+        handler->execute();
 }
 
 enum Endpoint::EndpointType : short {

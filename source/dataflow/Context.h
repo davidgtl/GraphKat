@@ -12,9 +12,11 @@
 using boost::any;
 using std::unordered_map, std::string, std::ostream;
 
+class Endpoint;
+
 class Context {
 private:
-    unordered_map<string, Endpoint> endpoints;
+    unordered_map<string, Endpoint *> endpoints;
     unordered_map<string, Context *> children;
     string context_name;
 

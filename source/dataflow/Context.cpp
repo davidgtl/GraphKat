@@ -13,13 +13,14 @@ string Context::CurrentPath = "/";
 
 template<typename T>
 void Context::createEndpoint(const string &name, T init_value) {
-    endpoints[name] = Endpoint();
+    endpoints[name] = new Endpoint();
     endpoints[name] = init_value;
 }
 
+//TODO: add destructor
 Endpoint *Context::createEndpoint(const string &name) {
-    endpoints[name] = Endpoint();
-    return &endpoints[name];
+    endpoints[name] = new Endpoint();
+    return endpoints[name];
 }
 
 void Context::removeEndpoint(const string &name) {
@@ -91,7 +92,7 @@ Endpoint *Context::endpoint(const string &path) {
 
     int k = current_context->endpoints.count(endpoint);
 
-    return &current_context->endpoints[endpoint];
+    return current_context->endpoints[endpoint];
 }
 
 void Context::linkContext(Context &context) {
