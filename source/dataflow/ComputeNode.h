@@ -21,8 +21,8 @@ typedef void (*ComputeFunc_t)(Context *, Context *);
 template<typename T> static void CAT(_, name)(Context *in_ctx, Context *out_ctx);\
 static std::unordered_map<std::type_index, ComputeFunc_t> DCAT(_,name,_dynamic_map);\
 public:\
-static void name(Context *in_ctx, Context *out_ctx) { (*DCAT(_,name,_dynamic_map)())[in_ctx->endpoint("x")->type()](in_ctx, out_ctx); }
-#define TEMPLATE(namespace, name, ...) std::unordered_map<std::type_index, ComputeFunc_t> namespace::DCAT(_,name,_dynamic_map) = {MAP_ENTRIES(name, __VA_ARGS__)};
+static void name(Context *in_ctx, Context *out_ctx) { DCAT(_,name,_dynamic_map)[in_ctx->endpoint("x")->type()](in_ctx, out_ctx); }
+#define LINK_TEMPLATE(namespace, name, ...) std::unordered_map<std::type_index, ComputeFunc_t> namespace::DCAT(_,name,_dynamic_map) = {MAP_ENTRIES(name, __VA_ARGS__)};
 
 
 class ComputeNode {

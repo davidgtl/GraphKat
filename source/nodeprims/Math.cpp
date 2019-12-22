@@ -5,9 +5,7 @@
 #include "Math.h"
 
 
-std::unordered_map<std::type_index, ComputeFunc_t> Math::_LinMap_dynamic_map = {{typeid(float), _LinMap < float > },
-                                                                                {typeid(vec2),  _LinMap < vec2 > }};
-
+LINK_TEMPLATE(Math, LinMap, float, vec2)
 
 template<typename T>
 void Math::_LinMap(Context *in_ctx, Context *out_ctx) {

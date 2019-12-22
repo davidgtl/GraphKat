@@ -16,16 +16,7 @@ using glm::vec2;
 
 class Math {
 
-private:
-    template<typename T>
-    static void _LinMap(Context *in_ctx, Context *out_ctx);
-    static std::unordered_map<std::type_index, ComputeFunc_t> _LinMap_dynamic_map;
-public:
-    static void LinMap(Context *in_ctx, Context *out_ctx) {
-        _LinMap_dynamic_map[in_ctx->endpoint("x")->type()](in_ctx, out_ctx);
-    }
-
-//    ComputeFuncT(LinMap);
+ComputeFuncT(LinMap);
 
     ComputeFunc(LinMapUnit);
 
