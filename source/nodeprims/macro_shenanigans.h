@@ -18,5 +18,10 @@
 #define ApplyMacro_2(M, A, arg, ...) M(A, arg),ApplyMacro_1(M, A, __VA_ARGS__)
 #define ApplyMacro_3(M, A, arg, ...) M(A, arg),ApplyMacro_2(M, A, __VA_ARGS__)
 #define ApplyMacro_4(M, A, arg, ...) M(A, arg),ApplyMacro_3(M, A, __VA_ARGS__)
+#define ApplyMacro_5(M, A, arg, ...) M(A, arg),ApplyMacro_4(M, A, __VA_ARGS__)
+#define ApplyMacro_6(M, A, arg, ...) M(A, arg),ApplyMacro_5(M, A, __VA_ARGS__)
+#define ApplyMacro_7(M, A, arg, ...) M(A, arg),ApplyMacro_6(M, A, __VA_ARGS__)
+#define ApplyMacro_8(M, A, arg, ...) M(A, arg),ApplyMacro_7(M, A, __VA_ARGS__)
+#define ApplyMacro_9(M, A, arg, ...) M(A, arg),ApplyMacro_8(M, A, __VA_ARGS__)
 
 #endif //GRAPHKAT_MACRO_SHENANIGANS_H
