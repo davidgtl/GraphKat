@@ -25,7 +25,7 @@ FontRenderer::FontRenderer(const char *fontPath, const int atlas_size, int pt, i
     this->atlas_size = atlas_size;
 
     fontAtlas = new Texture(atlas_size, atlas_size);
-    textPlane = new Plane(1, true);
+    //textPlane = new Plane(1, true); //FIXME
 
     Shader textVertShader("shaders/text.vert", Shader::VERTEX_SHADER);
     Shader textFragShader("shaders/text.frag", Shader::FRAGMENT_SHADER);
@@ -172,7 +172,7 @@ void FontRenderer::drawText(const char *text, vec2 origin, vec2 size, vec4 color
         vec2 charSize = getCharsize(*text, atlas_size, atlas_charHeight, size);
         float dw = maxWidth - charSize.x;
         pen += vec2(dw / 2, 0);
-        textPlane->updateVertices(pen, charSize);
+        //textPlane->updateVertices(pen, charSize); //FIXME
 
         glUniform4fv(glGetUniformLocation(textShader, "charBounds"), 1, (GLfloat *) (&charBounds[*text]));
 

@@ -68,7 +68,7 @@ tuple<vec2, vec2> LayoutManager::calculateMetrics(Plane &p) {
     origin += parentOrigin;
     size *= parentSize;
 
-    p.updateVertices(origin, size);
+    //p.updateVertices(origin, size);//FIXME
 
     return {origin, size};
 }

@@ -2,19 +2,12 @@
 #include <glad/glad.h>
 
 
-Plane::Plane(float zindex, bool invertY) {
-    init(vec2(0, 0), vec2(1, 1), zindex, invertY);
+Plane::Plane(Context *ctx, bool invertY) : vao(-1), vbo(-1), ebo(-1), uvs(-1) {
+    this->context = ctx;
+    init(invertY);
 }
 
-
-Plane::Plane(vec2 origin, vec2 size, float z, bool invertY) {
-    init(origin, size, z, invertY);
-}
-
-void Plane::init(vec2 origin, vec2 size, float z, bool invertY) {
-    this->origin = origin;
-    this->size = size;
-    this->z = z;
+void Plane::init(bool invertY) {
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -24,7 +17,7 @@ void Plane::init(vec2 origin, vec2 size, float z, bool invertY) {
 
     glBindVertexArray(vao);
 
-    updateVertices(origin, size);
+    updateVertices();
 
     int indices[] = {
             0, 1, 2,
@@ -72,9 +65,7 @@ void Plane::draw() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 }
 
-void Plane::updateVertices(vec2 origin, vec2 size) {
-    this->origin = origin;
-    this->size = size;
+void Plane::updateVertices() {
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableVertexAttribArray(0);
@@ -83,9 +74,10 @@ void Plane::updateVertices(vec2 origin, vec2 size) {
     vec2 ostart = vec2(-1, -1);
     vec2 oend = vec2(1, 1);
 
-    vec2 start = ostart + origin * (oend - ostart);
-    vec2 end = start + size * (oend - ostart);
+    vec2 start = ostart + EGV(origin, vec2) * (oend - ostart);
+    vec2 end = start + EGV(size, vec2) * (oend - ostart);
 
+    auto z = EGV(z, float);
 
     float vertices[] = {
             start.x, start.y, z,
@@ -98,5 +90,7 @@ void Plane::updateVertices(vec2 origin, vec2 size) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-Plane::Plane() : vao(-1), vbo(-1), ebo(-1), uvs(-1), origin(-1, -1), size(-1, -1), z(-1) {}
+Plane::Plane() : vao(-1), vbo(-1), ebo(-1), uvs(-1) {
+    this->context = nullptr;
+}
 

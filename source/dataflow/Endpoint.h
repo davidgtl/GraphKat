@@ -10,11 +10,20 @@
 #include <boost/any.hpp>
 #include <iostream>
 #include "ComputeNode.h"
+#include "nodeprims/macro_shenanigans.h"
 
 using std::vector, std::map;
 
 class ComputeNode;
 
+//get & set value
+#define _EGV2(end_name, type) context->endpoint(#end_name)->value<type>()
+#define _EGV3(context, end_name, type) context->endpoint(#end_name)->value<type>()
+#define EGV(...) CAT(_EGV,COUNT_ARGUMENTS(__VA_ARGS__))(__VA_ARGS__)
+#define _ESV3(end_name, type, val) context->endpoint(#end_name)->update<type>(val)
+#define _ESV4(context, end_name, type, val) context->endpoint(#end_name)->update<type>(val)
+#define ESV(...) CAT(_ESV,COUNT_ARGUMENTS(__VA_ARGS__))(__VA_ARGS__)
+//special cases for computeNodes
 #define EIV(end_name, type) in_ctx->endpoint(#end_name)->value<type>()
 #define EOV(end_name, type, val) out_ctx->endpoint(#end_name)->update(val)
 
@@ -24,7 +33,7 @@ private:
 
     vector<ComputeNode *> listeners;
     vector<Endpoint *> slaveLinks;
-    Endpoint *masterLink;
+    Endpoint *masterLink = nullptr;
 
     void handleOnChanged();
 

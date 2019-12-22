@@ -39,10 +39,10 @@ public:
 
     Context();
 
-    Context(const string &name);
+    explicit Context(const string &name);
 
     template<typename T>
-    void createEndpoint(const string &name, T init_value) {
+    Endpoint *createEndpoint(const string &name, T init_value) {
         endpoints[name] = new Endpoint();
         endpoints[name]->update(init_value);
     }

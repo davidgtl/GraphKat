@@ -243,12 +243,24 @@ void doNothing(Context *in_ctx, Context *out_ctx) {
     in_ctx->createEndpoint("hello");
 };
 
+Context *createPlane(vec2 origin, vec2 size, float z) {
+    auto context = new Context();
+    context->createEndpoint("origin", origin);
+    context->createEndpoint("size", size);
+    context->createEndpoint("z", z);
+    context->createEndpoint("plane", Plane(context));
+
+    return context;
+}
+
 void buildUI() {
     ComputeNode root;
     /*root.func = [](Context* in_ctx, Context* out_ctx){
         in_ctx->createEndpoint("hello");
     };*/
     root.func = doNothing;
+
+
 
 
 }
@@ -260,15 +272,14 @@ int main(int argc, char *argv[]) {
     in_ctx->createEndpoint("fstart", 2.0f);
     in_ctx->createEndpoint("fend", 8.0f);
     in_ctx->createEndpoint("tstart", 0.0f);
-    in_ctx->createEndpoint("tend", 1.0f);
-    in_ctx->createEndpoint("x", 4.0f);
+    in_ctx->createEndpoint("tend", 100.0f);
+    in_ctx->createEndpoint("x", 0.4f);
     out_ctx->createEndpoint("res");
 
-    Math::LinMap(in_ctx, out_ctx);
+    Math::LinMapUnit(in_ctx, out_ctx);
 
     cout << "result: " << out_ctx->endpoint("res")->value<float>();
 
-    exit(0);
     /* boost::variant<int, std::string> u(7);
      std::cout << u; // output: hello world
 
@@ -288,20 +299,11 @@ int main(int argc, char *argv[]) {
 
     //Plane plane1 = Plane(0.0);
     //Plane plane2 = Plane(0.1, true);
-    Plane plane4 = Plane(0.2, false);
-    Plane plane41 = Plane(0.2, false);
-    Plane plane42 = Plane(0.2, false);
-    Plane plane43 = Plane(0.2, false);
-    Plane plane44 = Plane(0.2, false);
-    Plane plane3 = Plane(0.3, false);
-
-    lmgr.addPlane(plane4, {0, 0}, {0.0, 0.8});
-    lmgr.addPlane(plane41, {0, 0}, {0.2, 0.6});
-    lmgr.addPlane(plane42, {0, 0}, {0.4, 0.4});
-    lmgr.addPlane(plane43, {0, 0}, {0.6, 0.2});
-    lmgr.addPlane(plane44, {0, 0}, {0.8, 0.0});
-    lmgr.addPlane(plane3, LayoutConstraint::sl(0.4, wsize(10, wsize::sis)),
-                  LayoutConstraint::sl(0.2, wsize(10, wsize::sis)));
+    Context *p1 = createPlane(vec2(0, 0), vec2(1, 0.2), 0.1f);
+    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f);
+    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f);
+    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f);
+    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f);
 
     FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
@@ -350,13 +352,6 @@ int main(int argc, char *argv[]) {
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
-
-            lmgr.calculateMetrics(plane4);
-            lmgr.calculateMetrics(plane41);
-            lmgr.calculateMetrics(plane42);
-            lmgr.calculateMetrics(plane43);
-            lmgr.calculateMetrics(plane44);
-            lmgr.calculateMetrics(plane3);
             resized = false;
         }
         if (invalidated) {
@@ -387,16 +382,16 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(lineShader, "vlength"), vlen - 1);
             glUniform1fv(glGetUniformLocation(lineShader, "lower"), vlen, lower);
             glUniform1fv(glGetUniformLocation(lineShader, "upper"), vlen, upper);
-            plane4.draw();
+            EGV(p1, plane, Plane).draw();
 
             glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der1);
-            plane41.draw();
+            EGV(p2, plane, Plane).draw();
             glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der2);
-            plane42.draw();
+            EGV(p3, plane, Plane).draw();
             glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der3);
-            plane43.draw();
+            EGV(p4, plane, Plane).draw();
             glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der4);
-            plane44.draw();
+            EGV(p5, plane, Plane).draw();
 
 
             stringstream str;

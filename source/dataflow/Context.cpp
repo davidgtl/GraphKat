@@ -5,8 +5,8 @@
 #include "Context.h"
 #include "ContextPath.h"
 #include <algorithm>
+#include <utils/Randoms.h>
 #include "messages.h"
-
 Context *Context::Root = new Context("root");
 Context *Context::CurrentContext = Context::Root;
 string Context::CurrentPath = "/";
@@ -21,7 +21,7 @@ void Context::removeEndpoint(const string &name) {
     endpoints.erase(name);
 }
 
-Context::Context() : endpoints(), context_name(""), children() {
+Context::Context() : endpoints(), context_name(Randoms::random_string()), children() {
 }
 
 Context::Context(const string &name) : endpoints(), context_name(name), children() {}

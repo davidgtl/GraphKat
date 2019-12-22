@@ -15,13 +15,12 @@
 using glm::vec2;
 
 class Math {
+
 ComputeFuncT(LinMap, x);
+ComputeFuncT(LinMapUnit, x);
+ComputeFuncT(InvLinMap, x);
+ComputeFuncT(InvLinMapUnit, x);
 
-    ComputeFunc(LinMapUnit);
-
-    ComputeFunc(InvLinMap);
-
-    ComputeFunc(InvLinMapUnit);
 };
 
 
