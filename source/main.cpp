@@ -19,6 +19,7 @@
 #include "dataflow/ComputeNode.h"
 #include "dataflow/Context.h"
 #include "dataflow/Endpoint.h"
+#include <nodeprims/Math.h>
 #include <thread>
 #include <chrono>
 #include <map>
@@ -253,15 +254,28 @@ void buildUI() {
 }
 
 int main(int argc, char *argv[]) {
+    auto in_ctx = new Context();
+    auto out_ctx = new Context();
 
+    in_ctx->createEndpoint("fstart", 2.0f);
+    in_ctx->createEndpoint("fend", 8.0f);
+    in_ctx->createEndpoint("tstart", 0.0f);
+    in_ctx->createEndpoint("tend", 1.0f);
+    in_ctx->createEndpoint("x", 4.0f);
+    out_ctx->createEndpoint("res");
 
-    boost::variant<int, std::string> u(7);
-    std::cout << u; // output: hello world
+    Math::LinMap(in_ctx, out_ctx);
 
-    int result = boost::apply_visitor(my_visitor(), u);
-    std::cout << result; // output: 11 (i.e., length of "hello world")
+    cout << "result: " << out_ctx->endpoint("res")->value<float>();
 
     exit(0);
+    /* boost::variant<int, std::string> u(7);
+     std::cout << u; // output: hello world
+
+     int result = boost::apply_visitor(my_visitor(), u);
+     std::cout << result; // output: 11 (i.e., length of "hello world")
+
+     exit(0);*/
     glfwSetErrorCallback(errorCallback);
 
     windowSize = vec2(1280, 720);

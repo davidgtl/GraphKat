@@ -6,11 +6,11 @@
 #define GRAPHKAT_COMPUTENODE_H
 
 #include <vector>
-#include "Context.h"
 
 using std::vector;
 
 class Context;
+#define ComputeFunc(name) static void name(Context *in_ctx, Context *out_ctx)
 
 class ComputeNode {
 public:

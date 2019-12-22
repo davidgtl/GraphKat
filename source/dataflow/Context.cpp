@@ -11,12 +11,6 @@ Context *Context::Root = new Context("root");
 Context *Context::CurrentContext = Context::Root;
 string Context::CurrentPath = "/";
 
-template<typename T>
-void Context::createEndpoint(const string &name, T init_value) {
-    endpoints[name] = new Endpoint();
-    endpoints[name] = init_value;
-}
-
 //TODO: add destructor
 Endpoint *Context::createEndpoint(const string &name) {
     endpoints[name] = new Endpoint();

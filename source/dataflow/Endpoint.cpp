@@ -31,23 +31,6 @@ void Endpoint::handleOnChanged() {
         handler->execute();
 }
 
-enum Endpoint::EndpointType : short {
-    Float, FloatV,
-    Vec2, Vec2V,
-    Vec3, Vec3V,
-    Vec4, Vec4V
-};
-
-using T = Endpoint::EndpointType;
-using bany = boost::any;
-
-map<T, boost::any (*)(void)> Endpoint::initializers = {
-        {T::Float,  []() { return bany(float(0.0)); }},
-        {T::FloatV, []() { return bany(vector<float>()); }}
-};
-
-//template void foo<int>();
-
 
 
 

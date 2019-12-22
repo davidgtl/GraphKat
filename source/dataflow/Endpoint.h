@@ -15,6 +15,9 @@ using std::vector, std::map;
 
 class ComputeNode;
 
+#define EIV(end_name, type) in_ctx->endpoint(#end_name)->value<type>()
+#define EOV(end_name, type, val) out_ctx->endpoint(#end_name)->update(val)
+
 class Endpoint {
 private:
     boost::any _value;
@@ -26,11 +29,7 @@ private:
     void handleOnChanged();
 
 public:
-    enum EndpointType : short;
-    static map<EndpointType, boost::any (*)(void)> initializers;
-
     bool hasChanged;
-    EndpointType type;
 
     Endpoint();
 
@@ -58,8 +57,11 @@ public:
     template<typename T>
     T value() {
         hasChanged = false;
-        auto t = std::string(_value.type().name());
         return boost::any_cast<T>(this->_value);
+    }
+
+    std::type_index type() {
+        return this->_value.type();
     }
 
     //TODO: implement reference transparent behaviour
