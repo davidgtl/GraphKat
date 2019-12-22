@@ -16,7 +16,7 @@ using glm::vec2;
 
 class Math {
 
-ComputeFuncT(LinMap, x);
+    ComputeFuncT(LinMap, x);
 
     ComputeFunc(LinMapUnit);
 

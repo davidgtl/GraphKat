@@ -49,7 +49,7 @@ typedef void (*ComputeFunc_t)(Context *, Context *);
 #define ComputeFunc(name) static void name(Context *in_ctx, Context *out_ctx)
 #define MAP_ENTRY(name, type) {typeid(type), CAT(_,name)<type>}
 #define MAP_ENTRIES(name, ...) ApplyMacro(MAP_ENTRY, name, __VA_ARGS__)
-#define ComputeFuncT(name, type_endpoint) private:\
+#define ComputeFuncT(name, type_endpoint) {}private:\
 template<typename T> static void CAT(_, name)(Context *in_ctx, Context *out_ctx);\
 static std::unordered_map<std::type_index, ComputeFunc_t> DCAT(_,name,_dynamic_map);\
 public:\
