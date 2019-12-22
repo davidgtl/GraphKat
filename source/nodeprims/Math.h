@@ -8,13 +8,46 @@
 #include <dataflow/Context.h>
 #include <dataflow/ComputeNode.h>
 
+#define GLM_FORCE_SWIZZLE
+
+#include <glm/glm.hpp>
+
+using glm::vec2;
+
 class Math {
+/*private:
+    template<typename T>
+    static void _LinMap(Context *in_ctx, Context *out_ctx);
+
+    static std::unordered_map<std::type_index, ComputeFunc_t> *_LinMap_dynamic_map() {
+        static std::unordered_map<std::type_index, ComputeFunc_t> smap = {
+                {typeid(float), _LinMap<float>},
+                {typeid(vec2),  _LinMap<vec2>}
+        };
+        return &smap;
+    }
+
+    void LinMap(Context *in_ctx, Context *out_ctx) { (*_LinMap_dynamic_map())[in_ctx->endpoint("x")->type()](in_ctx, out_ctx); }
+
+public:
+    ComputeFunc(LinMap);*/
+
 private:
     template<typename T>
     static void _LinMap(Context *in_ctx, Context *out_ctx);
 
+    static std::unordered_map<std::type_index, ComputeFunc_t> *_LinMap_dynamic_map() {
+        static std::unordered_map<std::type_index, ComputeFunc_t> smap = {{typeid(float), _LinMap<float>},
+                                                                          {typeid(vec2),  _LinMap<vec2>}};
+        return &smap;
+    }
+
 public:
-    ComputeFunc(LinMap);
+    static void LinMap(Context *in_ctx, Context *out_ctx) {
+        (*_LinMap_dynamic_map())[in_ctx->endpoint("x")->type()](in_ctx, out_ctx);
+    }
+
+//    ComputeFuncT(LinMap);
 
     ComputeFunc(LinMapUnit);
 
