@@ -4,6 +4,11 @@
 
 #include "Math.h"
 
+
+std::unordered_map<std::type_index, ComputeFunc_t> Math::_LinMap_dynamic_map = {{typeid(float), _LinMap < float > },
+                                                                                {typeid(vec2),  _LinMap < vec2 > }};
+
+
 template<typename T>
 void Math::_LinMap(Context *in_ctx, Context *out_ctx) {
     auto a = EIV(fstart, T);
@@ -34,3 +39,4 @@ void Math::InvLinMapUnit(Context *in_ctx, Context *out_ctx) {
     auto d = EIV(tend, float);
     EOV(fstart, float, (1 - EIV(x, float)) * (d - c) + c);
 }
+
