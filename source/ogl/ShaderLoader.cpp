@@ -78,7 +78,8 @@ map<string, ProgramShader> ShaderLoader::LoadShaders(const char *shaders_path) {
     pugi::xpath_node_set xpath_programs = doc.select_nodes("/shaders/programs/program");
 
     //WIP
-    //Endpoint * ctx = (*Context::Root)["/shaders/programs"];
+    //Endpoint * ctx = (*Context::Root)["/shaders/"];
+    auto ctx = Context::createContext("/shaders/");
 
     /* Load and compile root program shaders */
     for (auto xpath_program : xpath_programs) {
@@ -92,7 +93,7 @@ map<string, ProgramShader> ShaderLoader::LoadShaders(const char *shaders_path) {
         for (auto node : xml_shaders)
             shaders.push_back(resolveShader(node));
 
-        Context::CurrentContext = nullptr; //WIP
+        Context::CurrentContext = ctx->createSubContext(name); //WIP
         programMap[name] = ProgramShader(shaders);
         glCheckError();
 

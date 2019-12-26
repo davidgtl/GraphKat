@@ -48,7 +48,7 @@ public:
     }
 
     /* Initialized to null */
-    Endpoint * createEndpoint(const string &name);
+    Endpoint *createEndpoint(const string &name);
 
     void removeEndpoint(const string &name);
 
@@ -61,16 +61,28 @@ public:
     void disownContext(Context &context);
 
     /* Path must end with /context/ */
-    Context *path(string &path);
+    Context *path(const string &path);
 
     /* Path must end with /endpoint */
     Endpoint *endpoint(const string &path);
 
     static Context *createContext(const string &path);
+    Context *createSubContext(const string &path);
 
     friend ostream &operator<<(ostream &os, const Context &c) {
         return os << c.context_name;
     }
+
+    auto begin() {
+        return endpoints.begin();
+    }
+
+    auto end() {
+        return endpoints.end();
+    }
+
+    void pretty_print(int level = 0);
+
 };
 
 #endif //GRAPHKAT_CONTEXT_H

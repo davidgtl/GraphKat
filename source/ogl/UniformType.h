@@ -11,8 +11,8 @@
 class UniformType {
 public:
         GLenum type;
-        int size;
-        int location;
+    int count;
+    int location;
 
         boost::any getInit();
 

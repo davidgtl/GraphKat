@@ -15,4 +15,4 @@ boost::any UniformType::getInit() {
     return initializers[type];
 }
 
-UniformType::UniformType(GLenum type, int size, int location) : type(type), size(size), location(location) {}
+UniformType::UniformType(GLenum type, int size, int location) : type(type), count(size), location(location) {}

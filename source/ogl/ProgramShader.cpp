@@ -42,6 +42,8 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
         GLenum 	type = GL_NONE;
         glGetProgramiv(id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_name_len);
 
+
+
         /*
          * #define GL_FLOAT_VEC2 0x8B50
          * #define GL_FLOAT_VEC3 0x8B51
@@ -49,10 +51,6 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
          * #define GL_INT_VEC2 0x8B53
          * #define GL_INT_VEC3 0x8B54
          * #define GL_INT_VEC4 0x8B55
-         * #define GL_BOOL 0x8B56
-         * #define GL_BOOL_VEC2 0x8B57
-         * #define GL_BOOL_VEC3 0x8B58
-         * #define GL_BOOL_VEC4 0x8B59
          * #define GL_FLOAT_MAT2 0x8B5A
          * #define GL_FLOAT_MAT3 0x8B5B
          * #define GL_FLOAT_MAT4 0x8B5C
@@ -63,6 +61,11 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
          * #define GL_INT 0x1404
          * #define GL_UNSIGNED_INT 0x1405
          * #define GL_FLOAT 0x1406
+         * #define GL_BOOL 0x8B56
+         *
+         * #define GL_BOOL_VEC2 0x8B57
+         * #define GL_BOOL_VEC3 0x8B58
+         * #define GL_BOOL_VEC4 0x8B59
          */
         auto uniform_name = std::make_unique<char[]>(max_name_len);
 
@@ -81,7 +84,7 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
             printf("%s - %x#%d @%d\n", uniform_name.get(), type, uniform_info.count, uniform_info.location);
             UniformType utype = UniformType(type, uniform_info.count, uniform_info.location);
 
-            //Context::CurrentContext->createEndpoint(uniform_name.get(), utype);
+            Context::CurrentContext->createEndpoint(uniform_name.get(), utype);
 
             uniforms.emplace(std::make_pair(std::string(uniform_name.get(), length), uniform_info));
         }

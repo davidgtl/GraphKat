@@ -29,5 +29,7 @@ public:
     void use() const;
 
     operator GLuint() const;
+
+    void setUniform();
 };
 

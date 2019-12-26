@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <utils/Randoms.h>
 #include "messages.h"
+
 Context *Context::Root = new Context("root");
 Context *Context::CurrentContext = Context::Root;
 string Context::CurrentPath = "/";
@@ -26,9 +27,9 @@ Context::Context() : endpoints(), context_name(Randoms::random_string()), childr
 
 Context::Context(const string &name) : endpoints(), context_name(name), children() {}
 
-Context *Context::path(string &path) {
+Context *Context::path(const string &path) {
     auto[current_path, is_absolute] = ContextPath::makeRelative(path);
-    Context *current_context = is_absolute ? Context::Root : Context::CurrentContext;
+    Context *current_context = this;//is_absolute ? Context::Root : Context::CurrentContext;
 
     while (!current_path.empty()) {
         auto[head, tail] = ContextPath::getHeadTail(current_path);
@@ -44,7 +45,7 @@ Context *Context::path(string &path) {
 }
 
 /* Context path must begin and end with / endpoints end without */
-Context* Context::createContext(const string &path) {
+Context *Context::createContext(const string &path) {
 
     auto[current_path, is_absolute] = ContextPath::makeRelative(path);
     Context *current_context = is_absolute ? Context::Root : Context::CurrentContext;
@@ -60,6 +61,11 @@ Context* Context::createContext(const string &path) {
     }
 
     return current_context;
+}
+
+Context *Context::createSubContext(const string &name) {
+    this->children[name] = new Context(name);
+    return this->children[name];
 }
 
 Endpoint *Context::endpoint(const string &path) {
@@ -105,6 +111,31 @@ void Context::disownContext(Context &context) {
     throw;
 }
 
+void Context::pretty_print(int level) {
+    using std::cout, std::endl;
+
+    string cpath = "./";
+    Context *ctx = this;
+    for (const auto &e : ctx->endpoints) {
+        for (int i = 0; i < level; i++)
+            cout << "\t";
+        cout << cpath << e.first << endl;
+    }
+    for (const auto &c : ctx->children) {
+        for (int i = 0; i < level; i++)
+            cout << "\t";
+        cout << cpath << c.first << "/" << endl;
+    }
+
+    for (const auto &c : ctx->children) {
+        cout << endl;
+        for (int i = 0; i < level; i++)
+            cout << "\t";
+        cout << cpath << c.first << "/:" << endl;
+        c.second->pretty_print(level + 1);
+    }
+
+}
 
 
 
