@@ -25,6 +25,7 @@
 #include <map>
 #include <boost/any.hpp>
 #include <boost/variant.hpp>
+#include <testbench.h>
 
 using namespace std;
 using namespace glm;
@@ -243,12 +244,18 @@ void doNothing(Context *in_ctx, Context *out_ctx) {
     in_ctx->createEndpoint("hello");
 };
 
-Context *createPlane(vec2 origin, vec2 size, float z) {
-    auto context = new Context();
-    context->createEndpoint("origin", origin);
-    context->createEndpoint("size", size);
-    context->createEndpoint("z", z);
-    context->createEndpoint("plane", Plane(context));
+Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
+    auto context = new Context("object");
+    auto primitive = context->createSubContext("primitive");
+    auto shader = context->createSubContext("shader");
+
+    primitive->createEndpoint("origin", origin);
+    primitive->createEndpoint("size", size);
+    primitive->createEndpoint("z", z);
+    primitive->createEndpoint("plane", Plane(primitive));
+
+    shader->linkContext(shader_ctx);
+
 
     return context;
 }
@@ -266,6 +273,10 @@ void buildUI() {
 }
 
 int main(int argc, char *argv[]) {
+
+    TB::run_windowing();
+
+    return 0;
     auto in_ctx = new Context();
     auto out_ctx = new Context();
 
@@ -297,14 +308,6 @@ int main(int argc, char *argv[]) {
     updateScreenSize();
     framebuffer_size_callback(window, windowSize.x, windowSize.y);
 
-    //Plane plane1 = Plane(0.0);
-    //Plane plane2 = Plane(0.1, true);
-    Context *p1 = createPlane(vec2(0, 0), vec2(1, 0.2), 0.1f);
-    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f);
-    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f);
-    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f);
-    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f);
-
     FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
     auto shaders = ShaderLoader::LoadShaders("shaders/shaders.xml");
@@ -312,6 +315,14 @@ int main(int argc, char *argv[]) {
     ProgramShader baseShader = shaders["base"];
     ProgramShader markerShader = shaders["marker"];
     ProgramShader lineShader = shaders["line"];
+
+    //Plane plane1 = Plane(0.0);
+    //Plane plane2 = Plane(0.1, true);
+    Context *p1 = createPlane(vec2(0, 0), vec2(1, 0.2), 0.1f, nullptr);
+    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f, nullptr);
+    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f, nullptr);
+    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f, nullptr);
+    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, nullptr);
 
     Context::Root->pretty_print();
 

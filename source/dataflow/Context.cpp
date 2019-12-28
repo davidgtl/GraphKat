@@ -95,19 +95,19 @@ Endpoint *Context::endpoint(const string &path) {
     return current_context->endpoints[endpoint];
 }
 
-void Context::linkContext(Context &context) {
+void Context::linkContext(Context *context) {
     throw;
 }
 
-void Context::unlinkContext(Context &context) {
+void Context::unlinkContext(Context *context) {
     throw;
 }
 
-void Context::adoptContext(Context &context) {
-    this->children[context.context_name] = &context;
+void Context::adoptContext(Context *context) {
+    this->children[context->context_name] = context;
 }
 
-void Context::disownContext(Context &context) {
+void Context::disownContext(Context *context) {
     throw;
 }
 
@@ -136,6 +136,5 @@ void Context::pretty_print(int level) {
     }
 
 }
-
 
 

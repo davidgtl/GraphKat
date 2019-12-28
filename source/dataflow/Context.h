@@ -52,13 +52,13 @@ public:
 
     void removeEndpoint(const string &name);
 
-    void linkContext(Context &context);
+    void linkContext(Context *context);
 
-    void unlinkContext(Context &context);
+    void unlinkContext(Context *context);
 
-    void adoptContext(Context &context);
+    void adoptContext(Context *context);
 
-    void disownContext(Context &context);
+    void disownContext(Context *context);
 
     /* Path must end with /context/ */
     Context *path(const string &path);
