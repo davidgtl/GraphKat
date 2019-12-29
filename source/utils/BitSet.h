@@ -11,12 +11,19 @@ using std::vector;
 
 class BitSet {
 private:
-    vector<bool> values;
-    int size;
+    typedef unsigned int cont_t;
+    vector<cont_t> values;
+    unsigned int size;
+#define LONG_SIZE 64
+#define LONG_POW (cont_t)6
+#define LONG_MASK (cont_t)63
+
 public:
-    explicit BitSet(int size);
-    void set(int i);
-    void clear(int i);
+    explicit BitSet(unsigned int size);
+    void set(unsigned int i);
+    void set_region(unsigned int a, unsigned int b);
+    void clear(unsigned int i);
+    void clear_regions(unsigned int a, unsigned int b);
     vector<int> intersect(const BitSet &bitset);
 
     int count();

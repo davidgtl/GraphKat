@@ -44,7 +44,7 @@ int getLIndex(unsigned long a) {
 }
 
 void algo() {
-    const int COMPONENTS = 10000;
+    const int COMPONENTS = 100000;
     const int CLICKS = 1000;
     const int W = 1920;
     const int H = 1080;
@@ -62,16 +62,16 @@ void algo() {
     cout << "Initializing sets\n";
 
     for (int ix = 0; ix <= W; ix++)
-        xs.push_back(BitSet(COMPONENTS));
+        xs.emplace_back(COMPONENTS);
 
     for (int iy = 0; iy <= H; iy++)
-        ys.push_back(BitSet(COMPONENTS));
+        ys.emplace_back(COMPONENTS);
 
     cout << "Populating sets\n";
-    vector<Context *> contexts;
+    /*vector<Context *> contexts;
     for (int i = 0; i < COMPONENTS; i++) {
         contexts.push_back(new Context(Randoms::random_string()));
-    }
+    }*/
     int area = 1;
     auto start = std::chrono::high_resolution_clock::now();
 
