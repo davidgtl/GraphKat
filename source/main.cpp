@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_SWIZZLE
+#define GLM_FORCE_AVX
 
 #include <glm/glm.hpp>
 #include <stdio.h>
@@ -274,9 +275,6 @@ void buildUI() {
 
 int main(int argc, char *argv[]) {
 
-    TB::run_windowing();
-
-    return 0;
     auto in_ctx = new Context();
     auto out_ctx = new Context();
 

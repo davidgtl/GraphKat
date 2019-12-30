@@ -96,7 +96,7 @@ Endpoint *Context::endpoint(const string &path) {
 }
 
 void Context::linkContext(Context *context) {
-    throw;
+    ma
 }
 
 void Context::unlinkContext(Context *context) {

@@ -14,11 +14,22 @@ set(CMAKE_CXX_STANDARD 17)
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif (MSVC)
+
+add_library(sse4_1 INTERFACE IMPORTED)
+if (MSVC)
+    target_compile_options(sse4_1 INTERFACE /arch:SSE4.1)
+else ()
+    target_compile_options(sse4_1 INTERFACE -msse4.1)
+endif ()
+
 #set(CMAKE_REQUIRED_FLAGS "-O2 -std=c++14")
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 target_include_directories(${PROJECT_NAME} PUBLIC "${GLAD_DIR}/includes")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
+# SSE4.1 AVX vectorization
+target_link_libraries(${PROJECT_NAME} sse4_1)
 
 # Boost
 set(Boost_USE_STATIC_LIBS OFF)
@@ -26,7 +37,7 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost 1.45.0 COMPONENTS regex)
 
-if(Boost_FOUND)
+if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 endif()

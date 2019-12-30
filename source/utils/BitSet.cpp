@@ -32,7 +32,7 @@ BitSet::BitSet(unsigned int size) : size(size), values((size >> LONG_POW) + ((si
 int BitSet::count() {
     int res = 0;
 
-    for (int i = 0; i < size >> LONG_POW; i++) {
+    for (unsigned int i = 0; i < (size >> LONG_POW); i++) {
         cont_t intersection = values[i >> LONG_POW];
 
         for (unsigned int o = 0; o < LONG_SIZE; o++)
@@ -49,4 +49,16 @@ void BitSet::clear_regions(unsigned int a, unsigned int b) {
 
 void BitSet::set_region(unsigned int a, unsigned int b) {
 
+}
+
+int BitSet::fintersect(const BitSet &bitset) {
+    for (unsigned int i = 0, absi = 0; i < (size >> LONG_POW); i++, absi += LONG_SIZE) {
+        cont_t intersection = bitset.values[i >> LONG_POW] & values[i >> LONG_POW];
+
+        for (unsigned int o = 0; o < LONG_SIZE; o++, absi++)
+            if (intersection & ((cont_t) 1 << o))
+                return absi;
+    }
+
+    return -1;
 }

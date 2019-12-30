@@ -44,7 +44,7 @@ int getLIndex(unsigned long a) {
 }
 
 void algo() {
-    const int COMPONENTS = 100000;
+    const int COMPONENTS = 10000000;
     const int CLICKS = 1000;
     const int W = 1920;
     const int H = 1080;
@@ -56,8 +56,8 @@ void algo() {
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> distx(0, W); // distribution in range [1, 6]
     std::uniform_int_distribution<std::mt19937::result_type> disty(0, H); // distribution in range [1, 6]
-    std::uniform_int_distribution<std::mt19937::result_type> distw(10, 100); // distribution in range [1, 6]
-    std::uniform_int_distribution<std::mt19937::result_type> disth(10, 100); // distribution in range [1, 6]
+    std::uniform_int_distribution<std::mt19937::result_type> distw(10, 10); // distribution in range [1, 6]
+    std::uniform_int_distribution<std::mt19937::result_type> disth(10, 10); // distribution in range [1, 6]
 
     cout << "Initializing sets\n";
 
@@ -119,7 +119,7 @@ void algo() {
     cout << "Intersecting sets\n";
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < CLICKS; i++) {
-        intersections += xs[txs[i]].intersect(ys[tys[i]]).size();
+        intersections += xs[txs[i]].fintersect(ys[tys[i]]);
     }
 
     finish = std::chrono::high_resolution_clock::now();
