@@ -11,3 +11,9 @@ void ComputeNode::execute() {
 ComputeNode::ComputeNode() {
 
 }
+
+ComputeNode::ComputeNode(Context *in_ctx, Context *out_ctx, void (*func)(Context *, Context *)) {
+    this->inputs = in_ctx;
+    this->outputs = out_ctx;
+    this->func = func;
+}

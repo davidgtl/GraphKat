@@ -28,8 +28,8 @@ void Shaders::BindUniforms(Context *in_ctx, Context *out_ctx) {
      */
     auto type_ctx = in_ctx->context("shader");
     auto unif_ctx = type_ctx->context("uniforms");
-    EGV(type_ctx, _program, ProgramShader).use();
-    for (const auto &endp : *unif_ctx) {
+    EGV(type_ctx, program, ProgramShader).use();
+    for (const auto &endp : unif_ctx->endpoints()) {
         auto unif_type = endp.second->value<UniformType>();
         auto gltype = unif_type.type;
 

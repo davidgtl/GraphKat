@@ -32,13 +32,10 @@ BitSet::BitSet(unsigned int size) : size(size), values((size >> LONG_POW) + ((si
 int BitSet::count() {
     int res = 0;
 
-    for (unsigned int i = 0; i < (size >> LONG_POW); i++) {
-        cont_t intersection = values[i >> LONG_POW];
-
+    for (auto i : values) {
         for (unsigned int o = 0; o < LONG_SIZE; o++)
-            if (intersection & ((cont_t) 1 << o))
+            if (i & ((cont_t) 1 << o))
                 res++;
-
     }
     return res;
 }

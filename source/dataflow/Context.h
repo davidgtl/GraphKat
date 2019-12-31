@@ -10,14 +10,35 @@
 #include <unordered_map>
 #include "Endpoint.h"
 
+#define CGV(ctx, name) ctx->context(#name)
+#define CCV(ctx, name) ctx->createSubContext(#name)
+#define CIV(name) in_ctx->context(#name)
+#define COV(name) out_ctx->context(#name)
+
 using boost::any;
 using std::unordered_map, std::string, std::ostream;
 
 class Endpoint;
 
+template<typename Container>
+class ConstIteratorProxy {
+public:
+    ConstIteratorProxy(const Container &container) : container_(container) {}
+
+    typename Container::const_iterator begin() const {
+        return container_.begin();
+    };
+
+    typename Container::const_iterator end() const {
+        return container_.end();
+    };
+private:
+    const Container &container_;
+};
+
 class Context {
 private:
-    unordered_map<string, Endpoint *> endpoints;
+    unordered_map<string, Endpoint *> _endpoints;
     unordered_map<string, Context *> children;
     string context_name;
     Context *master = nullptr;
@@ -45,8 +66,8 @@ public:
 
     template<typename T>
     Endpoint *createEndpoint(const string &name, T init_value) {
-        endpoints[name] = new Endpoint();
-        endpoints[name]->update(init_value);
+        _endpoints[name] = new Endpoint();
+        _endpoints[name]->update(init_value);
     }
 
     /* Initialized to null */
@@ -71,18 +92,19 @@ public:
     Endpoint *endpoint(const string &path);
 
     static Context *createContext(const string &path);
+
     Context *createSubContext(const string &path);
 
     friend ostream &operator<<(ostream &os, const Context &c) {
         return os << c.context_name;
     }
 
-    auto begin() {
-        return endpoints.begin();
+    auto endpoints() const {
+        return ConstIteratorProxy(_endpoints);
     }
 
-    auto end() {
-        return endpoints.end();
+    auto contexts() const {
+        return ConstIteratorProxy(children);
     }
 
     void pretty_print(int level = 0);

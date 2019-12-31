@@ -5,7 +5,6 @@
 #define GLM_FORCE_AVX
 
 #include <glm/glm.hpp>
-#include <stdio.h>
 #include <sstream>
 #include "io.h"
 #include "ogl/PointModel.h"
@@ -22,12 +21,15 @@
 #include "dataflow/Endpoint.h"
 #include <nodeprims/Math.h>
 #include <nodeprims/Shaders.h>
+#include <nodeprims/Layouts.h>
+#include <utils/BitSet.h>
 #include <thread>
 #include <chrono>
 #include <map>
 #include <boost/any.hpp>
 #include <boost/variant.hpp>
 #include <testbench.h>
+#include <utils/BitMap2D.h>
 
 using namespace std;
 using namespace glm;
@@ -123,6 +125,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             cout << "mevent " << captured << endl;
             captured = !captured;
+
+            //cout << "Clicked context: " <<
+            EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->prettyPrint();//getFirst(lxpos, lypos) << "\n";
+
             //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
         }
     }
@@ -220,34 +226,71 @@ void doNothing(Context *in_ctx, Context *out_ctx) {
     in_ctx->createEndpoint("hello");
 };
 
+void renderPlane(Context *in_ctx, Context *out_ctx) {
+    Shaders::BindUniforms(in_ctx, nullptr);
+    EGV(in_ctx, primitive/plane, Plane).draw();
+}
+
 Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
     auto context = new Context();
-    auto primitive = context->createSubContext("primitive");
-    auto shader = context->createSubContext("shader");
+    auto primitive = CCV(context, primitive);
+    auto shader = CCV(context, shader);
 
-    primitive->createEndpoint("origin", origin);
-    primitive->createEndpoint("size", size);
-    primitive->createEndpoint("z", z);
-    primitive->createEndpoint("plane", Plane(primitive));
+    ECV(primitive, origin, origin);
+    ECV(primitive, size, size);
+    ECV(primitive, z, z);
+    ECV(primitive, plane, Plane(primitive));
 
     shader->linkContext(shader_ctx);
 
+    ECV(context, render, new ComputeNode(context, nullptr, renderPlane));
 
     return context;
 }
 
-void buildUI() {
-    // ComputeNode root;
-    /*root.func = [](Context* in_ctx, Context* out_ctx){
-        in_ctx->createEndpoint("hello");
-    };
-    root.func = doNothing;*/
-
+void renderScene(Context *in_ctx, Context *out_ctx) {
+    for (auto obj : CGV(in_ctx, objects)->contexts())
+        EE(obj.second, render);
 
 }
 
-int main(int argc, char *argv[]) {
+Context *buildScene() {
+    auto shaders = CGV(Context::Root, shaders);
+    auto scene_ctx = CCV(Context::Root, MainScene);
 
+    Context *planeShader = CGV(shaders, slider);
+
+    Context *p1 = createPlane(vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f, planeShader);
+    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f, planeShader);
+    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f, planeShader);
+    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f, planeShader);
+    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, planeShader);
+
+    ECV(p1, color, vec3(0.3, 0.8, 1.0));
+    ECV(p1, shape, 1);
+    ECV(p1, filled, 0);
+    ECV(p1, border_size, vec2(0.01f, 0.01f));
+    ECV(p3, filled, 1);
+    ECV(p4, filled, 0);
+    ECV(p5, filled, 1);
+
+    auto Obj_ctx = CCV(scene_ctx, objects);
+    Obj_ctx->adoptContext(p1);
+    Obj_ctx->adoptContext(p2);
+    Obj_ctx->adoptContext(p3);
+    Obj_ctx->adoptContext(p4);
+    Obj_ctx->adoptContext(p5);
+
+    ECV(scene_ctx, hitmap, new BitMap2D<Context>(10, 1920, 1080));
+
+    Layouts::PopulateHitmap(scene_ctx, nullptr);
+
+    ECV(scene_ctx, render, new ComputeNode(scene_ctx, nullptr, renderScene));
+
+    return scene_ctx;
+}
+
+int main(int argc, char *argv[]) {
     auto in_ctx = new Context();
     auto out_ctx = new Context();
 
@@ -279,74 +322,18 @@ int main(int argc, char *argv[]) {
     updateScreenSize();
     framebuffer_size_callback(window, windowSize.x, windowSize.y);
 
-    FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
-
-    auto shaders = ShaderLoader::LoadShaders("shaders/shaders.xml");
-
-    /*ProgramShader baseShader = shaders["base"];
-    ProgramShader markerShader = shaders["marker"];
-    ProgramShader lineShader = shaders["line"];*/
-
-    Context *lineShader = shaders->context("line");
-
-    //Plane plane1 = Plane(0.0);
-    //Plane plane2 = Plane(0.1, true);
-    Context *p1 = createPlane(vec2(0, 0), vec2(1, 0.2), 0.1f, lineShader);
-    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f, lineShader);
-    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f, lineShader);
-    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f, lineShader);
-    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, lineShader);
-
-    auto Obj_ctx = Context::Root->createSubContext("objects");
-    Obj_ctx->adoptContext(p1);
-    Obj_ctx->adoptContext(p2);
-    Obj_ctx->adoptContext(p3);
-    Obj_ctx->adoptContext(p4);
-    Obj_ctx->adoptContext(p5);
-
-
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    int vlen = 300;
-    vector<float> lower(vlen);
-    vector<float> values(vlen);
-    vector<float> upper(vlen);
+    FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
-    srand(static_cast <unsigned> (time(0)));
+    ShaderLoader::LoadShaders("shaders/shaders.xml");
 
-    values[0] = randf();
-    lower[0] = randf()*values[0];
-    upper[0] = randf()*(1 - values[0]) + values[0];
-
-    for (int i = 1; i < vlen; i++) {
-        values[i] = 0.2*(randf() - 0.5)*values[i - 1] + values[i - 1];
-        lower[i] = values[i] - 0.2*(randf())*lower[i - 1];
-        upper[i] = values[i] + 0.2*(randf())*upper[i - 1];
-
-        upper[i] += upper[i - 1];
-        upper[i] /= 2;
-
-        lower[i] += lower[i - 1];
-        lower[i] /= 2;
-
-        lower[i] = 0.49;
-        upper[i] = 0.51;
-    }
-
-    ECV(p1, color_line, vec3(0.3, 0.8, 1.0));
-    ECV(p1, color_bg, vec4(0.8, 0.8, 0.0, 1.0));
-    ECV(p1, color_region, vec3(1.0, 0.8, 0.3));
-    ECV(p1, width, 0.01f);
-    ECV(p1, blur, 0.005f);
-    ECV(p1, values, values);
-    ECV(p1, lower, lower);
-    ECV(p1, vlength, vlen - 1);
+    Context *mainScene = buildScene();
 
     Context::Root->pretty_print();
 
-    vec2 p3_brd;
     resized = true;
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
@@ -371,30 +358,8 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);*/
             //plane3.draw();
 
-            Shaders::BindUniforms(p1, nullptr);
-            /*ProgramShader ls = EGV(p1, shader/_program, ProgramShader);
-            glUniform3f(glGetUniformLocation(ls, "color_line"), 0.3, 0.8, 1.0);
-            glUniform3f(glGetUniformLocation(ls, "color_region"), 1.0, 0.8, 0.3);
-            glUniform1f(glGetUniformLocation(ls, "width"), lmgr.sisc(2, 2).x);
-            glUniform1f(glGetUniformLocation(ls, "blur"), lmgr.sisc(0.5, 0.5).x);
 
-            glUniform1fv(glGetUniformLocation(ls, "values"), vlen, values.data());
-            glUniform1i(glGetUniformLocation(ls, "vlength"), vlen - 1);
-            glUniform1fv(glGetUniformLocation(ls, "lower"), vlen, lower.data());*/
-            EGV(p1, primitive/plane, Plane).draw();
-
-            Shaders::BindUniforms(p2, nullptr);
-            EGV(p2, primitive/plane, Plane).draw();
-
-            Shaders::BindUniforms(p3, nullptr);
-            EGV(p3, primitive/plane, Plane).draw();
-
-            Shaders::BindUniforms(p4, nullptr);
-            EGV(p4, primitive/plane, Plane).draw();
-
-            Shaders::BindUniforms(p5, nullptr);
-            EGV(p5, primitive/plane, Plane).draw();
-
+            EE(mainScene, render);
 
             stringstream str;
 

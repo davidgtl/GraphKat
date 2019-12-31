@@ -8,10 +8,11 @@
 
 #include <dataflow/Context.h>
 #include <dataflow/ComputeNode.h>
+#include <dataflow/Endpoint.h>
 
 class Layouts {
 public:
-    ComputeFunc(ComputeSize);
+ComputeFunc(PopulateHitmap);
 };
 
 

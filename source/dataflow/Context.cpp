@@ -16,16 +16,16 @@ string Context::CurrentPath = "/";
 Endpoint *Context::createEndpoint(const string &name) {
     if (master != nullptr) return nullptr; //Gatekeeper of chaos
 
-    endpoints[name] = new Endpoint();
-    return endpoints[name];
+    _endpoints[name] = new Endpoint();
+    return _endpoints[name];
 }
 
 void Context::removeEndpoint(const string &name) {
-    endpoints.erase(name);
+    _endpoints.erase(name);
 }
 
 bool Context::hasEndpoint(const string &name) {
-    return endpoints.count(name) > 0;
+    return _endpoints.count(name) > 0;
 }
 
 Endpoint *Context::endpoint(const string &path) {
@@ -48,16 +48,16 @@ Endpoint *Context::endpoint(const string &path) {
         current_path = tail;
     }
 
-    if (!current_context->endpoints.count(endpoint))
+    if (!current_context->_endpoints.count(endpoint))
         return nullptr;
 
-    return current_context->endpoints[endpoint];
+    return current_context->_endpoints[endpoint];
 }
 
-Context::Context() : endpoints(), context_name(Randoms::random_string()), children() {
+Context::Context() : _endpoints(), context_name(Randoms::random_string()), children() {
 }
 
-Context::Context(const string &name) : endpoints(), context_name(name), children() {}
+Context::Context(const string &name) : _endpoints(), context_name(name), children() {}
 
 Context *Context::context(const string &path) {
     auto[current_path, is_absolute] = ContextPath::makeRelative(path);
@@ -131,7 +131,7 @@ void Context::pretty_print(int level) {
     if (master != nullptr)
         cpath = "->" + master->context_name + "/";
     Context *ctx = master == nullptr ? this : master;
-    for (const auto &e : ctx->endpoints) {
+    for (const auto &e : ctx->_endpoints) {
         for (int i = 0; i < level; i++)
             cout << "\t";
         cout << cpath << e.first << endl;

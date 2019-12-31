@@ -92,7 +92,7 @@ Context *ShaderLoader::LoadShaders(const char *shaders_path) {
             shaders.push_back(resolveShader(node));
 
         Context::CurrentContext = ctx->createSubContext(name);
-        Context::CurrentContext->createEndpoint("_program", ProgramShader(shaders));
+        Context::CurrentContext->createEndpoint("program", ProgramShader(shaders));
         glCheckError();
 
     }

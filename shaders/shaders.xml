@@ -20,5 +20,10 @@
             <shader ref="base"/>
             <shader src="shaders/verticalRange.frag"/>
         </program>
+
+        <program name="slider">
+            <shader ref="base"/>
+            <shader src="shaders/ui/slider.frag"/>
+        </program>
     </programs>
 </shaders>

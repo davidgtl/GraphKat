@@ -29,6 +29,7 @@ class ComputeNode;
 #define ESV(...) CAT(_ESV,COUNT_ARGUMENTS(__VA_ARGS__))(__VA_ARGS__)
 //special cases
 #define EIV(end_name, type) in_ctx->endpoint(#end_name)->value<type>()
+#define EE(context, function_name) context->endpoint(#function_name)->value<ComputeNode*>()->execute()
 #define EOV(end_name, type, val) out_ctx->endpoint(#end_name)->update(val)
 #define ECV(context, name, value) context->createEndpoint(#name, value)
 

@@ -68,6 +68,8 @@ public:
 
     ComputeNode();
 
+    ComputeNode(Context *in_ctx, Context *out_ctx, void (*func)(Context *in_ctx, Context *out_ctx));
+
     void execute();
 };
 
