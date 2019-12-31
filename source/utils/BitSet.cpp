@@ -16,8 +16,8 @@ void BitSet::clear(unsigned int i) {
 vector<int> BitSet::intersect(const BitSet &bitset) {
     vector<int> res;
 
-    for (unsigned int i = 0, absi = 0; i < (size >> LONG_POW); i++, absi += LONG_SIZE) {
-        cont_t intersection = bitset.values[i >> LONG_POW] & values[i >> LONG_POW];
+    for (unsigned int i = 0, absi = 0; i < size; i++, absi += LONG_SIZE) {
+        cont_t intersection = bitset.values[i] & values[i];
 
         for (unsigned int o = 0; o < LONG_SIZE; o++, absi++)
             if (intersection & ((cont_t) 1 << o))
@@ -27,7 +27,8 @@ vector<int> BitSet::intersect(const BitSet &bitset) {
     return res;
 }
 
-BitSet::BitSet(unsigned int size) : size(size), values((size >> LONG_POW) + ((size & LONG_MASK) != 0), false) {}
+BitSet::BitSet(unsigned int size) : size((size >> LONG_POW) + ((size & LONG_MASK) != 0)),
+                                    values((size >> LONG_POW) + ((size & LONG_MASK) != 0), false) {}
 
 int BitSet::count() {
     int res = 0;
@@ -49,8 +50,9 @@ void BitSet::set_region(unsigned int a, unsigned int b) {
 }
 
 int BitSet::fintersect(const BitSet &bitset) {
-    for (unsigned int i = 0, absi = 0; i < (size >> LONG_POW); i++, absi += LONG_SIZE) {
-        cont_t intersection = bitset.values[i >> LONG_POW] & values[i >> LONG_POW];
+
+    for (unsigned int i = 0, absi = 0; i < size; i++, absi += LONG_SIZE) {
+        cont_t intersection = bitset.values[i] & values[i];
 
         for (unsigned int o = 0; o < LONG_SIZE; o++, absi++)
             if (intersection & ((cont_t) 1 << o))

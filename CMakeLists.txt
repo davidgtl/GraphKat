@@ -7,7 +7,7 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
 set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/ogl/PointModel.cpp source/ogl/PointModel.h source/ogl/ProgramShader.cpp
         source/ogl/ProgramShader.h source/ogl/Shader.cpp source/ogl/Shader.h source/ogl/Plane.cpp source/ogl/Plane.h source/ogl/Texture.h source/ogl/Texture.cpp
-        source/main.cpp source/ogl/FontRenderer.h source/ogl/FontRenderer.cpp source/wmgr/LayoutManager.cpp source/wmgr/LayoutManager.h source/wmgr/wsize.cpp source/wmgr/wsize.h source/wmgr/LayoutConstraint.cpp source/wmgr/LayoutConstraint.h source/ogl/ShaderLoader.cpp source/ogl/ShaderLoader.h source/dataflow/Context.cpp source/dataflow/Context.h source/dataflow/ContextPath.cpp source/dataflow/ContextPath.h source/dataflow/Endpoint.cpp source/dataflow/Endpoint.h source/ogl/UniformType.cpp source/ogl/UniformType.h source/dataflow/ComputeNode.cpp source/dataflow/ComputeNode.h source/nodeprims/Layouts.cpp source/nodeprims/Layouts.h source/nodeprims/Math.cpp source/nodeprims/Math.h source/nodeprims/macro_shenanigans.h source/utils/Randoms.cpp source/utils/Randoms.h source/nodeprims/Shaders.cpp source/nodeprims/Shaders.h source/testbench.cpp source/testbench.h source/utils/BitSet.cpp source/utils/BitSet.h source/utils/BitMap2D.cpp source/utils/BitMap2D.h source/nodeprims/Rendering.cpp source/nodeprims/Rendering.h)
+        source/main.cpp source/ogl/FontRenderer.h source/ogl/FontRenderer.cpp source/wmgr/LayoutManager.cpp source/wmgr/LayoutManager.h source/wmgr/wsize.cpp source/wmgr/wsize.h source/wmgr/LayoutConstraint.cpp source/wmgr/LayoutConstraint.h source/ogl/ShaderLoader.cpp source/ogl/ShaderLoader.h source/dataflow/Context.cpp source/dataflow/Context.h source/dataflow/ContextPath.cpp source/dataflow/ContextPath.h source/dataflow/Endpoint.cpp source/dataflow/Endpoint.h source/ogl/UniformType.cpp source/ogl/UniformType.h source/dataflow/ComputeNode.cpp source/dataflow/ComputeNode.h source/nodeprims/Layouts.cpp source/nodeprims/Layouts.h source/nodeprims/Math.cpp source/nodeprims/Math.h source/nodeprims/macro_shenanigans.h source/utils/Randoms.cpp source/utils/Randoms.h source/nodeprims/Shaders.cpp source/nodeprims/Shaders.h source/testbench.cpp source/testbench.h source/utils/BitSet.cpp source/utils/BitSet.h source/utils/BitMap2D.h source/nodeprims/Rendering.cpp source/nodeprims/Rendering.h)
 
 # Executable definition and properties
 set(CMAKE_CXX_STANDARD 17)
@@ -63,6 +63,7 @@ target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 # glm
 set(GLM_DIR "${LIB_DIR}/glm")
 set(GLM_TEST_ENABLE OFF)
+set(GLM_TEST_ENABLE_SIMD_AVX ON)
 add_subdirectory("${GLM_DIR}")
 target_link_libraries(${PROJECT_NAME} "glm" "${GLM_LIBRARIES}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLM_DIR}/include")

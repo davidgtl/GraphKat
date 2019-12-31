@@ -12,6 +12,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <fstream>
 
 using std::cout;
 using std::list, std::vector, std::unordered_map;
@@ -44,13 +45,15 @@ public:
     void set(T *obj, vec2 start, vec2 size) {
         int index = objmap[obj];
 
-        vec2 end = (start + size)*vec2(W, H);
+        vec2 end = start + size;
+        vec2 mul = vec2(W, H);
+        end = end*mul;
         start *= vec2(W, H);
 
         for (int x = start.x; x < (int) end.x; x++)
             xs[x].set(index);
 
-        for (int y = start.x; y < (int) end.y; y++)
+        for (int y = start.y; y < (int) end.y; y++)
             ys[y].set(index);
 
     }
@@ -123,6 +126,7 @@ public:
     }
 
     void prettyPrint() {
+        //std::ofstream fout("hitmap.log", std::ios::out);
         for (int y = 0; y < H; y++) {
             for (int x = 0; x < W; x++) {
                 cout << ys[y].fintersect(xs[x]) << "|";

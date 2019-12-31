@@ -2,9 +2,11 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_SWIZZLE
-#define GLM_FORCE_AVX
+//#define GLM_FORCE_AVX
 
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <sstream>
 #include "io.h"
 #include "ogl/PointModel.h"
@@ -126,10 +128,14 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             cout << "mevent " << captured << endl;
             captured = !captured;
 
-            //cout << "Clicked context: " <<
-            EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->prettyPrint();//getFirst(lxpos, lypos) << "\n";
+            cout << "Clicked context: "
+                 << EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, lypos) << "\n";
+            EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, lypos)->endpoint("color")->update(
+                    vec3(1.0, 0.3, 0.3));
+            //EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->prettyPrint();
 
             //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+            invalidate();
         }
     }
 }
@@ -267,6 +273,10 @@ Context *buildScene() {
     Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, planeShader);
 
     ECV(p1, color, vec3(0.3, 0.8, 1.0));
+    ECV(p2, color, vec3(0.3, 0.8, 1.0));
+    ECV(p3, color, vec3(0.3, 0.8, 1.0));
+    ECV(p4, color, vec3(0.3, 0.8, 1.0));
+    ECV(p5, color, vec3(0.3, 0.8, 1.0));
     ECV(p1, shape, 1);
     ECV(p1, filled, 0);
     ECV(p1, border_size, vec2(0.01f, 0.01f));
