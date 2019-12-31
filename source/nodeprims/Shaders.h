@@ -10,7 +10,8 @@
 
 class Shaders {
 
-    ComputeFunc(BindUniforms);
+ComputeFunc(BindUniforms);
+
 };
 
 

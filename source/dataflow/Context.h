@@ -7,6 +7,7 @@
 
 #include <string>
 #include <boost/any.hpp>
+#include <unordered_map>
 #include "Endpoint.h"
 
 using boost::any;
@@ -19,6 +20,7 @@ private:
     unordered_map<string, Endpoint *> endpoints;
     unordered_map<string, Context *> children;
     string context_name;
+    Context *master = nullptr;
 
 public:
     /*
@@ -52,16 +54,18 @@ public:
 
     void removeEndpoint(const string &name);
 
+    bool hasEndpoint(const string &name);
+
     void linkContext(Context *context);
 
-    void unlinkContext(Context *context);
+    void unlinkContext();
 
     void adoptContext(Context *context);
 
     void disownContext(Context *context);
 
     /* Path must end with /context/ */
-    Context *path(const string &path);
+    Context *context(const string &path);
 
     /* Path must end with /endpoint */
     Endpoint *endpoint(const string &path);

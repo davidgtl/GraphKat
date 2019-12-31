@@ -2,6 +2,7 @@
 #include "dataflow/Context.h"
 #include "messages.h"
 #include <glm/glm.hpp>
+#include <memory>
 
 /* Creates uniforms within the current context path */
 ProgramShader::ProgramShader(const vector<Shader> &shaders) {
@@ -71,6 +72,7 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
 
         std::unordered_map<std::string, uniform_info_t> uniforms;
 
+        auto unif_ctx = Context::CurrentContext->createSubContext("uniforms");
         //TODO: map them to the program shaders uniformtypes
         //based on that data do things whith the endpoints
         for (GLint i = 0; i < uniform_count; ++i)
@@ -84,7 +86,7 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
             printf("%s - %x#%d @%d\n", uniform_name.get(), type, uniform_info.count, uniform_info.location);
             UniformType utype = UniformType(type, uniform_info.count, uniform_info.location);
 
-            Context::CurrentContext->createEndpoint(uniform_name.get(), utype);
+            unif_ctx->createEndpoint(uniform_name.get(), utype);
 
             uniforms.emplace(std::make_pair(std::string(uniform_name.get(), length), uniform_info));
         }

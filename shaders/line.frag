@@ -3,6 +3,7 @@
 in vec3 v_color;
 in vec2 uv;
 
+uniform vec4 color_bg;
 uniform vec3 color_line;
 uniform vec3 color_region;
 uniform float width;
@@ -119,7 +120,7 @@ float lerpLines(int index, int line, int mode){
 
 void main() {
 
-    vec4 cTransparent = vec4(0);
+    vec4 cTransparent = color_bg;
     vec4 cLine = vec4(color_line, 1.0);
     vec4 cRegBorder = vec4(color_region, 0.7);
     vec4 cRegFill = vec4(color_region, 0.4);

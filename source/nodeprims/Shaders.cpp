@@ -6,10 +6,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <messages.h>
+#include <ogl/ProgramShader.h>
 
 using std::vector;
 using glm::value_ptr;
-using glm::vec2, glm::vec3, glm::mat3, glm::mat4;
+using glm::vec2, glm::vec3, glm::vec4, glm::mat3, glm::mat4;
 
 /*
  * Strcuture:
@@ -25,10 +26,14 @@ void Shaders::BindUniforms(Context *in_ctx, Context *out_ctx) {
                          glUniformMatrix4fv(glGetUniformLocation(depthShader, "lightSpaceTrMatrix"), 1, GL_FALSE,
 			value_ptr(computeLightSpaceTrMatrix()));
      */
-    auto type_ctx = in_ctx->path("shader");
-    for (const auto &endp : *type_ctx) {
+    auto type_ctx = in_ctx->context("shader");
+    auto unif_ctx = type_ctx->context("uniforms");
+    EGV(type_ctx, _program, ProgramShader).use();
+    for (const auto &endp : *unif_ctx) {
         auto unif_type = endp.second->value<UniformType>();
         auto gltype = unif_type.type;
+
+        if (!in_ctx->hasEndpoint(endp.first)) continue;
 
         if (gltype == GL_FLOAT && unif_type.count == 1) {
             glUniform1f(unif_type.location, in_ctx->endpoint(endp.first)->value<float>());
@@ -51,11 +56,17 @@ void Shaders::BindUniforms(Context *in_ctx, Context *out_ctx) {
             auto buffy = in_ctx->endpoint(endp.first)->value<vector<vec3>>();
             glUniform3fv(unif_type.location, buffy.size(), value_ptr(buffy[0]));
 
+        } else if (gltype == GL_FLOAT_VEC4 && unif_type.count == 1) {
+            glUniform4fv(unif_type.location, 1, value_ptr(in_ctx->endpoint(endp.first)->value<vec4>()));
+
+        } else if (gltype == GL_FLOAT_VEC4 && unif_type.count > 1) {
+            auto buffy = in_ctx->endpoint(endp.first)->value<vector<vec4>>();
+            glUniform4fv(unif_type.location, buffy.size(), value_ptr(buffy[0]));
+
         } else if (gltype == GL_INT && unif_type.count == 1) {
             glUniform1i(unif_type.location, in_ctx->endpoint(endp.first)->value<int>());
 
-        }
-        fatal_error(endp.first.c_str());
+        } else fatal_error(("Shaders::BindUniforms type not found for: " + endp.first).c_str());
     }
 
 }

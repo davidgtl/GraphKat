@@ -14,7 +14,7 @@ using namespace std;
 
 class ShaderLoader {
 public:
-    static map<string, ProgramShader> LoadShaders(const char *shaders_path);
+    static Context *LoadShaders(const char *shaders_path);
 private:
     static map<std::string, GLuint> s_mapShaderType;
     static map<string, ProgramShader> programMap;

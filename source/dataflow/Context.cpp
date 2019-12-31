@@ -14,6 +14,8 @@ string Context::CurrentPath = "/";
 
 //TODO: add destructor
 Endpoint *Context::createEndpoint(const string &name) {
+    if (master != nullptr) return nullptr; //Gatekeeper of chaos
+
     endpoints[name] = new Endpoint();
     return endpoints[name];
 }
@@ -22,14 +24,45 @@ void Context::removeEndpoint(const string &name) {
     endpoints.erase(name);
 }
 
+bool Context::hasEndpoint(const string &name) {
+    return endpoints.count(name) > 0;
+}
+
+Endpoint *Context::endpoint(const string &path) {
+
+    auto[current_path, endpoint] = ContextPath::getPathEndpoint(path);
+    Context *current_context = master == nullptr ? this : master;
+
+    while (!current_path.empty()) {
+        auto[head, tail] = ContextPath::getHeadTail(current_path);
+
+        if (!current_context->children.count(head)) {
+            current_path = head;
+            fatal_error("Error: Context not found");
+            break;
+        }
+
+        current_context = current_context->children[head];
+        if (current_context->master != nullptr)
+            current_context = current_context->master;
+        current_path = tail;
+    }
+
+    if (!current_context->endpoints.count(endpoint))
+        return nullptr;
+
+    return current_context->endpoints[endpoint];
+}
+
 Context::Context() : endpoints(), context_name(Randoms::random_string()), children() {
 }
 
 Context::Context(const string &name) : endpoints(), context_name(name), children() {}
 
-Context *Context::path(const string &path) {
+Context *Context::context(const string &path) {
     auto[current_path, is_absolute] = ContextPath::makeRelative(path);
-    Context *current_context = this;//is_absolute ? Context::Root : Context::CurrentContext;
+    Context *current_context = master == nullptr ? this : master;
+    //is_absolute ? Context::Root : Context::CurrentContext;
 
     while (!current_path.empty()) {
         auto[head, tail] = ContextPath::getHeadTail(current_path);
@@ -38,6 +71,8 @@ Context *Context::path(const string &path) {
             fatal_error("Context not found.");
 
         current_context = current_context->children[head];
+        if (current_context->master != nullptr)
+            current_context = current_context->master;
         current_path = tail;
     }
 
@@ -57,6 +92,8 @@ Context *Context::createContext(const string &path) {
             current_context->children[head] = new Context(head);
 
         current_context = current_context->children[head];
+        if (current_context->master != nullptr)
+            current_context = current_context->master;
         current_path = tail;
     }
 
@@ -64,43 +101,19 @@ Context *Context::createContext(const string &path) {
 }
 
 Context *Context::createSubContext(const string &name) {
+    if (master != nullptr) return nullptr; //Gatekeeper of chaos
+
     this->children[name] = new Context(name);
     return this->children[name];
 }
 
-Endpoint *Context::endpoint(const string &path) {
-
-    auto[_path, endpoint] = ContextPath::getPathEndpoint(path);
-    auto[current_path, is_absolute] = ContextPath::makeRelative(_path);
-    Context *current_context = is_absolute ? Context::Root : this;
-
-    while (!current_path.empty()) {
-        auto[head, tail] = ContextPath::getHeadTail(current_path);
-
-        if (!current_context->children.count(head)) {
-            current_path = head;
-            fatal_error("Error: Context not found");
-            break;
-        }
-
-        current_context = current_context->children[head];
-        current_path = tail;
-    }
-
-    if (!current_context->endpoints.count(endpoint))
-        return nullptr;
-
-    int k = current_context->endpoints.count(endpoint);
-
-    return current_context->endpoints[endpoint];
-}
-
+/* Should be treated as read only link unless specifically intended otherwise */
 void Context::linkContext(Context *context) {
-    ma
+    this->master = context;
 }
 
-void Context::unlinkContext(Context *context) {
-    throw;
+void Context::unlinkContext() {
+    this->master = nullptr;
 }
 
 void Context::adoptContext(Context *context) {
@@ -108,14 +121,16 @@ void Context::adoptContext(Context *context) {
 }
 
 void Context::disownContext(Context *context) {
-    throw;
+    this->children.erase(context->context_name);
 }
 
 void Context::pretty_print(int level) {
     using std::cout, std::endl;
 
     string cpath = "./";
-    Context *ctx = this;
+    if (master != nullptr)
+        cpath = "->" + master->context_name + "/";
+    Context *ctx = master == nullptr ? this : master;
     for (const auto &e : ctx->endpoints) {
         for (int i = 0; i < level; i++)
             cout << "\t";

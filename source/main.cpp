@@ -21,6 +21,7 @@
 #include "dataflow/Context.h"
 #include "dataflow/Endpoint.h"
 #include <nodeprims/Math.h>
+#include <nodeprims/Shaders.h>
 #include <thread>
 #include <chrono>
 #include <map>
@@ -40,10 +41,8 @@ vec2 windowSize;
 bool invalidated = true;
 bool resized = true;
 
-GLfloat *values, *der1, *der2, *der3, *der4;
-
 vec2 absToRel(vec2 win, vec2 compPos, vec2 compSize) {
-    return (win - compPos) / compSize;
+    return (win - compPos)/compSize;
 }
 
 void invalidate() {
@@ -84,27 +83,6 @@ vec2 mp;
 double a_xpos = 0.0f, a_ypos = 0.0f;
 float mouseSensitivity = 0.001;
 
-void calcDerivatives() {
-    for (int i = 1; i < 299; i++)
-        der1[i] = 0.5 + values[i + 1] - values[i - 1];
-    der1[299] = 0.5 + 0;
-    der1[0] = 0.5 + 0;
-
-    for (int i = 1; i < 299; i++)
-        der2[i] = 0.5 + der1[i + 1] - der1[i - 1];
-    der2[299] = 0.5 + 0;
-    der2[0] = 0.5 + 0;
-
-    for (int i = 1; i < 299; i++)
-        der3[i] = 0.5 + der2[i + 1] - der2[i - 1];
-    der3[299] = 0.5 + 0;
-    der3[0] = 0.5 + 0;
-
-    for (int i = 1; i < 299; i++)
-        der4[i] = 0.5 + der3[i + 1] - der3[i - 1];
-    der4[299] = 0.5 + 0;
-    der4[0] = 0.5 + 0;
-}
 
 void updateValues() {
 
@@ -114,11 +92,8 @@ void updateValues() {
     indv = indv < 0 ? 0 : indv;
     indv = indv > 1 ? 1 : indv;
 
-    int index = (int) (indv * 299);
+    int index = (int) (indv*299);
 
-    values[index] = local.y;
-
-    calcDerivatives();
 }
 
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
@@ -130,7 +105,7 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
         return;
     }
 
-    mp = vec2(xpos, ypos) / windowSize;
+    mp = vec2(xpos, ypos)/windowSize;
     mp.y = 1 - mp.y;
 
     double dy = lypos - ypos;//inverted Y
@@ -158,8 +133,8 @@ float offX, offY;
 void echo();
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    offX -= xoffset * 0.01;
-    offY += yoffset * 0.01;
+    offX -= xoffset*0.01;
+    offY += yoffset*0.01;
     invalidate();
 }
 
@@ -226,7 +201,7 @@ GLFWwindow *initialize(int width, int height) {
 }
 
 float randf() {
-    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    return static_cast <float> (rand())/static_cast <float> (RAND_MAX);
 }
 
 
@@ -246,7 +221,7 @@ void doNothing(Context *in_ctx, Context *out_ctx) {
 };
 
 Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
-    auto context = new Context("object");
+    auto context = new Context();
     auto primitive = context->createSubContext("primitive");
     auto shader = context->createSubContext("shader");
 
@@ -262,13 +237,11 @@ Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
 }
 
 void buildUI() {
-    ComputeNode root;
+    // ComputeNode root;
     /*root.func = [](Context* in_ctx, Context* out_ctx){
         in_ctx->createEndpoint("hello");
-    };*/
-    root.func = doNothing;
-
-
+    };
+    root.func = doNothing;*/
 
 
 }
@@ -310,43 +283,47 @@ int main(int argc, char *argv[]) {
 
     auto shaders = ShaderLoader::LoadShaders("shaders/shaders.xml");
 
-    ProgramShader baseShader = shaders["base"];
+    /*ProgramShader baseShader = shaders["base"];
     ProgramShader markerShader = shaders["marker"];
-    ProgramShader lineShader = shaders["line"];
+    ProgramShader lineShader = shaders["line"];*/
+
+    Context *lineShader = shaders->context("line");
 
     //Plane plane1 = Plane(0.0);
     //Plane plane2 = Plane(0.1, true);
-    Context *p1 = createPlane(vec2(0, 0), vec2(1, 0.2), 0.1f, nullptr);
-    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f, nullptr);
-    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f, nullptr);
-    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f, nullptr);
-    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, nullptr);
+    Context *p1 = createPlane(vec2(0, 0), vec2(1, 0.2), 0.1f, lineShader);
+    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f, lineShader);
+    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f, lineShader);
+    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f, lineShader);
+    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, lineShader);
 
-    Context::Root->pretty_print();
+    auto Obj_ctx = Context::Root->createSubContext("objects");
+    Obj_ctx->adoptContext(p1);
+    Obj_ctx->adoptContext(p2);
+    Obj_ctx->adoptContext(p3);
+    Obj_ctx->adoptContext(p4);
+    Obj_ctx->adoptContext(p5);
+
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     int vlen = 300;
-    values = new GLfloat[vlen];
-    der1 = new GLfloat[vlen];
-    der2 = new GLfloat[vlen];
-    der3 = new GLfloat[vlen];
-    der4 = new GLfloat[vlen];
-    auto *lower = new GLfloat[vlen];
-    auto *upper = new GLfloat[vlen];
+    vector<float> lower(vlen);
+    vector<float> values(vlen);
+    vector<float> upper(vlen);
 
     srand(static_cast <unsigned> (time(0)));
 
     values[0] = randf();
-    lower[0] = randf() * values[0];
-    upper[0] = randf() * (1 - values[0]) + values[0];
+    lower[0] = randf()*values[0];
+    upper[0] = randf()*(1 - values[0]) + values[0];
 
     for (int i = 1; i < vlen; i++) {
-        values[i] = 0.2 * (randf() - 0.5) * values[i - 1] + values[i - 1];
-        lower[i] = values[i] - 0.2 * (randf()) * lower[i - 1];
-        upper[i] = values[i] + 0.2 * (randf()) * upper[i - 1];
+        values[i] = 0.2*(randf() - 0.5)*values[i - 1] + values[i - 1];
+        lower[i] = values[i] - 0.2*(randf())*lower[i - 1];
+        upper[i] = values[i] + 0.2*(randf())*upper[i - 1];
 
         upper[i] += upper[i - 1];
         upper[i] /= 2;
@@ -357,6 +334,17 @@ int main(int argc, char *argv[]) {
         lower[i] = 0.49;
         upper[i] = 0.51;
     }
+
+    ECV(p1, color_line, vec3(0.3, 0.8, 1.0));
+    ECV(p1, color_bg, vec4(0.8, 0.8, 0.0, 1.0));
+    ECV(p1, color_region, vec3(1.0, 0.8, 0.3));
+    ECV(p1, width, 0.01f);
+    ECV(p1, blur, 0.005f);
+    ECV(p1, values, values);
+    ECV(p1, lower, lower);
+    ECV(p1, vlength, vlen - 1);
+
+    Context::Root->pretty_print();
 
     vec2 p3_brd;
     resized = true;
@@ -369,40 +357,43 @@ int main(int argc, char *argv[]) {
             glClear(GL_COLOR_BUFFER_BIT);
 
             //screen.update(offX, offY);
-            baseShader.use();
-            glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
+            //baseShader.use();
+            //glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
             //screen.draw();
             //plane1.draw();
 
 
-            markerShader.use();
+            /*markerShader.use();
             glUniform3f(glGetUniformLocation(markerShader, "color"), 0.3, 0.8, 1.0);
             glUniform2fv(glGetUniformLocation(markerShader, "border_size"), 1,
                          reinterpret_cast<const GLfloat *>(&p3_brd));
             glUniform1i(glGetUniformLocation(markerShader, "shape"), 1);
-            glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);
+            glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);*/
             //plane3.draw();
 
-            lineShader.use();
-            glUniform3f(glGetUniformLocation(lineShader, "color_line"), 0.3, 0.8, 1.0);
-            glUniform3f(glGetUniformLocation(lineShader, "color_region"), 1.0, 0.8, 0.3);
-            glUniform1f(glGetUniformLocation(lineShader, "width"), lmgr.sisc(2, 2).x);
-            glUniform1f(glGetUniformLocation(lineShader, "blur"), lmgr.sisc(0.5, 0.5).x);
+            Shaders::BindUniforms(p1, nullptr);
+            /*ProgramShader ls = EGV(p1, shader/_program, ProgramShader);
+            glUniform3f(glGetUniformLocation(ls, "color_line"), 0.3, 0.8, 1.0);
+            glUniform3f(glGetUniformLocation(ls, "color_region"), 1.0, 0.8, 0.3);
+            glUniform1f(glGetUniformLocation(ls, "width"), lmgr.sisc(2, 2).x);
+            glUniform1f(glGetUniformLocation(ls, "blur"), lmgr.sisc(0.5, 0.5).x);
 
-            glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, values);
-            glUniform1i(glGetUniformLocation(lineShader, "vlength"), vlen - 1);
-            glUniform1fv(glGetUniformLocation(lineShader, "lower"), vlen, lower);
-            glUniform1fv(glGetUniformLocation(lineShader, "upper"), vlen, upper);
-            EGV(p1, plane, Plane).draw();
+            glUniform1fv(glGetUniformLocation(ls, "values"), vlen, values.data());
+            glUniform1i(glGetUniformLocation(ls, "vlength"), vlen - 1);
+            glUniform1fv(glGetUniformLocation(ls, "lower"), vlen, lower.data());*/
+            EGV(p1, primitive/plane, Plane).draw();
 
-            glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der1);
-            EGV(p2, plane, Plane).draw();
-            glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der2);
-            EGV(p3, plane, Plane).draw();
-            glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der3);
-            EGV(p4, plane, Plane).draw();
-            glUniform1fv(glGetUniformLocation(lineShader, "values"), vlen, der4);
-            EGV(p5, plane, Plane).draw();
+            Shaders::BindUniforms(p2, nullptr);
+            EGV(p2, primitive/plane, Plane).draw();
+
+            Shaders::BindUniforms(p3, nullptr);
+            EGV(p3, primitive/plane, Plane).draw();
+
+            Shaders::BindUniforms(p4, nullptr);
+            EGV(p4, primitive/plane, Plane).draw();
+
+            Shaders::BindUniforms(p5, nullptr);
+            EGV(p5, primitive/plane, Plane).draw();
 
 
             stringstream str;

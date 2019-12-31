@@ -46,7 +46,7 @@ typedef void (*ComputeFunc_t)(Context *, Context *);
  *         EOV(res, T, a + EIV(b, T)); // EIV can be used directly too,
  *     }
  */
-#define ComputeFunc(name) static void name(Context *in_ctx, Context *out_ctx)
+#define ComputeFunc(name) public: static void name(Context *in_ctx, Context *out_ctx)
 #define MAP_ENTRY(name, type) {typeid(type), CAT(_,name)<type>}
 #define MAP_ENTRIES(name, ...) ApplyMacro(MAP_ENTRY, name, __VA_ARGS__)
 #define ComputeFuncT(name, type_endpoint) private:\
@@ -58,11 +58,13 @@ static void name(Context *in_ctx, Context *out_ctx) { DCAT(_,name,_dynamic_map)[
 
 
 class ComputeNode {
+private:
+    void (*func)(Context *in_ctx, Context *out_ctx);
+
 public:
     Context *inputs = nullptr;
     Context *outputs = nullptr;
 
-    void (*func)(Context *in_ctx, Context *out_ctx);
 
     ComputeNode();
 

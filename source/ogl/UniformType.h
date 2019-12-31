@@ -7,6 +7,7 @@
 
 #include <boost/any.hpp>
 #include <glad/glad.h>
+#include <unordered_map>
 
 class UniformType {
 public:
