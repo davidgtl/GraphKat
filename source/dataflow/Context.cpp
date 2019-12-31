@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <utils/Randoms.h>
 #include "messages.h"
+#include <utils/std_colors.h>
+
 
 Context *Context::Root = new Context("root");
 Context *Context::CurrentContext = Context::Root;
@@ -129,24 +131,26 @@ void Context::pretty_print(int level) {
 
     string cpath = "./";
     if (master != nullptr)
-        cpath = "->" + master->context_name + "/";
+        cpath = "->" + FOREMAG + master->context_name + RST + "/";
     Context *ctx = master == nullptr ? this : master;
     for (const auto &e : ctx->_endpoints) {
         for (int i = 0; i < level; i++)
-            cout << "\t";
-        cout << cpath << e.first << endl;
+            cout << "|   ";
+        cout << cpath << FOREBLU + e.first + RST << " = " << FOREGRN << e.second << RST << endl;
     }
     for (const auto &c : ctx->children) {
         for (int i = 0; i < level; i++)
-            cout << "\t";
-        cout << cpath << c.first << "/" << endl;
+            cout << "|   ";
+        cout << cpath << FORERED << c.first << RST << "/" << endl;
     }
 
     for (const auto &c : ctx->children) {
+        for (int i = 0; i < level; i++)
+            cout << "|   ";
         cout << endl;
         for (int i = 0; i < level; i++)
-            cout << "\t";
-        cout << cpath << c.first << "/:" << endl;
+            cout << "|   ";
+        cout << cpath << FORERED << c.first << RST << "/:" << endl;
         c.second->pretty_print(level + 1);
     }
 

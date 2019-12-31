@@ -100,12 +100,22 @@ void updateValues() {
 
 }
 
+Context *last_ctx = nullptr;
+
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 
     if (!captured) {
         lxpos = xpos;
         lypos = ypos;
-        //invalidate();
+
+        auto ctx = EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, windowSize.y - lypos);
+        if (last_ctx != nullptr)
+            ESV(last_ctx, color, vec3(0.3, 0.3, 1.0));
+        if (ctx != nullptr)
+            ESV(ctx, color, vec3(1.0, 0.3, 0.3));
+        last_ctx = ctx;
+
+        invalidate();
         return;
     }
 
@@ -114,6 +124,8 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 
     double dy = lypos - ypos;//inverted Y
     double dx = lxpos - xpos;//inverted X
+
+
 
 
     updateValues();
@@ -129,8 +141,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             captured = !captured;
 
             cout << "Clicked context: "
-                 << EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, lypos) << "\n";
-            EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, lypos)->endpoint("color")->update(
+                 << EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, windowSize.y - lypos)
+                 << "\n";
+
+            EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(150, 300)->endpoint("color")->update(
                     vec3(1.0, 0.3, 0.3));
             //EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->prettyPrint();
 
@@ -291,7 +305,9 @@ Context *buildScene() {
     Obj_ctx->adoptContext(p4);
     Obj_ctx->adoptContext(p5);
 
-    ECV(scene_ctx, hitmap, new BitMap2D<Context>(10, 1920, 1080));
+    ECV(scene_ctx, hitmap, new BitMap2D<Context>(10, windowSize.x, windowSize.y));
+
+    Context::Root->pretty_print();
 
     Layouts::PopulateHitmap(scene_ctx, nullptr);
 
@@ -343,6 +359,7 @@ int main(int argc, char *argv[]) {
     Context *mainScene = buildScene();
 
     Context::Root->pretty_print();
+
 
     resized = true;
     while (!glfwWindowShouldClose(window)) {

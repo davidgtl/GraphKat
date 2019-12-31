@@ -5,6 +5,8 @@
 #ifndef GRAPHKAT_ENDPOINT_H
 #define GRAPHKAT_ENDPOINT_H
 
+#include <glm/glm.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <string>
 #include <map>
 #include <typeindex>
@@ -13,7 +15,9 @@
 #include "ComputeNode.h"
 #include "nodeprims/macro_shenanigans.h"
 
+using boost::any_cast;
 using std::vector, std::map;
+using glm::to_string, glm::vec2, glm::vec3, glm::vec4;
 
 class ComputeNode;
 
@@ -24,8 +28,7 @@ class ComputeNode;
 #define _EGV2(end_name, type) context->endpoint(#end_name)->value<type>()
 #define _EGV3(context, end_name, type) context->endpoint(#end_name)->value<type>()
 #define EGV(...) CAT(_EGV,COUNT_ARGUMENTS(__VA_ARGS__))(__VA_ARGS__)
-#define _ESV3(end_name, type, val) context->endpoint(#end_name)->update<type>(val)
-#define _ESV4(context, end_name, type, val) context->endpoint(#end_name)->update<type>(val)
+#define _ESV3(context, end_name, val) context->endpoint(#end_name)->update(val)
 #define ESV(...) CAT(_ESV,COUNT_ARGUMENTS(__VA_ARGS__))(__VA_ARGS__)
 //special cases
 #define EIV(end_name, type) in_ctx->endpoint(#end_name)->value<type>()
@@ -87,6 +90,24 @@ public:
     void unregisterListener(ComputeNode *);
 
     void registerListener(ComputeNode *);
+
+    friend std::ostream &operator<<(std::ostream &stream, const Endpoint *e) {
+        if (e->_value.type() == typeid(float))
+            stream << any_cast<float>(e->_value);
+        else if (e->_value.type() == typeid(vec2))
+            stream << to_string(any_cast<vec2>(e->_value));
+        else if (e->_value.type() == typeid(vec3))
+            stream << to_string(any_cast<vec3>(e->_value));
+        else if (e->_value.type() == typeid(vec4))
+            stream << to_string(any_cast<vec4>(e->_value));
+        else if (e->_value.type() == typeid(int))
+            stream << any_cast<int>(e->_value);
+        else if (e->_value.type() == typeid(double))
+            stream << any_cast<double>(e->_value);
+        else
+            stream << reinterpret_cast<const void *>(e);
+        return stream;
+    }
 
 };
 

@@ -121,6 +121,7 @@ public:
     }
 
     T *getFirst(int x, int y) {
+        if (x >= W || y >= H) return nullptr;
         int index = ys[y].fintersect(xs[x]);
         return index == -1 ? nullptr : indexmap[index];
     }
