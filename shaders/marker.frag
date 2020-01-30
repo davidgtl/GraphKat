@@ -21,6 +21,26 @@ float df_circle(vec2 uv){
     return sqrt(duv.x + duv.y)/0.5;
 }
 
+float df_ducking_lemons(vec2 uv){
+    vec2  size = vec2(4.0, 0.8);
+    float scale = max(size.x, size.y);
+    vec2 d = normalize(uv);
+
+    float r = length(uv*scale) - size.y*size.x/length(size.yx*d);
+
+    if (r < scale) return 0.0;
+
+    return r;
+}
+
+float sdBox(in vec2 p, vec2 size, float off)
+{
+    vec2 d = abs(p/size) - off;
+    float t = max(sign(d.x)+sign(d.y)-1.0, 0.0);
+    d *= size;
+    return (mix(max(d.x, d.y), length(d), t)+off);
+}
+
 float border(float blur, float lower, float upper){
     float delta = upper - lower;
     float result = -smoothstep(1.0, 1.0 - blur, lower) + smoothstep(1.0, 1.0 - blur, upper);
@@ -43,13 +63,9 @@ void main() {
     float blur = 0.07;
     float t, tu;
 
-    if (shape == 0){
-        t = df_square(cscale(uv, center, vec2(1.0, 1.0)));
-        tu = df_square(cscale(uv, center, 1 + border_size));
-    } else {
-        t = df_circle(cscale(uv, center, vec2(1.0, 1.0)));
-        tu = df_circle(cscale(uv, center, 1 + border_size));
-    }
+    t = sdBox(cscale(uv, center, vec2(1.0, 1.0)), vec2(1.0, 1.0), 0.0);
+    tu = sdBox(cscale(uv, center, 1 + border_size), vec2(1.0, 1.0), 0.0);
+
 
     float ti = smoothstep(1 - blur, 1, tu);
     float to = smoothstep(1 - blur, 1, t);

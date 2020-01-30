@@ -41,6 +41,7 @@ bool captured = false;
 LayoutManager lmgr;
 vec2 screenSize;
 vec2 windowSize;
+vec2 windowNorm;
 
 bool invalidated = true;
 bool resized = true;
@@ -103,12 +104,14 @@ void updateValues() {
 Context *last_ctx = nullptr;
 
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
+    if (xpos < 0 || ypos < 0 || xpos >= windowSize.x || ypos >= windowSize.y)
+        return;
+    auto ctx = EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, windowSize.y - lypos);
 
     if (!captured) {
         lxpos = xpos;
         lypos = ypos;
 
-        auto ctx = EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, windowSize.y - lypos);
         if (last_ctx != nullptr)
             ESV(last_ctx, color, vec3(0.3, 0.3, 1.0));
         if (ctx != nullptr)
@@ -125,8 +128,9 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
     double dy = lypos - ypos;//inverted Y
     double dx = lxpos - xpos;//inverted X
 
-
-
+    if (ctx != nullptr)
+        ESV(ctx, value,
+            (float) ((xpos/windowSize.x - EGV(ctx, primitive/origin, vec2).x)/EGV(ctx, primitive/size, vec2).x));
 
     updateValues();
     lxpos = xpos;
@@ -140,12 +144,16 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             cout << "mevent " << captured << endl;
             captured = !captured;
 
-            cout << "Clicked context: "
-                 << EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, windowSize.y - lypos)
-                 << "\n";
 
-            EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(150, 300)->endpoint("color")->update(
-                    vec3(1.0, 0.3, 0.3));
+            Context *clicked_object = EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos,
+                                                                                                         windowSize.y -
+                                                                                                         lypos);
+
+            cout << "Clicked context: "
+                 << clicked_object
+                 << "\n";
+            if (clicked_object != nullptr)
+                ESV(clicked_object, color, vec3(1.0, 1.0, 0.3));
             //EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->prettyPrint();
 
             //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
@@ -167,6 +175,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     //glViewport(0, 0, width, height);
     windowSize = vec2(width, height);
+    windowNorm = windowSize/glm::min(windowSize.x, windowSize.y);
     lmgr.updateWindowSize(windowSize);
     resized = true;
     invalidate();
@@ -261,6 +270,10 @@ Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
     ECV(primitive, z, z);
     ECV(primitive, plane, Plane(primitive));
 
+    //Used for UI Elems like slider
+    float minv = glm::min(size.x, size.y);
+    ECV(context, uv_norm, size*windowNorm/minv);
+
     shader->linkContext(shader_ctx);
 
     ECV(context, render, new ComputeNode(context, nullptr, renderPlane));
@@ -271,7 +284,6 @@ Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
 void renderScene(Context *in_ctx, Context *out_ctx) {
     for (auto obj : CGV(in_ctx, objects)->contexts())
         EE(obj.second, render);
-
 }
 
 Context *buildScene() {
@@ -297,6 +309,12 @@ Context *buildScene() {
     ECV(p3, filled, 1);
     ECV(p4, filled, 0);
     ECV(p5, filled, 1);
+
+    ECV(p1, value, 0.0f);
+    ECV(p2, value, 0.0f);
+    ECV(p3, value, 0.0f);
+    ECV(p4, value, 0.0f);
+    ECV(p5, value, 0.0f);
 
     auto Obj_ctx = CCV(scene_ctx, objects);
     Obj_ctx->adoptContext(p1);
@@ -341,6 +359,7 @@ int main(int argc, char *argv[]) {
     glfwSetErrorCallback(errorCallback);
 
     windowSize = vec2(1280, 720);
+    windowNorm = windowSize/glm::min(windowSize.x, windowSize.y);
     GLFWwindow *window = initialize(windowSize.x, windowSize.y);
     if (!window) {
         return 0;
@@ -348,7 +367,7 @@ int main(int argc, char *argv[]) {
     updateScreenSize();
     framebuffer_size_callback(window, windowSize.x, windowSize.y);
 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.094f, 0.086f, 0.109f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
