@@ -27,6 +27,12 @@ public:
         return false;
     }
 
+    static void UpdateVertices(Context *in_ctx, Context *out_ctx);
+
+    static Context *CreatePlane(vec2 origin, vec2 size, float z, Context *shader_ctx);
+
+    static void RenderPlane(Context *in_ctx, Context *out_ctx);
+
 
 private:
 

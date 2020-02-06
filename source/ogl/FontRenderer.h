@@ -21,6 +21,8 @@ public:
 
     void drawText(const char *text, vec2 origin, vec2 size, vec4 color, int align);
 
+    static Context *CreateFontRenderer(const char *fontPath, int atlas_size, int pt, int dpi);
+
 private:
     void
     initFonts(const char *fontPath, Texture texture, int width, int height, int *charHeight, int *charWidth, int pt,
@@ -33,7 +35,7 @@ private:
     vec2 getCharsize(char character, float atlasSize, float charHeight, vec2 size);
 
     vec4 *charBounds;
-    Plane *textPlane;
+    Context *textPlane;
     ProgramShader textShader;
     Texture *fontAtlas;
 };

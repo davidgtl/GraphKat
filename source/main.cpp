@@ -255,30 +255,37 @@ void doNothing(Context *in_ctx, Context *out_ctx) {
     in_ctx->createEndpoint("hello");
 };
 
-void renderPlane(Context *in_ctx, Context *out_ctx) {
-    Shaders::BindUniforms(in_ctx, nullptr);
-    EGV(in_ctx, primitive/plane, Plane).draw();
-}
 
-Context *createPlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
-    auto context = new Context();
-    auto primitive = CCV(context, primitive);
-    auto shader = CCV(context, shader);
+Context *createSlider(vec2 origin, vec2 size, float z) {
 
-    ECV(primitive, origin, origin);
-    ECV(primitive, size, size);
-    ECV(primitive, z, z);
-    ECV(primitive, plane, Plane(primitive));
+    auto context = Plane::CreatePlane(origin, size, z, CGV(Context::Root, shaders/slider));
 
-    //Used for UI Elems like slider
     float minv = glm::min(size.x, size.y);
     ECV(context, uv_norm, size*windowNorm/minv);
-
-    shader->linkContext(shader_ctx);
-
-    ECV(context, render, new ComputeNode(context, nullptr, renderPlane));
+    float g_bw = 1/glm::min((size*windowSize).x, (size*windowSize).y);
+    ECV(context, g_bw, g_bw*3);
+    ECV(context, g_tr, g_bw*2);
 
     return context;
+}
+
+Context *createButton(vec2 origin, vec2 size, float z) {
+    auto context = Plane::CreatePlane(origin, size, z, CGV(Context::Root, shaders/button));
+
+    float minv = glm::min(size.x, size.y);
+    ECV(context, uv_norm, size*windowNorm/minv);
+    float g_bw = 1/glm::min((size*windowSize).x, (size*windowSize).y);
+    ECV(context, g_bw, g_bw*3);
+    ECV(context, g_tr, g_bw*2);
+
+    return context;
+}
+
+/*
+ * Supports only monospaced fonts, size is side of square
+ */
+Context *createText(vec2 midstart, float size, float z) {
+
 }
 
 void renderScene(Context *in_ctx, Context *out_ctx) {
@@ -287,33 +294,35 @@ void renderScene(Context *in_ctx, Context *out_ctx) {
 }
 
 Context *buildScene() {
-    auto shaders = CGV(Context::Root, shaders);
     auto scene_ctx = CCV(Context::Root, MainScene);
 
-    Context *planeShader = CGV(shaders, slider);
-
-    Context *p1 = createPlane(vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f, planeShader);
-    Context *p2 = createPlane(vec2(0, 0.2), vec2(1, 0.2), 0.1f, planeShader);
-    Context *p3 = createPlane(vec2(0, 0.4), vec2(1, 0.2), 0.1f, planeShader);
-    Context *p4 = createPlane(vec2(0, 0.6), vec2(1, 0.2), 0.1f, planeShader);
-    Context *p5 = createPlane(vec2(0, 0.8), vec2(1, 0.2), 0.1f, planeShader);
+    Context *p1 = createSlider(vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f);
+    Context *p2 = createSlider(vec2(0, 0.2), vec2(1, 0.2), 0.1f);
+    Context *p3 = createSlider(vec2(0, 0.4), vec2(1, 0.2), 0.1f);
+    Context *p4 = createSlider(vec2(0, 0.6), vec2(1, 0.2), 0.1f);
+    Context *p5 = createSlider(vec2(0, 0.8), vec2(1, 0.2), 0.1f);
+    Context *p6 = createButton(vec2(0.3, 0.1), vec2(0.1, 0.2), 0.1f);
 
     ECV(p1, color, vec3(0.3, 0.8, 1.0));
     ECV(p2, color, vec3(0.3, 0.8, 1.0));
     ECV(p3, color, vec3(0.3, 0.8, 1.0));
     ECV(p4, color, vec3(0.3, 0.8, 1.0));
     ECV(p5, color, vec3(0.3, 0.8, 1.0));
+    ECV(p6, color, vec3(0.3, 0.8, 1.0));
+
     ECV(p1, shape, 1);
     ECV(p1, filled, 0);
     ECV(p1, border_size, vec2(0.01f, 0.01f));
     ECV(p3, filled, 1);
     ECV(p4, filled, 0);
     ECV(p5, filled, 1);
+    ECV(p6, filled, 1);
 
     ECV(p1, value, 0.0f);
     ECV(p2, value, 0.0f);
     ECV(p3, value, 0.0f);
     ECV(p4, value, 0.0f);
+    ECV(p5, value, 0.0f);
     ECV(p5, value, 0.0f);
 
     auto Obj_ctx = CCV(scene_ctx, objects);
@@ -322,8 +331,9 @@ Context *buildScene() {
     Obj_ctx->adoptContext(p3);
     Obj_ctx->adoptContext(p4);
     Obj_ctx->adoptContext(p5);
+    Obj_ctx->adoptContext(p6);
 
-    ECV(scene_ctx, hitmap, new BitMap2D<Context>(10, windowSize.x, windowSize.y));
+    ECV(scene_ctx, hitmap, new BitMap2D<Context>(10, windowSize.x, windowSize.y));//FIXME: @100 nothing works
 
     Context::Root->pretty_print();
 
@@ -349,6 +359,8 @@ int main(int argc, char *argv[]) {
 
     cout << "result: " << out_ctx->endpoint("res")->value<float>();
 
+    cout << "\n";
+
     /* boost::variant<int, std::string> u(7);
      std::cout << u; // output: hello world
 
@@ -371,9 +383,10 @@ int main(int argc, char *argv[]) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
     ShaderLoader::LoadShaders("shaders/shaders.xml");
+
+    FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
     Context *mainScene = buildScene();
 
@@ -410,7 +423,9 @@ int main(int argc, char *argv[]) {
             stringstream str;
 
             str << "x: " << lxpos << ", y: " << lypos;
-            //textRenderer.drawText(str.str().c_str(), lmgr.sisc(100, 100), lmgr.sisc(8), vec4(1, 0, 0.5, 1), -1);
+            textRenderer.drawText(str.str().c_str(), lmgr.sisc(80, 80), lmgr.sisc(8), vec4(1, 0.8, 0.5, 1), -1);
+
+            //textRenderer.
 
             glfwSwapBuffers(window);
             invalidated = false;

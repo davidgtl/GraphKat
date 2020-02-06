@@ -47,8 +47,8 @@ public:
 
         vec2 end = start + size;
         vec2 mul = vec2(W, H);
-        end = end*mul;
-        start *= vec2(W, H);
+        end = glm::min(end*mul, mul - vec2(1.0));
+        start = glm::max(start*mul, vec2(0.0));
 
         for (int x = start.x; x < (int) end.x; x++)
             xs[x].set(index);
@@ -64,7 +64,7 @@ public:
         vec2 nend = (nstart + nsize)*vec2(W, H);
         nstart *= vec2(W, H);
 
-        vec2 oend = (ostart + osize)*vec2(W, H);
+        vec2 oend = (ostart + osize)*vec2(W, H); //FIXME: min max bounds here and @clear
         ostart *= vec2(W, H);
 
         if (nstart.x < ostart.x)

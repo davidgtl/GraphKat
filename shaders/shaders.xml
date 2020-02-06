@@ -8,14 +8,22 @@
             <shader ref="base"/>
             <shader src="shaders/base.frag"/>
         </program>
+
+        <program name="text">
+            <shader src="shaders/text.vert"/>
+            <shader src="shaders/text.frag"/>
+        </program>
+
         <program name="marker">
             <shader ref="base"/>
             <shader src="shaders/marker.frag"/>
         </program>
+
         <program name="line">
             <shader ref="base"/>
             <shader src="shaders/line.frag"/>
         </program>
+
         <program name="verticalRange">
             <shader ref="base"/>
             <shader src="shaders/verticalRange.frag"/>
@@ -25,5 +33,11 @@
             <shader ref="base"/>
             <shader src="shaders/ui/slider.frag"/>
         </program>
+
+        <program name="button">
+            <shader ref="base"/>
+            <shader src="shaders/ui/button.frag"/>
+        </program>
+
     </programs>
 </shaders>

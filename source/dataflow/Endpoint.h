@@ -35,6 +35,8 @@ class ComputeNode;
 #define EE(context, function_name) context->endpoint(#function_name)->value<ComputeNode*>()->execute()
 #define EOV(end_name, type, val) out_ctx->endpoint(#end_name)->update(val)
 #define ECV(context, name, value) context->createEndpoint(#name, value)
+#define ERL(context, end_name, comp_fn) context->endpoint(#end_name)->registerListener(comp_fn);
+#define EUL(context, end_name, comp_fn) context->endpoint(#end_name)->unregisterListener(comp_fn);
 
 class Endpoint {
 private:

@@ -40,12 +40,12 @@ Texture::Texture(int width, int height) {
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
 
-    unsigned char *data = (unsigned char *) malloc(sizeof(unsigned char) * width * height * 3);
-    memset(data, 0, sizeof(unsigned char) * width * height * 3);
+    unsigned char *data = (unsigned char *) malloc(sizeof(unsigned char)*width*height*3);
+    memset(data, 0, sizeof(unsigned char)*width*height*3);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    //glGenerateMipmap(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     free(data);
 

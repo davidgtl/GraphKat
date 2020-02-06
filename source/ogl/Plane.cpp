@@ -1,6 +1,6 @@
 #include "Plane.h"
 #include <glad/glad.h>
-
+#include <nodeprims/Shaders.h>
 
 Plane::Plane(Context *ctx, bool invertY) : vao(-1), vbo(-1), ebo(-1), uvs(-1) {
     this->context = ctx;
@@ -44,7 +44,7 @@ void Plane::init(bool invertY) {
             1.0f, 0.0f,
     };
 
-    float *uv = invertY ? uvI : uvN;
+    float *uv = !invertY ? uvI : uvN;
 
     glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), uv, GL_STATIC_DRAW);
 
@@ -86,7 +86,7 @@ void Plane::updateVertices() {
             end.x, end.y, z
     };
 
-    glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4*3*sizeof(float), vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -94,3 +94,33 @@ Plane::Plane() : vao(-1), vbo(-1), ebo(-1), uvs(-1) {
     this->context = nullptr;
 }
 
+void Plane::UpdateVertices(Context *in_ctx, Context *out_ctx) {
+    EIV(plane, Plane).updateVertices();
+}
+
+void Plane::RenderPlane(Context *in_ctx, Context *out_ctx) {
+    Shaders::BindUniforms(in_ctx, nullptr);
+    EGV(in_ctx, primitive/plane, Plane).draw();
+}
+
+Context *Plane::CreatePlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
+    auto context = new Context();
+    auto primitive = CCV(context, primitive);
+    auto shader = CCV(context, shader);
+
+    ECV(primitive, origin, origin);
+    ECV(primitive, size, size);
+    ECV(primitive, z, z);
+    ECV(primitive, plane, Plane(primitive));
+
+    auto cn_update_verts = new ComputeNode(primitive, nullptr, Plane::UpdateVertices);
+    ERL(primitive, origin, cn_update_verts);
+    ERL(primitive, size, cn_update_verts);
+    ERL(primitive, z, cn_update_verts);
+
+    shader->linkContext(shader_ctx);
+
+    ECV(context, render, new ComputeNode(context, nullptr, Plane::RenderPlane));
+
+    return context;
+}

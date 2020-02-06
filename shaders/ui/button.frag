@@ -75,8 +75,6 @@ void main() {
 
 
     final_color = fblend(final_color, color, inside(0.1, g_bw, g_tr, sq_dist));
-    final_color = fblend(final_color, 1.0-color, bump(0.3, g_bw, g_tr, circ_dist));
-    final_color = fblend(final_color, vec3(1.0), inside(0.3, g_bw, g_tr, circ_dist)*0.8);
 
     out_color = final_color;
 
