@@ -32,6 +32,8 @@
 #include <boost/variant.hpp>
 #include <testbench.h>
 #include <utils/BitMap2D.h>
+#include <Foo.h>
+#include <Bar.h>
 
 using namespace std;
 using namespace glm;
@@ -301,7 +303,7 @@ Context *buildScene() {
     Context *p3 = createSlider(vec2(0, 0.4), vec2(1, 0.2), 0.1f);
     Context *p4 = createSlider(vec2(0, 0.6), vec2(1, 0.2), 0.1f);
     Context *p5 = createSlider(vec2(0, 0.8), vec2(1, 0.2), 0.1f);
-    Context *p6 = createButton(vec2(0.3, 0.1), vec2(0.1, 0.2), 0.1f);
+    Context *p6 = createButton(vec2(0.3, 0.1), vec2(0.1, 0.05), 0.1f);
 
     ECV(p1, color, vec3(0.3, 0.8, 1.0));
     ECV(p2, color, vec3(0.3, 0.8, 1.0));
@@ -344,7 +346,93 @@ Context *buildScene() {
     return scene_ctx;
 }
 
+void indirect_tb() {
+    vector<int> original;
+    vector<int> first;
+    vector<int> second;
+    vector<int> third;
+
+    int N = 1000000;
+
+    for (int i = 0; i < N; i++) {
+        original.push_back(i);
+        first.push_back(original[i]);
+        second.push_back(first[i]);
+        third.push_back(second[i]);
+    }
+
+
+    int total = 0;
+    auto t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[first[second[third[i]]]];
+
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[first[i]];
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[first[second[i]]];
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[i];
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    fatal_error();
+}
+
 int main(int argc, char *argv[]) {
+
+    Bar b;
+    b.c = 100;
+    Foo f = Foo(b);
+    b.c = 200;
+    cout << f.bar.c;
+    fatal_error();
+
+    std::string_view names[] = {"ana", "are", "mere", "djkfhksjfdfnrekfnkerjnferbhvbivnvnrjnjkdnkfjvndkjg"};
+
+    cout << sizeof(names) << "/" << sizeof(std::string_view) << "\n";
+    for (int i = 0; i < sizeof(names) / sizeof(std::string_view); i++)
+        cout << names[i] << "\n";
+
     auto in_ctx = new Context();
     auto out_ctx = new Context();
 

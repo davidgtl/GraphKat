@@ -33,7 +33,10 @@ public:
 
     static void RenderPlane(Context *in_ctx, Context *out_ctx);
 
-
+    constexpr static const std::string_view _endpoint_rmap[] = {"origin", "size", "z", "plane"};
+    enum Endpoints {
+        origin, size, z, plane, _end
+    };
 private:
 
     void init(bool invertY = false);

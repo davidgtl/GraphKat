@@ -69,12 +69,12 @@ void main() {
         tu = df_circle(cscale(uv, 1 + border_size));
     }*/
 
-    vec2 sq_size = vec2(0.475, 0.10) * uv_norm;
+    vec2 sq_size = vec2(0.4, 0.4) * uv_norm;
     float sq_dist = df_square(nuv-uv_norm*0.5, sq_size);
     float circ_dist = df_circle(nuv-0.5 - vec2(value * sq_size.x*2.0 - 0.2, 0.0), 0.0);
 
 
-    final_color = fblend(final_color, color, inside(0.1, g_bw, g_tr, sq_dist));
+    final_color = fblend(final_color, color, inside(0.2, g_bw, g_tr, sq_dist));
 
     out_color = final_color;
 
