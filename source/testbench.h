@@ -7,6 +7,16 @@
 
 namespace TB {
     void run_windowing();
+
+    void run_anyvector();
+
+    void deallocating();
+
+    void fancy_types();
+
+    void fancy_access();
+
+    void typeinfo();
 }
 
 #endif //GRAPHKAT_TESTBENCH_H

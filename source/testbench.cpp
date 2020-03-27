@@ -13,6 +13,8 @@
 #include <dataflow/Context.h>
 #include <utils/Randoms.h>
 #include <utils/BitSet.h>
+#include <typing/TypeInfos.h>
+#include "typing/TypeInfo.h"
 
 using std::cout, std::unordered_map, std::vector, std::set;
 
@@ -203,3 +205,184 @@ void TB::run_windowing() {
     algo();
 
 }
+
+void TB::run_anyvector() {
+    struct banana {
+        int a;
+        int b;
+        int c;
+    };
+    using std::vector;
+    using boost::any, boost::any_cast;
+
+    vector<any> myvec;
+    myvec.reserve(10);
+
+    printf("\n first:  %p \n second: %p \n 10th:   %p \n", &myvec[0], &myvec[1], &myvec[2]);
+
+    struct banana ban = {1, 2, 3};
+
+    myvec[0] = (char) 5;
+    myvec[1] = ban;
+    myvec[2] = (double) 5.0;
+
+    printf("\n first:  %p \n second: %p \n 10th:   %p \n", &myvec[0], &myvec[1], &myvec[2]);
+    void *p = &myvec[1];
+    printf("\n a: %d \n b: %p \n c: %p \n", any_cast<struct banana>(myvec[1]).c, &myvec[1], &myvec[2]);
+
+}
+
+void TB::deallocating() {
+    using namespace std;
+    const int size = 100000000;
+    double *buffy = new double[size];
+
+    for (int i = 0; i < size; i++)
+        buffy[i] = i * 1.2;
+
+    cout << "deallocate?\n";
+
+    double sum = 0.0;
+    for (int i = 0; i < size; i++)
+        sum += buffy[i];
+    cout << sum << endl;
+    int a;
+    cin >> a;
+
+    void *p = buffy;
+
+    delete[] p;
+    cin >> a;
+}
+
+template<typename T, size_t offset>
+T *access(void *pointy) {
+    return (T *) ((char *) pointy + offset);
+}
+
+void TB::fancy_types() {
+    void *mymem = new char[sizeof(int) + sizeof(double) + 10];
+    auto myint = &access<int, 0>;
+    auto mydouble = &access<double, sizeof(int)>;
+    auto mystring = &access<char, sizeof(int) + sizeof(double)>;
+
+    *myint(mymem) = 10;
+    *mydouble(mymem) = 10.0 / 7;
+    memset(mystring(mymem), 0, *myint(mymem));
+    strcpy(mystring(mymem), "hello");
+
+    cout << *myint(mymem) << " " << *mydouble(mymem) << " " << mystring(mymem);
+
+
+}
+
+namespace FancyTyping {
+    template<typename... Types>
+    size_t size_sum() {
+        return (sizeof(Types)+...);
+    }
+
+    template<>
+    size_t size_sum() {
+        return 0;
+    }
+
+    template<typename T, typename... Types>
+    T *access(void *mem) {
+        return (T *) ((char *) mem + size_sum<Types...>());
+    }
+
+    template<void *mem, typename T, typename... Types>
+    T *access() {
+        return (T *) ((char *) mem + size_sum<Types...>());
+    }
+
+
+    template<typename... Types>
+    void *allocate() {
+        return new char[size_sum<Types...>()];
+    }
+
+    template<typename... Types>
+    void copy(void *dest, void *src) {
+        memcpy(dest, src, size_sum<Types...>());
+    }
+}
+
+class FancyNode {
+public:
+    static constexpr auto create = &FancyTyping::allocate<int, double>;
+    static constexpr auto copy = &FancyTyping::copy<int, double>;
+    static constexpr auto age = &FancyTyping::access<int>;
+    static constexpr auto kg = &FancyTyping::access<double, int>;
+
+    void *mem;
+
+    operator void *() {
+        return this;
+    }
+
+    FancyNode() {
+        mem = create();
+    }
+
+    FancyNode(void *mem) {
+        this->mem = create();
+        copy(this->mem, mem);
+    }
+};
+
+void TB::fancy_access() {
+    void *mem = FancyNode::create();
+    *FancyNode::age(mem) = 11;
+    *FancyNode::kg(mem) = 60.15 + *FancyNode::age(mem);
+
+    cout << *FancyNode::age(mem) << " " << *FancyNode::kg(mem) << "\n";
+
+    auto not_pointy = (FancyNode) mem;
+    cout << *not_pointy.age(not_pointy) << " " << *not_pointy.kg(not_pointy) << "\n";
+    cout << *not_pointy.age(not_pointy) << " " << *not_pointy.kg(not_pointy) << "\n";
+
+    //FancyNode dupl1(not_pointy);
+    FancyNode dupl2(mem);
+/*
+    //*dupl1.age() = 7;
+    *dupl2.kg() = 30.2;
+
+    //cout << *dupl1.age() << " " << *dupl1.kg() << "\n";
+    cout << *dupl2.age() << " " << *dupl2.kg() << "\n";
+    not_pointy._age(&not_pointy);
+    */
+}
+
+/*
+class FancierNode {
+public:
+
+    void *mem;
+
+    //FancyTypes::TypeInfo *t;
+    FancierNode() {
+        mem = create();
+    }
+
+    FancyNode(void *mem) {
+        this->mem = create();
+        copy(this->mem, mem);
+    }
+};*/
+
+void TB::typeinfo() {
+    using namespace FancyTypes;
+    TypeInfo t = int_t;
+
+    auto a = int_t.create();
+
+}
+
+
+
+
+
+
+

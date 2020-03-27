@@ -34,6 +34,7 @@
 #include <utils/BitMap2D.h>
 #include <Foo.h>
 #include <Bar.h>
+#include <random>
 
 using namespace std;
 using namespace glm;
@@ -352,7 +353,7 @@ void indirect_tb() {
     vector<int> second;
     vector<int> third;
 
-    int N = 1000000;
+    int N = 100000000;
 
     for (int i = 0; i < N; i++) {
         original.push_back(i);
@@ -418,7 +419,102 @@ void indirect_tb() {
     fatal_error();
 }
 
+#define CSIZE(ctype) if(t == typeid(ctype)) return sizeof(ctype);
+
+unsigned int csize(type_index t) {
+    CSIZE(char);
+    CSIZE(unsigned char);
+    CSIZE(short);
+    CSIZE(unsigned short);
+    CSIZE(int);
+    CSIZE(unsigned int);
+    CSIZE(long);
+    CSIZE(unsigned long);
+    CSIZE(long long);
+    CSIZE(unsigned long long);
+    CSIZE(float);
+    CSIZE(double);
+}
+
+#define CMAPSIZE(ctype) {std::type_index(typeid(ctype)), sizeof(ctype)}
+std::unordered_map<type_index, unsigned int> types_map = {
+        CMAPSIZE(char),
+        CMAPSIZE(unsigned char),
+        CMAPSIZE(short),
+        CMAPSIZE(unsigned short),
+        CMAPSIZE(int),
+        CMAPSIZE(unsigned int),
+        CMAPSIZE(long),
+        CMAPSIZE(unsigned long),
+        CMAPSIZE(long long),
+        CMAPSIZE(unsigned long long),
+        CMAPSIZE(float),
+        CMAPSIZE(double)
+};
+
+void stdmap_vs_ifs_tb() {
+    vector<int> original;
+    type_index types[] = {typeid(char), typeid(unsigned char), typeid(short), typeid(unsigned short), typeid(int),
+                          typeid(unsigned int),
+                          typeid(long), typeid(unsigned long), typeid(long long), typeid(unsigned long long),
+                          typeid(float), typeid(double)};
+
+    int N = 1000000;
+
+
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 11); // distribution in range [1, 6]
+
+
+    for (int i = 0; i < N; i++) {
+        original.push_back(dist(rng));
+    }
+
+
+    int total = 0;
+    auto t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += types_map[types[original[i]]];
+
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += csize(types[original[i]]);
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    fatal_error();
+}
+
+
 int main(int argc, char *argv[]) {
+    TB::fancy_access();
+    fatal_error();
+
+    TB::deallocating();
+    fatal_error();
+
+    TB::run_anyvector();
+    fatal_error();
+    indirect_tb();
+    GLuint i;
+    cin >> i;
 
     Bar b;
     b.c = 100;
