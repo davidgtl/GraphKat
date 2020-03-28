@@ -30,7 +30,7 @@ namespace FancyTypes::_internal {
         return (T *) ((char *) mem + size_sum<Types...>());
     }
 
-
+    //string need a constructor fo initializer lists to work with a struct
     template<typename... Types>
     void *allocate() {
         return new char[size_sum<Types...>()];

@@ -50,30 +50,49 @@ namespace FancyTypes {
 
         t_size size;
         t_toString toString;
+
+        template<typename T>
+        static TypeInfo with_toString(t_toString toString) {
+            return TypeInfo(_internal::allocate<T>, _internal::copy<T>, false, _internal::size_sum<T>, toString);
+        }
     };
 
     template<typename T, t_iterator<T> f_iterator, t_access<T> f_access>
-    struct TypeAccess {
+    class TypeAccess {
 
+    private:
+        t_access<T> _access = f_access;
+    public:
         void *mem;
 
         TypeAccess(void *ptr) : mem(ptr) {}
 
         t_iterator<T> iterator = f_iterator;
-        t_access<T> access = f_access;
 
         TypeAccess &operator=(T &other) {
-            *access(mem) = other;
+            *_access(mem) = other;
             return *this;
         }
 
         TypeAccess &operator=(T other) {
-            *access(mem) = other;
+            *_access(mem) = other;
             return *this;
         }
 
         operator T() {
-            return *access(mem);
+            return *_access(mem);
+        }
+
+        operator void *() {
+            return mem;
+        }
+
+        T *operator->() {
+            return _access(mem);
+        }
+
+        T *value() {
+            return _access(mem);
         }
 
     };

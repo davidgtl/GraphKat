@@ -380,9 +380,19 @@ public:
 
 };
 
+struct uninfo {
+    string name;
+    unsigned int count;
+    unsigned int length;
+    unsigned int type;
+};
+
+
 void TB::typeinfo() {
     using namespace FancyTypes;
 
+
+#if 0
     FancierNode node(int_i);
 
     int_t myint = node;
@@ -396,14 +406,34 @@ void TB::typeinfo() {
     cout << "myotherint: " << myotherint << "\n";
     myotherint = 7;
     cout << "myint: " << myint << "\n";
+#endif
 
+    typedef primitive_type<uninfo> uninfo_t;
+    auto uninfo_i = TypeInfo::with_toString<uninfo>([](void *ptr) {
+        stringstream ss;
+        auto value = (uninfo *) ptr;
+        ss << "{" << value->name << ","
+           << value->count << ","
+           << value->length << ","
+           << value->type << "}";
+        return ss.str();
+    });
 
-    /*
-     * There need to be two behaviours:
-     * 1. When using generics to get info in a standardized way -- print
-     * 2. When accessing the variable in a function to get & set -- override = and T()
-     */
+    FancierNode node(uninfo_i);
 
+    uninfo_t info = node;
+
+    //info->name = "ana";
+    info->count = 4;
+    info->length = 3;
+    info->type = 1;
+
+    *info.value() = {"Bernadette", 4, 1, 3};
+
+    cout << info->name << "\n";
+    cout << uninfo_i.toString(info);
+
+    cout << "Done.";
 }
 
 
