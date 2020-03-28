@@ -404,12 +404,25 @@ void TB::typeinfo() {
 
     uninfo_t info = node;
 
-    *info.value() = {"Bernadette", 4, 1, 3};
+    info = {"Bernadette", 4, 1, 3};
+    uninfo_t info2({"Bernadette", 2, 1, 3});
 
-    cout << *I(info).name << "\n";
+    uninfo_t info3 = *info + *info2;
+
+    cout << info->length << " = " << *I(info).length << "\n";
     cout << info.toString() << "\n";
+    cout << info3.toString() << "\n";
 
-    cout << "Done.";
+    cout << "glm tests \n";
+
+    vec3_t a({1.0, 0.5, 0.5});
+    vec3_t b({1.0, 0.5, 0.5});
+
+    vec3_t c = *a + *b;
+
+    cout << c;
+
+    cout << "\nDone.";
 }
 
 

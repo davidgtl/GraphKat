@@ -73,11 +73,8 @@ namespace FancyTypes::_internal {
     }*/
 
     template<typename T>
-    string toString(void *mem) {
-        stringstream buffy;
-
-        buffy << access<T>(mem);
-        return buffy.str();
+    void toStream(std::ostream &stream, void *mem) {
+        stream << access<T>(mem);
     }
 }
 

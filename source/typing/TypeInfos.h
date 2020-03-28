@@ -10,11 +10,18 @@
 #include "TypeInfo.h"
 #include "templates.h"
 #include <string>
+#include <glm/glm.hpp>
 
 namespace FancyTypes {
 
     using std::string;
     using namespace _internal;
+
+    template<typename T>
+    class I {
+    public:
+        I(T &t) {}
+    };
 
     template<typename T, TypeInfo &typeinfo>
     using primitive_type = TypeAccess<T, nullptr, access<T>, typeinfo>;
@@ -25,11 +32,17 @@ namespace FancyTypes {
     TypeInfo double_i(tag<double>{});
     TypeInfo string_i(tag<string>{});
 
+    TypeInfo vec3_i = FancyTypes::TypeInfo::with_toString<glm::vec3>([](std::ostream &cout, void *ptr) {
+        auto val = (glm::vec3 *) ptr;
+        cout << "{" << val->x << "," << val->y << "," << val->z << "}";
+    });
+
     typedef primitive_type<int, int_i> int_t;
     typedef primitive_type<unsigned int, uint_i> uint_t;
     typedef primitive_type<float, float_i> float_t;
     typedef primitive_type<double, double_i> double_t;
     typedef primitive_type<string, string_i> string_t;
+    typedef primitive_type<glm::vec3, vec3_i> vec3_t;
 
 
     struct uninfo {
@@ -37,25 +50,18 @@ namespace FancyTypes {
         unsigned int count;
         unsigned int length;
         unsigned int type;
+
+        uninfo operator+(uninfo &other) {
+            return {this->name, this->count + other.count, this->length, this->type};
+        }
     };
 
-    TypeInfo uninfo_i = FancyTypes::TypeInfo::with_toString<uninfo>([](void *ptr) {
-        stringstream ss;
-        auto value = (uninfo *) ptr;
-        ss << "{" << value->name << ","
-           << value->count << ","
-           << value->length << ","
-           << value->type << "}";
-        return ss.str();
+    TypeInfo uninfo_i = FancyTypes::TypeInfo::with_toString<uninfo>([](std::ostream &cout, void *ptr) {
+        auto val = (uninfo *) ptr;
+        cout << "{" << val->name << "," << val->count << "," << val->length << "," << val->type << "}";
     });
 
     typedef FancyTypes::primitive_type<uninfo, uninfo_i> uninfo_t;
-
-    template<typename T>
-    class I {
-    public:
-        I(T &t) {}
-    };
 
     template<>
     class I<uninfo_t> {
@@ -67,13 +73,6 @@ namespace FancyTypes {
         unsigned int *type;
 
         I(uninfo_t &t) : name(&t->name), count(&t->count), length(&t->length), type(&t->type) {}
-    };
-
-    struct uninfo_p {
-        string *name;
-        unsigned int *count;
-        unsigned int *length;
-        unsigned int *type;
     };
 
 

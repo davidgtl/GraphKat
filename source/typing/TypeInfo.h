@@ -46,7 +46,7 @@ namespace FancyTypes {
 
     typedef void (*t_initialize)(void *);
 
-    typedef string (*t_toString)(void *);
+    typedef void (*t_toStream)(std::ostream &stream, void *);
 
     struct TypeInfo {
 
@@ -54,12 +54,12 @@ namespace FancyTypes {
         explicit
         TypeInfo(_internal::tag<T> t) :create(_internal::allocate<T>), initialize(_internal::initialize<T>),
                                        copy(_internal::copy<T>), hasIterator(false),
-                                       size(_internal::size_sum<T>), toString(_internal::toString<T>) {}
+                                       size(_internal::size_sum<T>), toStream(_internal::toStream<T>) {}
 
         TypeInfo(t_create f_create, t_initialize f_initialize, t_copy f_copy, bool has_iterator, t_size f_size,
-                 t_toString f_toString) :
+                 t_toStream f_toStream) :
                 create(f_create), initialize(f_initialize), copy(f_copy), hasIterator(has_iterator),
-                size(f_size), toString(f_toString) {}
+                size(f_size), toStream(f_toStream) {}
 
         t_create create;
         t_initialize initialize;
@@ -68,12 +68,12 @@ namespace FancyTypes {
         bool hasIterator;
 
         t_size size;
-        t_toString toString;
+        t_toStream toStream;
 
         template<typename T>
-        static TypeInfo with_toString(t_toString toString) {
+        static TypeInfo with_toString(t_toStream toStream) {
             return TypeInfo(_internal::allocate<T>, _internal::initialize<T>, _internal::copy<T>, false,
-                    _internal::size_sum<T>, toString);
+                    _internal::size_sum<T>, toStream);
         }
     };
 
@@ -88,6 +88,23 @@ namespace FancyTypes {
         constexpr static TypeInfo *typeinfo = &p_typeinfo;
 
         TypeAccess(void *ptr) : mem(ptr) {}
+
+        TypeAccess() {
+            mem = typeinfo->create();
+            typeinfo->initialize(mem);
+        }
+
+        TypeAccess(T value) {
+            mem = typeinfo->create();
+            typeinfo->initialize(mem);
+            *_access(mem) = value;
+        }
+
+        TypeAccess(T &value) {
+            mem = typeinfo->create();
+            typeinfo->initialize(mem);
+            *_access(mem) = value;
+        }
 
         t_iterator<T> iterator = f_iterator;
 
@@ -113,6 +130,10 @@ namespace FancyTypes {
             return _access(mem);
         }
 
+        T &operator*() {
+            return *_access(mem);
+        }
+
         T *value() {
             return _access(mem);
         }
@@ -134,7 +155,18 @@ namespace FancyTypes {
         }
 
         string toString() {
-            return typeinfo->toString(mem);
+            std::stringstream ss;
+            typeinfo->toStream(ss, mem);
+            return ss.str();
+        }
+
+        void toStream(std::ostream &stream) {
+            typeinfo->toStream(stream, mem);
+        }
+
+        friend std::ostream &operator<<(std::ostream &stream, TypeAccess &t) {
+            t.toStream(stream);
+            return stream;
         }
     };
 }
