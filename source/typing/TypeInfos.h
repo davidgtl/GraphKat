@@ -12,26 +12,34 @@
 #include <string>
 
 namespace FancyTypes {
+
     using std::string;
     using namespace _internal;
 
     template<typename T>
-    using primitive_type = TypeInfo<T, allocate<T>, copy<T>, false, nullptr,
-            access<T>, size_sum<T>, toString<T>>;
+    using primitive_type = TypeAccess<T, nullptr, access<T>>;
 
-    /*
+
     typedef primitive_type<int> int_t;
     typedef primitive_type<unsigned int> uint_t;
     typedef primitive_type<float> float_t;
     typedef primitive_type<double> double_t;
     typedef primitive_type<string> string_t;
-     */
-    primitive_type<int> int_t;
-    primitive_type<unsigned int> uint_t;
-    primitive_type<float> float_t;
-    primitive_type<double> double_t;
-    primitive_type<string> string_t;
 
+
+    TypeInfo int_i(tag<int>{});
+    TypeInfo uint_i(tag<unsigned int>{});
+    TypeInfo float_i(tag<float>{});
+    TypeInfo double_i(tag<double>{});
+    TypeInfo string_i(tag<string>{});
+
+    /*
+   primitive_type<int> int_t;
+   primitive_type<unsigned int> uint_t;
+   primitive_type<float> float_t;
+   primitive_type<double> double_t;
+   primitive_type<string> string_t;
+   */
 
 }
 

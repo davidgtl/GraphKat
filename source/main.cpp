@@ -504,7 +504,7 @@ void stdmap_vs_ifs_tb() {
 
 
 int main(int argc, char *argv[]) {
-    TB::fancy_access();
+    TB::typeinfo();
     fatal_error();
 
     TB::deallocating();

@@ -355,28 +355,54 @@ void TB::fancy_access() {
     */
 }
 
-/*
+
 class FancierNode {
 public:
 
     void *mem;
 
-    //FancyTypes::TypeInfo *t;
-    FancierNode() {
-        mem = create();
+    FancyTypes::TypeInfo *t;
+
+    FancierNode(FancyTypes::TypeInfo &type) {
+        this->t = &type;
+        mem = t->create();
     }
 
-    FancyNode(void *mem) {
-        this->mem = create();
-        copy(this->mem, mem);
+    template<typename A>
+    A access() {
+        return (A) mem;
     }
-};*/
+
+    template<typename T, FancyTypes::t_iterator<T> f_iterator, FancyTypes::t_access<T> f_access>
+    operator FancyTypes::TypeAccess<T, f_iterator, f_access>() {
+        return (FancyTypes::TypeAccess<T, f_iterator, f_access>) mem;
+    }
+
+};
 
 void TB::typeinfo() {
     using namespace FancyTypes;
-    TypeInfo t = int_t;
 
-    auto a = int_t.create();
+    FancierNode node(int_i);
+
+    int_t myint = node;
+
+    myint = 5;
+
+    cout << "myint: " << myint << "\n";
+
+    auto myotherint = (int_t) node;
+
+    cout << "myotherint: " << myotherint << "\n";
+    myotherint = 7;
+    cout << "myint: " << myint << "\n";
+
+
+    /*
+     * There need to be two behaviours:
+     * 1. When using generics to get info in a standardized way -- print
+     * 2. When accessing the variable in a function to get & set -- override = and T()
+     */
 
 }
 

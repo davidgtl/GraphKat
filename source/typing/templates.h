@@ -11,14 +11,13 @@
 namespace FancyTypes::_internal {
     using std::stringstream, std::string;
 
+    template<typename T>
+    struct tag {
+    };
+
     template<typename... Types>
     size_t size_sum() {
-        return (sizeof(Types)+...);
-    }
-
-    template<>
-    size_t size_sum() {
-        return 0;
+        return (0 + ... + sizeof(Types));
     }
 
     template<typename T, typename... Types>
