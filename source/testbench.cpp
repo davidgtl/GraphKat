@@ -374,24 +374,15 @@ public:
         return (A) mem;
     }
 
-    template<typename T, FancyTypes::t_iterator<T> f_iterator, FancyTypes::t_access<T> f_access>
-    operator FancyTypes::TypeAccess<T, f_iterator, f_access>() {
-        return (FancyTypes::TypeAccess<T, f_iterator, f_access>) mem;
+    template<typename T, FancyTypes::t_iterator<T> f_iterator, FancyTypes::t_access<T> f_access, FancyTypes::TypeInfo &typeinfo>
+    operator FancyTypes::TypeAccess<T, f_iterator, f_access, typeinfo>() {
+        return (FancyTypes::TypeAccess<T, f_iterator, f_access, typeinfo>) mem;
     }
 
 };
 
-struct uninfo {
-    string name = "";
-    unsigned int count;
-    unsigned int length;
-    unsigned int type;
-};
-
-
 void TB::typeinfo() {
     using namespace FancyTypes;
-
 
 #if 0
     FancierNode node(int_i);
@@ -409,27 +400,14 @@ void TB::typeinfo() {
     cout << "myint: " << myint << "\n";
 #endif
 
-    typedef primitive_type<uninfo> uninfo_t;
-    auto uninfo_i = TypeInfo::with_toString<uninfo>([](void *ptr) {
-        stringstream ss;
-        auto value = (uninfo *) ptr;
-        ss << "{" << value->name << ","
-           << value->count << ","
-           << value->length << ","
-           << value->type << "}";
-        return ss.str();
-    });
-
     FancierNode node(uninfo_i);
 
     uninfo_t info = node;
 
     *info.value() = {"Bernadette", 4, 1, 3};
 
-    cout << info->name << "\n";
-    cout << uninfo_i.toString(info) << "\n";
-
-    info->type = 5;
+    cout << *I(info).name << "\n";
+    cout << info.toString() << "\n";
 
     cout << "Done.";
 }
