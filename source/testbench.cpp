@@ -366,6 +366,7 @@ public:
     FancierNode(FancyTypes::TypeInfo &type) {
         this->t = &type;
         mem = t->create();
+        t->initialize(mem);
     }
 
     template<typename A>
@@ -381,7 +382,7 @@ public:
 };
 
 struct uninfo {
-    string name;
+    string name = "";
     unsigned int count;
     unsigned int length;
     unsigned int type;
@@ -423,15 +424,12 @@ void TB::typeinfo() {
 
     uninfo_t info = node;
 
-    //info->name = "ana";
-    info->count = 4;
-    info->length = 3;
-    info->type = 1;
-
     *info.value() = {"Bernadette", 4, 1, 3};
 
     cout << info->name << "\n";
-    cout << uninfo_i.toString(info);
+    cout << uninfo_i.toString(info) << "\n";
+
+    info->type = 5;
 
     cout << "Done.";
 }

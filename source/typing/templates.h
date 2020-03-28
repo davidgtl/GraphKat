@@ -7,9 +7,10 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 namespace FancyTypes::_internal {
-    using std::stringstream, std::string;
+    using std::stringstream, std::string, std::memcpy;
 
     template<typename T>
     struct tag {
@@ -31,14 +32,19 @@ namespace FancyTypes::_internal {
     }
 
     //string need a constructor fo initializer lists to work with a struct
-    template<typename... Types>
+    template<typename T>
     void *allocate() {
-        return new char[size_sum<Types...>()];
+        return new char[sizeof(T)];
     }
 
-    template<typename... Types>
+    template<typename T>
+    void initialize(void *mem) {
+        new(mem) T();
+    }
+
+    template<typename T>
     void copy(void *dest, void *src) {
-        memcpy(dest, src, size_sum<Types...>());
+        memcpy(dest, src, sizeof(T));
     }
 
     /*template<typename... Types>

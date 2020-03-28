@@ -30,20 +30,25 @@ namespace FancyTypes {
 
     typedef size_t (*t_size)();
 
+    typedef void (*t_initialize)(void *);
+
     typedef string (*t_toString)(void *);
 
     struct TypeInfo {
 
         template<typename T>
         explicit
-        TypeInfo(_internal::tag<T> t) :create(_internal::allocate<T>), copy(_internal::copy<T>), hasIterator(false),
+        TypeInfo(_internal::tag<T> t) :create(_internal::allocate<T>), initialize(_internal::initialize<T>),
+                                       copy(_internal::copy<T>), hasIterator(false),
                                        size(_internal::size_sum<T>), toString(_internal::toString<T>) {}
 
-        TypeInfo(t_create f_create, t_copy f_copy, bool has_iterator, t_size f_size, t_toString f_toString) :
-                create(f_create), copy(f_copy), hasIterator(has_iterator),
+        TypeInfo(t_create f_create, t_initialize f_initialize, t_copy f_copy, bool has_iterator, t_size f_size,
+                 t_toString f_toString) :
+                create(f_create), initialize(f_initialize), copy(f_copy), hasIterator(has_iterator),
                 size(f_size), toString(f_toString) {}
 
         t_create create;
+        t_initialize initialize;
         t_copy copy;
 
         bool hasIterator;
@@ -53,7 +58,8 @@ namespace FancyTypes {
 
         template<typename T>
         static TypeInfo with_toString(t_toString toString) {
-            return TypeInfo(_internal::allocate<T>, _internal::copy<T>, false, _internal::size_sum<T>, toString);
+            return TypeInfo(_internal::allocate<T>, _internal::initialize<T>, _internal::copy<T>, false,
+                    _internal::size_sum<T>, toString);
         }
     };
 
@@ -94,7 +100,6 @@ namespace FancyTypes {
         T *value() {
             return _access(mem);
         }
-
     };
 }
 
