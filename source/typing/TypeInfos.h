@@ -46,10 +46,16 @@ namespace FancyTypes {
 
 
     struct uninfo {
-        string name = "";
-        unsigned int count;
-        unsigned int length;
-        unsigned int type;
+
+        string_t name;
+        uint_t count;
+        uint_t length;
+        uint_t type;
+
+        uninfo() : name(), count(), length(), type() {}
+
+        uninfo(const string &name, unsigned int count, unsigned int length, unsigned int type) :
+                name(name), count(count), length(length), type(type) {}
 
         uninfo operator+(uninfo &other) {
             return {this->name, this->count + other.count, this->length, this->type};
@@ -63,17 +69,19 @@ namespace FancyTypes {
 
     typedef FancyTypes::primitive_type<uninfo, uninfo_i> uninfo_t;
 
+
+    /*
     template<>
     class I<uninfo_t> {
 
     public:
-        string *name;
-        unsigned int *count;
-        unsigned int *length;
-        unsigned int *type;
+        string_t name;
+        uint_t count;
+        uint_t length;
+        uint_t type;
 
         I(uninfo_t &t) : name(&t->name), count(&t->count), length(&t->length), type(&t->type) {}
-    };
+    };*/
 
 
 

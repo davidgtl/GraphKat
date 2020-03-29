@@ -5,7 +5,6 @@
 #ifndef GRAPHKAT_TYPEINFO_H
 #define GRAPHKAT_TYPEINFO_H
 
-#include "iterator.h"
 #include "templates.h"
 #include <string>
 /*
@@ -31,7 +30,7 @@ namespace FancyTypes {
     typedef void (*t_copy)(void *dest, void *src);
 
     template<typename T>
-    using t_iterator = iterator<T> (*)();
+    using t_iterator = T *(*)(size_t);
 
     template<typename T>
     using t_read = T (*)();
@@ -80,8 +79,8 @@ namespace FancyTypes {
     template<typename T, t_iterator<T> f_iterator, t_access<T> f_access, TypeInfo &p_typeinfo>
     class TypeAccess {
 
-    private:
-        t_access<T> _access = f_access;
+        //private:
+        //    t_access<T> _access = f_access;
     public:
         void *mem;
 
@@ -94,7 +93,14 @@ namespace FancyTypes {
             typeinfo->initialize(mem);
         }
 
-        TypeAccess(T value) {
+        template<typename... Args>
+        TypeAccess(Args &&... args) {
+            mem = typeinfo->create();
+            typeinfo->initialize(mem);
+            *f_access(mem) = T(std::forward<Args>(args)...);
+        }
+
+        /*TypeAccess(T value) {
             mem = typeinfo->create();
             typeinfo->initialize(mem);
             *_access(mem) = value;
@@ -104,10 +110,11 @@ namespace FancyTypes {
             mem = typeinfo->create();
             typeinfo->initialize(mem);
             *_access(mem) = value;
-        }
+        }*/
 
         t_iterator<T> iterator = f_iterator;
 
+/*
         TypeAccess &operator=(T &other) {
             *_access(mem) = other;
             return *this;
@@ -117,9 +124,9 @@ namespace FancyTypes {
             *_access(mem) = other;
             return *this;
         }
-
+*/
         operator T() {
-            return *_access(mem);
+            return *f_access(mem);
         }
 
         operator void *() {
@@ -127,15 +134,19 @@ namespace FancyTypes {
         }
 
         T *operator->() {
-            return _access(mem);
+            return f_access(mem);
         }
 
         T &operator*() {
-            return *_access(mem);
+            return *f_access(mem);
+        }
+
+        T &operator[](size_t index) {
+            return *f_access(mem + f_iterator(index));
         }
 
         T *value() {
-            return _access(mem);
+            return f_access(mem);
         }
 
         static void *create() {

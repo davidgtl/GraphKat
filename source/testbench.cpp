@@ -14,6 +14,7 @@
 #include <utils/Randoms.h>
 #include <utils/BitSet.h>
 #include <typing/TypeInfos.h>
+#include <typing/iterator.h>
 #include "typing/TypeInfo.h"
 
 using std::cout, std::unordered_map, std::vector, std::set;
@@ -374,10 +375,10 @@ public:
         return (A) mem;
     }
 
-    template<typename T, FancyTypes::t_iterator<T> f_iterator, FancyTypes::t_access<T> f_access, FancyTypes::TypeInfo &typeinfo>
+    /*template<typename T, FancyTypes::t_iterator<T> f_iterator, FancyTypes::t_access<T> f_access, FancyTypes::TypeInfo &typeinfo>
     operator FancyTypes::TypeAccess<T, f_iterator, f_access, typeinfo>() {
         return (FancyTypes::TypeAccess<T, f_iterator, f_access, typeinfo>) mem;
-    }
+    }*/
 
 };
 
@@ -402,21 +403,44 @@ void TB::typeinfo() {
 
     FancierNode node(uninfo_i);
 
-    uninfo_t info = node;
+    string_t st = string("hello");
+
+    cout << st << "\n";
+
+    uninfo_t info = node.mem;
 
     info = {"Bernadette", 4, 1, 3};
-    uninfo_t info2({"Bernadette", 2, 1, 3});
+    uninfo_t info2 = {"Bernadette", 2, 1, 3};
 
     uninfo_t info3 = *info + *info2;
 
-    cout << info->length << " = " << *I(info).length << "\n";
+    vector<float> myfile(1000);
+
+    for (int i = 0; i < 1000; i++)
+        myfile[i] = i / 2.0f;
+
+    for (int y = 0; y < 10; y++)
+        for (int x = 0; x < 10; x++)
+            cout << myfile[y * 10 + x] << " ";
+
+    cout << "\n";
+    iterator dim2(myfile, 100, 10, 1);
+
+    for (int y = 0; y < 10; y++)
+        for (int x = 0; x < 10; x++)
+            cout << dim2(1, y, x) << " ";
+
+
+    /*auto l = I(info).length;
+
+    cout << info->length << " = " << l << "\n";*/
     cout << info.toString() << "\n";
     cout << info3.toString() << "\n";
 
     cout << "glm tests \n";
 
     vec3_t a({1.0, 0.5, 0.5});
-    vec3_t b({1.0, 0.5, 0.5});
+    vec3_t b({1.0, 0.5, 1.33});
 
     vec3_t c = *a + *b;
 

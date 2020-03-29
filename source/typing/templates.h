@@ -74,7 +74,7 @@ namespace FancyTypes::_internal {
 
     template<typename T>
     void toStream(std::ostream &stream, void *mem) {
-        stream << access<T>(mem);
+        stream << *access<T>(mem);
     }
 }
 
