@@ -417,14 +417,14 @@ void TB::typeinfo() {
     vector<float> myfile(1000);
 
     for (int i = 0; i < 1000; i++)
-        myfile[i] = i / 2.0f;
+        myfile[i] = i / 3.0f;
 
     for (int y = 0; y < 10; y++)
         for (int x = 0; x < 10; x++)
             cout << myfile[y * 10 + x] << " ";
 
     cout << "\n";
-    iterator dim2(myfile, 100, 10, 1);
+    iterator dim2(myfile, 300, 30, 3);
 
     for (int y = 0; y < 10; y++)
         for (int x = 0; x < 10; x++)
