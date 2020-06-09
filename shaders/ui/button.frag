@@ -59,6 +59,9 @@ void main() {
     vec2 center = vec2(0.5, 0.5);
 
     float blur = 0.07;
+    if (value > 0.5){
+        final_color += 0.0001;
+    }
     float t, tu;
 
     /*if (shape == 0){

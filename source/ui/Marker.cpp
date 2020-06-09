@@ -12,7 +12,7 @@ Marker::Marker(vec3 color, int shape, int filled, vec2 border_size, vec2 origin,
 
 void Marker::draw() {
     shader->use();
-    set_g_uniforms(*shader, size());
+   // set_g_uniforms(*shader, size());
     shader->setUniform("color", color);
     shader->setUniform("shape", shape);
     shader->setUniform("filled", filled);

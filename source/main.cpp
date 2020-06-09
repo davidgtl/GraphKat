@@ -95,7 +95,10 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
     if (xpos < 0 || ypos < 0 || xpos >= win_layout.windowSize.x || ypos >= win_layout.windowSize.y)
         return;
 
-    hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos)->on_move(xpos, ypos);
+    auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
+    if (elem != nullptr) {
+        elem->on_move(xpos, ypos);
+    }
 
     /*if (!captured) {
         lxpos = xpos;
@@ -126,7 +129,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             cout << "mevent " << captured << endl;
             captured = !captured;
 
-            hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos)->on_button(button, action, mods);
+            auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
+            if (elem != nullptr)
+                elem->on_button(button, action, mods);
 
             //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
             invalidate();
@@ -142,7 +147,9 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     offX -= xoffset * 0.01;
     offY += yoffset * 0.01;
 
-    hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos)->on_scroll(xoffset, yoffset);
+    auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
+    if (elem != nullptr)
+        elem->on_scroll(xoffset, yoffset);
 
     invalidate();
 }
@@ -208,7 +215,7 @@ GLFWwindow *initialize(int width, int height) {
 }
 
 float randf() {
-    return static_cast <float> (rand())/static_cast <float> (RAND_MAX);
+    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
 
@@ -233,9 +240,6 @@ vector<IRenderable *> buildScene() {
     auto *p4 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.6), vec2(1, 0.2), 0.1f);
     auto *p5 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.8), vec2(1, 0.2), 0.1f);
     auto *p6 = new Button(vec3(0.3, 0.8, 1.0), 0, vec2(0.3, 0.1), vec2(0.1, 0.05), 0.1f);
-
-    hitmap = new BitMap2D<IMouseInteractable>(10, win_layout.windowSize.x,
-            win_layout.windowSize.y);//FIXME: @100 nothing works
 
     Layouts::PopulateHitmap(*hitmap, {p1, p2, p3, p4, p5, p6});
 
@@ -335,8 +339,11 @@ int main(int argc, char *argv[]) {
 
     FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
-    auto renderables = buildScene();
 
+    hitmap = new BitMap2D<IMouseInteractable>(10, win_layout.windowSize.x, win_layout.windowSize.y);
+    //auto renderables = buildScene();
+
+    Plane p = Plane(vec2(0, 0), vec2(1, 1), 0.0);
 
     resized = true;
     while (!glfwWindowShouldClose(window)) {
@@ -346,7 +353,7 @@ int main(int argc, char *argv[]) {
             resized = false;
         }
         if (invalidated) {
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //screen.update(offX, offY);
             //baseShader.use();
@@ -363,19 +370,23 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);*/
             //plane3.draw();
 
-            for (auto &r : renderables)
-                r->draw();
+            //for (auto &r : renderables)
+            //    r->draw();
 
             stringstream str;
 
-            str << "x: " << lxpos << ", y: " << lypos;
+            //str << "x: " << lxpos << ", y: " << lypos;
             textRenderer.drawText(str.str().c_str(), win_layout.sisc(80, 80), win_layout.sisc(8), vec4(1, 0.8, 0.5, 1),
                     -1);
 
+            auto &psh = ShaderLoader::programMap["slider"];
+            psh.use();
+            //psh.setUniform("offset", vec2(0.5, 0.5));
+            p.draw();
             //textRenderer.
 
             glfwSwapBuffers(window);
-            invalidated = false;
+            //invalidated = false;
         } else {
             this_thread::sleep_for(chrono::milliseconds(10));
         }

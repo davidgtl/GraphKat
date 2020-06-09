@@ -61,6 +61,8 @@ void main() {
     vec2 center = vec2(0.5, 0.5);
 
     float blur = 0.07;
+    if (shape == 1)
+    blur += 0.0001;
     float t, tu;
 
     t = sdBox(cscale(uv, center, vec2(1.0, 1.0)), vec2(1.0, 1.0), 0.0);
