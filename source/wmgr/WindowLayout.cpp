@@ -5,7 +5,7 @@
 #define GLM_FORCE_SWIZZLE
 
 #include <glm/glm.hpp>
-#include "LayoutManager.h"
+#include "WindowLayout.h"
 #include "wsize.h"
 #include <iostream>
 #include <pugixml.hpp>
@@ -14,25 +14,28 @@
 using namespace pugi;
 using namespace std;
 
-LayoutManager::LayoutManager() : screenSize(1, 1), windowSize(1, 1),
-                                 hConstr(), vConstr(), parents() {
+WindowLayout::WindowLayout() : screenSize(1, 1), windowSize(1, 1),
+                               hConstr(), vConstr(), parents() {
 
 }
 
-LayoutManager::LayoutManager(vec2 screenSize, vec2 windowSize) : screenSize(screenSize), windowSize(windowSize),
-                                                                 hConstr(), vConstr(), parents() {
-
+WindowLayout::WindowLayout(vec2 screenSize, vec2 windowSize) : screenSize(screenSize), windowSize(windowSize),
+                                                               hConstr(), vConstr(), parents() {
+    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
 }
 
-void LayoutManager::updateWindowSize(vec2 windowSize) {
+void WindowLayout::updateWindowSize(vec2 windowSize) {
     this->windowSize = windowSize;
+    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
 }
 
-void LayoutManager::updateScreenSize(vec2 screenSize) {
+void WindowLayout::updateScreenSize(vec2 screenSize) {
     this->screenSize = screenSize;
+    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
+
 }
 
-void LayoutManager::addPlane(const Plane &p, LayoutConstraint horizontal, LayoutConstraint vertical) {
+void WindowLayout::addPlane(const Plane &p, LayoutConstraint horizontal, LayoutConstraint vertical) {
     hConstr.insert({p, horizontal});
     vConstr.insert({p, vertical});
 
@@ -45,13 +48,13 @@ void LayoutManager::addPlane(const Plane &p, LayoutConstraint horizontal, Layout
     cout << "----\n";
 }
 
-void LayoutManager::addPlane(Plane &p, Plane &parent, LayoutConstraint horizontal, LayoutConstraint vertical) {
+void WindowLayout::addPlane(Plane &p, Plane &parent, LayoutConstraint horizontal, LayoutConstraint vertical) {
     hConstr.insert({p, horizontal});
     vConstr.insert({p, vertical});
     parents.insert({p, parent});
 }
 
-tuple<vec2, vec2> LayoutManager::calculateMetrics(Plane &p) {
+tuple<vec2, vec2> WindowLayout::calculateMetrics(Plane &p) {
 
     auto[x, w] = resolveConstraint(this->hConstr[p], true);
     auto[y, h] = resolveConstraint(this->vConstr[p], false);
@@ -73,7 +76,7 @@ tuple<vec2, vec2> LayoutManager::calculateMetrics(Plane &p) {
     return {origin, size};
 }
 
-tuple<float, float> LayoutManager::resolveConstraint(LayoutConstraint con, bool horizontal) {
+tuple<float, float> WindowLayout::resolveConstraint(LayoutConstraint con, bool horizontal) {
 
     if (con == LayoutConstraint::let) {
         auto size = resolveSize(con.length, horizontal);
@@ -91,7 +94,7 @@ tuple<float, float> LayoutManager::resolveConstraint(LayoutConstraint con, bool 
 }
 
 
-float LayoutManager::resolveSize(wsize s, bool horizontal) {
+float WindowLayout::resolveSize(wsize s, bool horizontal) {
     if (s == wsize::sis)
         return horizontal ? sisc(s).x : sisc(s).y;
 
@@ -101,29 +104,29 @@ float LayoutManager::resolveSize(wsize s, bool horizontal) {
     return 0;
 }
 
-vec2 LayoutManager::sisc(vec2 size) {
+vec2 WindowLayout::sisc(vec2 size) {
     return size * (screenSize.x / 1000.0f / windowSize);
 }
 
-vec2 LayoutManager::sisc(float size) {
+vec2 WindowLayout::sisc(float size) {
     return vec2(size, size) * (screenSize.x / 1000.0f / windowSize);
 }
 
-vec2 LayoutManager::sisc(float sx, float sy) {
+vec2 WindowLayout::sisc(float sx, float sy) {
     return sisc(vec2(sx, sy));
 }
 
-LayoutManager::LayoutManager(const string layout_file) {
+WindowLayout::WindowLayout(const string layout_file) {
     pugi::xml_document doc;
     ifstream stream(layout_file);
     pugi::xml_parse_result result = doc.load(stream);
 
-    pugi::xpath_node_set tools = doc.select_nodes("/Profile/Tools/Tool[@AllowRemote='true' and @DeriveCaptionFrom='lastparam']");
+    pugi::xpath_node_set tools = doc.select_nodes(
+            "/Profile/Tools/Tool[@AllowRemote='true' and @DeriveCaptionFrom='lastparam']");
 
     std::cout << "Tools:\n";
 
-    for (pugi::xpath_node_set::const_iterator it = tools.begin(); it != tools.end(); ++it)
-    {
+    for (pugi::xpath_node_set::const_iterator it = tools.begin(); it != tools.end(); ++it) {
         pugi::xpath_node node = *it;
         std::cout << node.node().attribute("Filename").value() << "\n";
     }
@@ -132,4 +135,14 @@ LayoutManager::LayoutManager(const string layout_file) {
 
     if (build_tool)
         std::cout << "Build tool: " << build_tool.node().attribute("Filename").value() << "\n";
+}
+
+
+void WindowLayout::line_metrics(vec2 size, vec2 &g_uv_norm, float &g_bandwidth, float &g_transition) {
+
+    g_uv_norm = size * windowNorm / glm::min(size.x, size.y);
+
+    float base = 1 / glm::min((size * windowSize).x, (size * windowSize).y);
+    g_bandwidth = base * 3;
+    g_transition = base * 2;
 }

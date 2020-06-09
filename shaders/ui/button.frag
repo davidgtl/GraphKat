@@ -3,10 +3,10 @@
 in vec3 v_color;
 in vec2 uv;
 
-uniform vec2 uv_norm;
 uniform vec3 color;
 uniform float value;
 
+uniform vec2 g_uv_norm;
 uniform float g_bw;
 uniform float g_tr;
 
@@ -54,7 +54,7 @@ vec4 fblend(vec4 acc, vec3 col, float alpha){
 }
 
 void main() {
-    vec2 nuv = uv*uv_norm;
+    vec2 nuv = uv*g_uv_norm;
     vec4 final_color = vec4(0.0);
     vec2 center = vec2(0.5, 0.5);
 
@@ -69,8 +69,8 @@ void main() {
         tu = df_circle(cscale(uv, 1 + border_size));
     }*/
 
-    vec2 sq_size = vec2(0.4, 0.4) * uv_norm;
-    float sq_dist = df_square(nuv-uv_norm*0.5, sq_size);
+    vec2 sq_size = vec2(0.4, 0.4) * g_uv_norm;
+    float sq_dist = df_square(nuv-g_uv_norm*0.5, sq_size);
     float circ_dist = df_circle(nuv-0.5 - vec2(value * sq_size.x*2.0 - 0.2, 0.0), 0.0);
 
 

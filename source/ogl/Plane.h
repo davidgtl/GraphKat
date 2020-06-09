@@ -2,42 +2,42 @@
 
 #include "PointModel.h"
 #include <glm/glm.hpp>
-#include <dataflow/Context.h>
+#include "IRenderable.h"
 
 using namespace glm;
 
-class Plane {
+class Plane : IRenderable {
 public:
     unsigned int vao, vbo, ebo, uvs;
 
-    Context *context;
+    explicit Plane(bool invertY = false);
 
-    Plane();
-    Plane(Context *ctx, bool invertY = false);
+    Plane(vec2 origin, vec2 size, float z, bool invertY = false);
 
     ~Plane();
 
-    void draw();
+    void draw() override;
 
-    void updateVertices();
+    void updateVertices(vec2 origin, vec2 size, float z);
+
+    void updateVertices(vec2 origin, vec2 size);
+
+    vec2 &origin();
+
+    vec2 &size();
+
+    float &z();
 
     bool operator<(const Plane &obj) const {
-        if (obj.vao < this->vao)
-            return true;
-        return false;
+        return obj.vao < this->vao;
     }
 
-    static void UpdateVertices(Context *in_ctx, Context *out_ctx);
-
-    static Context *CreatePlane(vec2 origin, vec2 size, float z, Context *shader_ctx);
-
-    static void RenderPlane(Context *in_ctx, Context *out_ctx);
-
-    constexpr static const std::string_view _endpoint_rmap[] = {"origin", "size", "z", "plane"};
-    enum Endpoints {
-        origin, size, z, plane, _end
-    };
 private:
+
+    vec2 _origin;
+    vec2 _size;
+    float _z;
+    bool invertY;
 
     void init(bool invertY = false);
 };

@@ -1,5 +1,4 @@
 #include "ProgramShader.h"
-#include "dataflow/Context.h"
 #include "messages.h"
 #include <glm/glm.hpp>
 #include <memory>
@@ -70,9 +69,7 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
          */
         auto uniform_name = std::make_unique<char[]>(max_name_len);
 
-        std::unordered_map<std::string, uniform_info_t> uniforms;
 
-        auto unif_ctx = Context::CurrentContext->createSubContext("uniforms");
         //TODO: map them to the program shaders uniformtypes
         //based on that data do things whith the endpoints
         for (GLint i = 0; i < uniform_count; ++i)
@@ -86,9 +83,7 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
             printf("%s - %x#%d @%d\n", uniform_name.get(), type, uniform_info.count, uniform_info.location);
             UniformType utype = UniformType(type, uniform_info.count, uniform_info.location);
 
-            unif_ctx->createEndpoint(uniform_name.get(), utype);
-
-            uniforms.emplace(std::make_pair(std::string(uniform_name.get(), length), uniform_info));
+            uniforms.emplace(std::string(uniform_name.get(), length), utype);
         }
     }
 }
@@ -113,7 +108,7 @@ ProgramShader::ProgramShader(GLuint shader1, GLuint shader2, GLuint shader3){
     }
 }
 
-ProgramShader::ProgramShader() : dataContext("shader") {
+ProgramShader::ProgramShader() {
     id = -1;
 }
 

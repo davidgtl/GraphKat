@@ -2,9 +2,15 @@
 #include <glad/glad.h>
 #include <nodeprims/Shaders.h>
 
-Plane::Plane(Context *ctx, bool invertY) : vao(-1), vbo(-1), ebo(-1), uvs(-1) {
-    this->context = ctx;
+Plane::Plane(bool invertY) : vao(-1), vbo(-1), ebo(-1), uvs(-1),
+                             _origin(0, 0), _size(0, 0), _z(0), invertY(invertY) {
     init(invertY);
+}
+
+Plane::Plane(vec2 origin, vec2 size, float z, bool invertY) : vao(-1), vbo(-1), ebo(-1), uvs(-1),
+                                                              _origin(origin), _size(size), _z(z), invertY(invertY) {
+    init(invertY);
+    updateVertices(origin, size, z);
 }
 
 void Plane::init(bool invertY) {
@@ -17,7 +23,12 @@ void Plane::init(bool invertY) {
 
     glBindVertexArray(vao);
 
-    updateVertices();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+
+    glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), nullptr, GL_STATIC_DRAW);
+
 
     int indices[] = {
             0, 1, 2,
@@ -65,19 +76,19 @@ void Plane::draw() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 }
 
-void Plane::updateVertices() {
+void Plane::updateVertices(vec2 origin, vec2 size, float z) {
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+
+    this->_origin = origin;
+    this->_size = size;
+    this->_z = z;
 
     vec2 ostart = vec2(-1, -1);
     vec2 oend = vec2(1, 1);
 
-    vec2 start = ostart + EGV(origin, vec2) * (oend - ostart);
-    vec2 end = start + EGV(size, vec2) * (oend - ostart);
-
-    auto z = EGV(z, float);
+    vec2 start = ostart + origin * (oend - ostart);
+    vec2 end = start + size * (oend - ostart);
 
     float vertices[] = {
             start.x, start.y, z,
@@ -86,41 +97,22 @@ void Plane::updateVertices() {
             end.x, end.y, z
     };
 
-    glBufferData(GL_ARRAY_BUFFER, 4*3*sizeof(float), vertices, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), 0, vertices);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-Plane::Plane() : vao(-1), vbo(-1), ebo(-1), uvs(-1) {
-    this->context = nullptr;
+void Plane::updateVertices(vec2 origin, vec2 size) {
+    updateVertices(origin, size, this->_z);
 }
 
-void Plane::UpdateVertices(Context *in_ctx, Context *out_ctx) {
-    EIV(plane, Plane).updateVertices();
+vec2 &Plane::origin() {
+    return _origin;
 }
 
-void Plane::RenderPlane(Context *in_ctx, Context *out_ctx) {
-    Shaders::BindUniforms(in_ctx, nullptr);
-    EGV(in_ctx, primitive/plane, Plane).draw();
+vec2 &Plane::size() {
+    return _size;
 }
 
-Context *Plane::CreatePlane(vec2 origin, vec2 size, float z, Context *shader_ctx) {
-    auto context = new Context();
-    auto primitive = CCV(context, primitive);
-    auto shader = CCV(context, shader);
-
-    ECV(primitive, origin, origin);
-    ECV(primitive, size, size);
-    ECV(primitive, z, z);
-    ECV(primitive, plane, Plane(primitive));
-
-    auto cn_update_verts = new ComputeNode(primitive, nullptr, Plane::UpdateVertices);
-    ERL(primitive, origin, cn_update_verts);
-    ERL(primitive, size, cn_update_verts);
-    ERL(primitive, z, cn_update_verts);
-
-    shader->linkContext(shader_ctx);
-
-    ECV(context, render, new ComputeNode(context, nullptr, Plane::RenderPlane));
-
-    return context;
+float &Plane::z() {
+    return _z;
 }

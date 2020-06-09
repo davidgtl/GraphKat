@@ -12,15 +12,15 @@
 #include <set>
 #include <random>
 #include <chrono>
-#include <dataflow/Context.h>
 #include <utils/Randoms.h>
 #include <utils/BitSet.h>
 #include <typing/TypeInfos.h>
 #include <typing/iterator.h>
 #include "typing/TypeInfo.h"
 #include <boost/format.hpp>
+#include <boost/any.hpp>
 
-using std::cout, std::unordered_map, std::vector, std::set, std::list;
+using std::cout, std::unordered_map, std::vector, std::set, std::list, std::string;
 
 int getFIndex(unsigned long a) {
     for (int i = 0; i < 64; i++) {

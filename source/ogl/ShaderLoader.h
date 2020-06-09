@@ -14,10 +14,12 @@ using namespace std;
 
 class ShaderLoader {
 public:
-    static Context *LoadShaders(const char *shaders_path);
+    static void LoadShaders(const char *shaders_path);
+
+    static map<string, ProgramShader> programMap;
+
 private:
     static map<std::string, GLuint> s_mapShaderType;
-    static map<string, ProgramShader> programMap;
     static map<string, Shader> shaderMap;
 
     static Shader resolveShader(pugi::xml_node shader_node);

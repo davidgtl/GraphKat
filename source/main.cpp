@@ -17,10 +17,7 @@
 #include "messages.h"
 #include "ogl/FontRenderer.h"
 #include "ogl/ShaderLoader.h"
-#include "wmgr/LayoutManager.h"
-#include "dataflow/ComputeNode.h"
-#include "dataflow/Context.h"
-#include "dataflow/Endpoint.h"
+#include "wmgr/WindowLayout.h"
 #include <nodeprims/Math.h>
 #include <nodeprims/Shaders.h>
 #include <nodeprims/Layouts.h>
@@ -36,22 +33,24 @@
 #include <Bar.h>
 #include <random>
 #include "typing/TypeInfo.h"
+#include "ui/Slider.h"
+#include "ui/Text.h"
+#include "ui/Button.h"
+#include "ui/Marker.h"
 
 using namespace std;
 using namespace glm;
 
 int keyPressed[512];
 bool captured = false;
-LayoutManager lmgr;
-vec2 screenSize;
-vec2 windowSize;
-vec2 windowNorm;
 
 bool invalidated = true;
 bool resized = true;
 
+BitMap2D<IMouseInteractable> *hitmap = nullptr;
+
 vec2 absToRel(vec2 win, vec2 compPos, vec2 compSize) {
-    return (win - compPos)/compSize;
+    return (win - compPos) / compSize;
 }
 
 void invalidate() {
@@ -88,31 +87,17 @@ void keyHeldCallback(double dt) {
 
 
 double lxpos, lypos;
-vec2 mp;
 double a_xpos = 0.0f, a_ypos = 0.0f;
 float mouseSensitivity = 0.001;
 
 
-void updateValues() {
-
-    vec2 local = absToRel(mp, vec2(0.0, 0.0), vec2(1, 0.2));
-
-    double indv = local.x;
-    indv = indv < 0 ? 0 : indv;
-    indv = indv > 1 ? 1 : indv;
-
-    int index = (int) (indv*299);
-
-}
-
-Context *last_ctx = nullptr;
-
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
-    if (xpos < 0 || ypos < 0 || xpos >= windowSize.x || ypos >= windowSize.y)
+    if (xpos < 0 || ypos < 0 || xpos >= win_layout.windowSize.x || ypos >= win_layout.windowSize.y)
         return;
-    auto ctx = EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos, windowSize.y - lypos);
 
-    if (!captured) {
+    hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos)->on_move(xpos, ypos);
+
+    /*if (!captured) {
         lxpos = xpos;
         lypos = ypos;
 
@@ -124,19 +109,12 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 
         invalidate();
         return;
-    }
+    }*/
 
-    mp = vec2(xpos, ypos)/windowSize;
-    mp.y = 1 - mp.y;
 
     double dy = lypos - ypos;//inverted Y
     double dx = lxpos - xpos;//inverted X
 
-    if (ctx != nullptr)
-        ESV(ctx, value,
-            (float) ((xpos/windowSize.x - EGV(ctx, primitive/origin, vec2).x)/EGV(ctx, primitive/size, vec2).x));
-
-    updateValues();
     lxpos = xpos;
     lypos = ypos;
     invalidate();
@@ -148,17 +126,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             cout << "mevent " << captured << endl;
             captured = !captured;
 
-
-            Context *clicked_object = EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->getFirst(lxpos,
-                                                                                                         windowSize.y -
-                                                                                                         lypos);
-
-            cout << "Clicked context: "
-                 << clicked_object
-                 << "\n";
-            if (clicked_object != nullptr)
-                ESV(clicked_object, color, vec3(1.0, 1.0, 0.3));
-            //EGV(Context::Root, MainScene/hitmap, BitMap2D<Context>*)->prettyPrint();
+            hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos)->on_button(button, action, mods);
 
             //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
             invalidate();
@@ -171,16 +139,17 @@ float offX, offY;
 void echo();
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    offX -= xoffset*0.01;
-    offY += yoffset*0.01;
+    offX -= xoffset * 0.01;
+    offY += yoffset * 0.01;
+
+    hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos)->on_scroll(xoffset, yoffset);
+
     invalidate();
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     //glViewport(0, 0, width, height);
-    windowSize = vec2(width, height);
-    windowNorm = windowSize/glm::min(windowSize.x, windowSize.y);
-    lmgr.updateWindowSize(windowSize);
+    win_layout.updateWindowSize(vec2(width, height));
     resized = true;
     invalidate();
 }
@@ -194,8 +163,7 @@ void updateScreenSize() {
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
-    screenSize = vec2(mode->width, mode->height);
-    lmgr.updateScreenSize(screenSize);
+    win_layout.updateScreenSize(vec2(mode->width, mode->height));
 }
 
 GLFWwindow *initialize(int width, int height) {
@@ -234,7 +202,7 @@ GLFWwindow *initialize(int width, int height) {
         return nullptr;
     }
 
-    framebuffer_size_callback(window, windowSize.x, windowSize.y);
+    framebuffer_size_callback(window, win_layout.windowSize.x, win_layout.windowSize.y);
 
     return window;
 }
@@ -255,97 +223,23 @@ public:
     }
 };
 
-void doNothing(Context *in_ctx, Context *out_ctx) {
-    in_ctx->createEndpoint("hello");
-};
 
+vector<IRenderable *> buildScene() {
 
-Context *createSlider(vec2 origin, vec2 size, float z) {
+    auto *p1 = new Marker(vec3(0.3, 0.8, 1.0), 1, 0, vec2(0.01f, 0.01f),
+            vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f);
+    auto *p2 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.2), vec2(1, 0.2), 0.1f);
+    auto *p3 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.4), vec2(1, 0.2), 0.1f);
+    auto *p4 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.6), vec2(1, 0.2), 0.1f);
+    auto *p5 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.8), vec2(1, 0.2), 0.1f);
+    auto *p6 = new Button(vec3(0.3, 0.8, 1.0), 0, vec2(0.3, 0.1), vec2(0.1, 0.05), 0.1f);
 
-    auto context = Plane::CreatePlane(origin, size, z, CGV(Context::Root, shaders/slider));
+    hitmap = new BitMap2D<IMouseInteractable>(10, win_layout.windowSize.x,
+            win_layout.windowSize.y);//FIXME: @100 nothing works
 
-    float minv = glm::min(size.x, size.y);
-    ECV(context, uv_norm, size*windowNorm/minv);
-    float g_bw = 1/glm::min((size*windowSize).x, (size*windowSize).y);
-    ECV(context, g_bw, g_bw*3);
-    ECV(context, g_tr, g_bw*2);
+    Layouts::PopulateHitmap(*hitmap, {p1, p2, p3, p4, p5, p6});
 
-    return context;
-}
-
-Context *createButton(vec2 origin, vec2 size, float z) {
-    auto context = Plane::CreatePlane(origin, size, z, CGV(Context::Root, shaders/button));
-
-    float minv = glm::min(size.x, size.y);
-    ECV(context, uv_norm, size*windowNorm/minv);
-    float g_bw = 1/glm::min((size*windowSize).x, (size*windowSize).y);
-    ECV(context, g_bw, g_bw*3);
-    ECV(context, g_tr, g_bw*2);
-
-    return context;
-}
-
-/*
- * Supports only monospaced fonts, size is side of square
- */
-Context *createText(vec2 midstart, float size, float z) {
-
-}
-
-void renderScene(Context *in_ctx, Context *out_ctx) {
-    for (auto obj : CGV(in_ctx, objects)->contexts())
-        EE(obj.second, render);
-}
-
-Context *buildScene() {
-    auto scene_ctx = CCV(Context::Root, MainScene);
-
-    Context *p1 = createSlider(vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f);
-    Context *p2 = createSlider(vec2(0, 0.2), vec2(1, 0.2), 0.1f);
-    Context *p3 = createSlider(vec2(0, 0.4), vec2(1, 0.2), 0.1f);
-    Context *p4 = createSlider(vec2(0, 0.6), vec2(1, 0.2), 0.1f);
-    Context *p5 = createSlider(vec2(0, 0.8), vec2(1, 0.2), 0.1f);
-    Context *p6 = createButton(vec2(0.3, 0.1), vec2(0.1, 0.05), 0.1f);
-
-    ECV(p1, color, vec3(0.3, 0.8, 1.0));
-    ECV(p2, color, vec3(0.3, 0.8, 1.0));
-    ECV(p3, color, vec3(0.3, 0.8, 1.0));
-    ECV(p4, color, vec3(0.3, 0.8, 1.0));
-    ECV(p5, color, vec3(0.3, 0.8, 1.0));
-    ECV(p6, color, vec3(0.3, 0.8, 1.0));
-
-    ECV(p1, shape, 1);
-    ECV(p1, filled, 0);
-    ECV(p1, border_size, vec2(0.01f, 0.01f));
-    ECV(p3, filled, 1);
-    ECV(p4, filled, 0);
-    ECV(p5, filled, 1);
-    ECV(p6, filled, 1);
-
-    ECV(p1, value, 0.0f);
-    ECV(p2, value, 0.0f);
-    ECV(p3, value, 0.0f);
-    ECV(p4, value, 0.0f);
-    ECV(p5, value, 0.0f);
-    ECV(p5, value, 0.0f);
-
-    auto Obj_ctx = CCV(scene_ctx, objects);
-    Obj_ctx->adoptContext(p1);
-    Obj_ctx->adoptContext(p2);
-    Obj_ctx->adoptContext(p3);
-    Obj_ctx->adoptContext(p4);
-    Obj_ctx->adoptContext(p5);
-    Obj_ctx->adoptContext(p6);
-
-    ECV(scene_ctx, hitmap, new BitMap2D<Context>(10, windowSize.x, windowSize.y));//FIXME: @100 nothing works
-
-    Context::Root->pretty_print();
-
-    Layouts::PopulateHitmap(scene_ctx, nullptr);
-
-    ECV(scene_ctx, render, new ComputeNode(scene_ctx, nullptr, renderScene));
-
-    return scene_ctx;
+    return {p1, p2, p3, p4, p5, p6};
 }
 
 void indirect_tb() {
@@ -420,125 +314,17 @@ void indirect_tb() {
     fatal_error();
 }
 
-#define CSIZE(ctype) if(t == typeid(ctype)) return sizeof(ctype);
-
-unsigned int csize(type_index t) {
-    CSIZE(char);
-    CSIZE(unsigned char);
-    CSIZE(short);
-    CSIZE(unsigned short);
-    CSIZE(int);
-    CSIZE(unsigned int);
-    CSIZE(long);
-    CSIZE(unsigned long);
-    CSIZE(long long);
-    CSIZE(unsigned long long);
-    CSIZE(float);
-    CSIZE(double);
-}
-
-#define CMAPSIZE(ctype) {std::type_index(typeid(ctype)), sizeof(ctype)}
-std::unordered_map<type_index, unsigned int> types_map = {
-        CMAPSIZE(char),
-        CMAPSIZE(unsigned char),
-        CMAPSIZE(short),
-        CMAPSIZE(unsigned short),
-        CMAPSIZE(int),
-        CMAPSIZE(unsigned int),
-        CMAPSIZE(long),
-        CMAPSIZE(unsigned long),
-        CMAPSIZE(long long),
-        CMAPSIZE(unsigned long long),
-        CMAPSIZE(float),
-        CMAPSIZE(double)
-};
-
-void stdmap_vs_ifs_tb() {
-    vector<int> original;
-    type_index types[] = {typeid(char), typeid(unsigned char), typeid(short), typeid(unsigned short), typeid(int),
-                          typeid(unsigned int),
-                          typeid(long), typeid(unsigned long), typeid(long long), typeid(unsigned long long),
-                          typeid(float), typeid(double)};
-
-    int N = 1000000;
-
-
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 11); // distribution in range [1, 6]
-
-
-    for (int i = 0; i < N; i++) {
-        original.push_back(dist(rng));
-    }
-
-
-    int total = 0;
-    auto t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++) {
-        total += types_map[types[original[i]]];
-
-    }
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    cout << "Avg time:"
-         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
-         << ",    ans: " << total << "\n";
-
-    total = 0;
-    t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++) {
-        total += csize(types[original[i]]);
-    }
-
-    t1 = std::chrono::high_resolution_clock::now();
-
-    cout << "Avg time:"
-         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
-         << ",    ans: " << total << "\n";
-
-    fatal_error();
-}
-
-
 int main(int argc, char *argv[]) {
 
-    auto in_ctx = new Context();
-    auto out_ctx = new Context();
-
-    in_ctx->createEndpoint("fstart", 2.0f);
-    in_ctx->createEndpoint("fend", 8.0f);
-    in_ctx->createEndpoint("tstart", 0.0f);
-    in_ctx->createEndpoint("tend", 100.0f);
-    in_ctx->createEndpoint("x", 0.4f);
-    out_ctx->createEndpoint("res");
-
-    Math::LinMapUnit(in_ctx, out_ctx);
-
-    cout << "result: " << out_ctx->endpoint("res")->value<float>();
-
-    cout << "\n";
-
-    /* boost::variant<int, std::string> u(7);
-     std::cout << u; // output: hello world
-
-     int result = boost::apply_visitor(my_visitor(), u);
-     std::cout << result; // output: 11 (i.e., length of "hello world")
-
-     exit(0);*/
     glfwSetErrorCallback(errorCallback);
 
-    windowSize = vec2(1280, 720);
-    windowNorm = windowSize/glm::min(windowSize.x, windowSize.y);
-    GLFWwindow *window = initialize(windowSize.x, windowSize.y);
+    win_layout.updateWindowSize(vec2(1280, 720));
+    GLFWwindow *window = initialize(win_layout.windowSize.x, win_layout.windowSize.y);
     if (!window) {
         return 0;
     }
     updateScreenSize();
-    framebuffer_size_callback(window, windowSize.x, windowSize.y);
+    framebuffer_size_callback(window, win_layout.windowSize.x, win_layout.windowSize.y);
 
     glClearColor(0.094f, 0.086f, 0.109f, 1.0f);
     glEnable(GL_BLEND);
@@ -549,15 +335,14 @@ int main(int argc, char *argv[]) {
 
     FontRenderer textRenderer = FontRenderer("fonts/Source_Code_Pro/SourceCodePro-Regular.ttf", 512, 20, 200);
 
-    Context *mainScene = buildScene();
-
-    Context::Root->pretty_print();
+    auto renderables = buildScene();
 
 
     resized = true;
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
-            printf("win: %f %f screen: %f %f\n", windowSize.x, windowSize.y, screenSize.x, screenSize.y);
+            printf("win: %f %f screen: %f %f\n", win_layout.windowSize.x, win_layout.windowSize.y,
+                    win_layout.screenSize.x, win_layout.screenSize.y);
             resized = false;
         }
         if (invalidated) {
@@ -578,13 +363,14 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);*/
             //plane3.draw();
 
-
-            EE(mainScene, render);
+            for (auto &r : renderables)
+                r->draw();
 
             stringstream str;
 
             str << "x: " << lxpos << ", y: " << lypos;
-            textRenderer.drawText(str.str().c_str(), lmgr.sisc(80, 80), lmgr.sisc(8), vec4(1, 0.8, 0.5, 1), -1);
+            textRenderer.drawText(str.str().c_str(), win_layout.sisc(80, 80), win_layout.sisc(8), vec4(1, 0.8, 0.5, 1),
+                    -1);
 
             //textRenderer.
 

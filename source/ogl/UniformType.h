@@ -11,15 +11,17 @@
 
 class UniformType {
 public:
-        GLenum type;
+    GLenum type;
     int count;
     int location;
 
-        boost::any getInit();
+    boost::any getInit();
 
-        static std::unordered_map<GLenum, boost::any> initializers;
+    static std::unordered_map<GLenum, boost::any> initializers;
 
     UniformType(GLenum type, int size, int location);
+
+    UniformType() : type(0), count(0), location(0) {}
 };
 
 

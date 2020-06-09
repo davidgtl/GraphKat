@@ -5,23 +5,15 @@
 #ifndef GRAPHKAT_MATH_H
 #define GRAPHKAT_MATH_H
 
-#include <dataflow/Context.h>
-#include <dataflow/ComputeNode.h>
+namespace Math {
 
-#define GLM_FORCE_SWIZZLE
+    template<typename T>
+    T linmap(T x, T fstart, T fend, T tstart, T tend) {
+        return (x - fstart) / (fend - fstart) * (tend - tstart) + tstart;
+    }
 
-#include <glm/glm.hpp>
 
-using glm::vec2;
-
-class Math {
-
-ComputeFuncT(LinMap, x);
-ComputeFuncT(LinMapUnit, x);
-ComputeFuncT(InvLinMap, x);
-ComputeFuncT(InvLinMapUnit, x);
-
-};
+}
 
 
 #endif //GRAPHKAT_MATH_H

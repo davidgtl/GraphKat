@@ -4,15 +4,15 @@
 #include "Shader.h"
 #include "UniformType.h"
 #include <vector>
-#include <dataflow/Context.h>
+#include "nodeprims/Shaders.h"
 
 using namespace std;
 
 class ProgramShader {
 public:
 
-    Context dataContext;
     GLuint id;
+    std::unordered_map<std::string, UniformType> uniforms;
 
     ProgramShader(GLuint shader1, GLuint shader2, GLuint shader3);
 
@@ -30,6 +30,9 @@ public:
 
     operator GLuint() const;
 
-    void setUniform();
+    template<typename T>
+    void setUniform(const string &name, T value) {
+        Shaders::bind_uniform(uniforms[name], value);
+    }
 };
 

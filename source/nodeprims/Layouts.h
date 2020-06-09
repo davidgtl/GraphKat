@@ -5,14 +5,12 @@
 #ifndef GRAPHKAT_LAYOUTS_H
 #define GRAPHKAT_LAYOUTS_H
 
+#include <ui/IMouseInteractable.h>
+#include "utils/BitMap2D.h"
+#include <vector>
 
-#include <dataflow/Context.h>
-#include <dataflow/ComputeNode.h>
-#include <dataflow/Endpoint.h>
-
-class Layouts {
-public:
-ComputeFunc(PopulateHitmap);
+namespace Layouts {
+    void PopulateHitmap(BitMap2D<IMouseInteractable> &hitmap, const vector<IMouseInteractable *> &objects);
 };
 
 

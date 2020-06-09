@@ -16,21 +16,17 @@
 #include "ogl/Shader.h"
 #include "ogl/Texture.h"
 #include "ogl/ProgramShader.h"
+#include "ogl/ShaderLoader.h"
 
 using namespace std;
 using namespace glm;
 
 
-FontRenderer::FontRenderer(const char *fontPath, const int atlas_size, int pt, int dpi) {
+FontRenderer::FontRenderer(const char *fontPath, const int atlas_size, int pt, int dpi) :
+        textPlane(vec2(0.0), vec2(0.0), 0.0f), textShader(ShaderLoader::programMap["text"]) {
     this->atlas_size = atlas_size;
 
     fontAtlas = new Texture(atlas_size, atlas_size);
-
-    textPlane = Plane::CreatePlane(vec2(0.0), vec2(0.0), 0.0f, CGV(Context::Root, shaders/text));
-
-    ECV(textPlane, color, vec4(0.0, 0.0, 0.0, 1.0));
-    ECV(textPlane, color, vec4(0.0, 0.0, 0.0, 1.0));
-    ECV(textPlane, charBounds, vec4(0.0));
 
     initFonts(fontPath, *fontAtlas, atlas_size, atlas_size, &atlas_charHeight, &atlas_charWidth, pt, dpi);
 }
@@ -154,8 +150,7 @@ void FontRenderer::drawText(const char *text, vec2 origin, vec2 size, vec4 color
     textShader.use();
     fontAtlas->bindTexture();
 
-
-    ESV(textPlane, color, color);
+    textShader.setUniform("color", color);
 
     vec2 pen;
     float maxWidth = getCharsize(' ', atlas_size, atlas_charHeight, size).x;
@@ -172,24 +167,16 @@ void FontRenderer::drawText(const char *text, vec2 origin, vec2 size, vec4 color
     while (*text != 0) {
         vec2 charSize = getCharsize(*text, atlas_size, atlas_charHeight, size);
         float dw = maxWidth - charSize.x;
-        pen += vec2(dw/2, 0);
+        pen += vec2(dw / 2, 0);
 
-        ESV(textPlane, primitive/origin, pen); //TODO: update grouping to avoid multiple updates
-        ESV(textPlane, primitive/size, charSize);
+        textPlane.updateVertices(pen, charSize);
+        textShader.setUniform("charBounds", charBounds[*text]);
 
-        ESV(textPlane, charBounds, charBounds[*text]);
-
-        EE(textPlane, render);
+        textPlane.draw();
 
         text++;
         pen += vec2(charSize.x, 0);
-        pen += vec2(dw - dw/2, 0);
+        pen += vec2(dw - dw / 2, 0);
     }
 }
-
-Context *FontRenderer::CreateFontRenderer(const char *fontPath, int atlas_size, int pt, int dpi) {
-
-    return nullptr;
-}
-
 

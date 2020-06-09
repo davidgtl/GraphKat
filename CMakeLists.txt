@@ -7,7 +7,14 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
 set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/ogl/PointModel.cpp source/ogl/PointModel.h source/ogl/ProgramShader.cpp
         source/ogl/ProgramShader.h source/ogl/Shader.cpp source/ogl/Shader.h source/ogl/Plane.cpp source/ogl/Plane.h source/ogl/Texture.h source/ogl/Texture.cpp
-        source/main.cpp source/ogl/FontRenderer.h source/ogl/FontRenderer.cpp source/wmgr/LayoutManager.cpp source/wmgr/LayoutManager.h source/wmgr/wsize.cpp source/wmgr/wsize.h source/wmgr/LayoutConstraint.cpp source/wmgr/LayoutConstraint.h source/ogl/ShaderLoader.cpp source/ogl/ShaderLoader.h source/dataflow/Context.cpp source/dataflow/Context.h source/dataflow/ContextPath.cpp source/dataflow/ContextPath.h source/dataflow/Endpoint.cpp source/dataflow/Endpoint.h source/ogl/UniformType.cpp source/ogl/UniformType.h source/dataflow/ComputeNode.cpp source/dataflow/ComputeNode.h source/nodeprims/Layouts.cpp source/nodeprims/Layouts.h source/nodeprims/Math.cpp source/nodeprims/Math.h source/nodeprims/macro_shenanigans.h source/utils/Randoms.cpp source/utils/Randoms.h source/nodeprims/Shaders.cpp source/nodeprims/Shaders.h source/testbench.cpp source/testbench.h source/utils/BitSet.cpp source/utils/BitSet.h source/utils/BitMap2D.h source/nodeprims/Rendering.cpp source/nodeprims/Rendering.h source/utils/std_colors.h source/Foo.cpp source/Foo.h source/Bar.cpp source/Bar.h source/typing/TypeInfo.cpp source/typing/TypeInfo.h source/typing/templates.h source/typing/iterator.cpp source/typing/iterator.h source/typing/TypeInfos.h)
+        source/main.cpp source/ogl/FontRenderer.h source/ogl/FontRenderer.cpp source/wmgr/WindowLayout.cpp source/wmgr/WindowLayout.h source/wmgr/wsize.cpp source/wmgr/wsize.h
+        source/wmgr/LayoutConstraint.cpp source/wmgr/LayoutConstraint.h source/ogl/ShaderLoader.cpp source/ogl/ShaderLoader.h
+        source/ogl/UniformType.cpp source/ogl/UniformType.h
+        source/nodeprims/Layouts.cpp source/nodeprims/Layouts.h source/nodeprims/Math.cpp source/nodeprims/Math.h
+        source/nodeprims/macro_shenanigans.h source/utils/Randoms.cpp source/utils/Randoms.h source/nodeprims/Shaders.h source/testbench.cpp
+        source/testbench.h source/utils/BitSet.cpp source/utils/BitSet.h source/utils/BitMap2D.h
+        source/utils/std_colors.h source/Foo.cpp source/Foo.h source/Bar.cpp source/Bar.h source/typing/TypeInfo.cpp source/typing/TypeInfo.h source/typing/templates.h
+        source/typing/iterator.cpp source/typing/iterator.h source/typing/TypeInfos.h source/ogl/IRenderable.h source/ui/IMouseInteractable.h source/ui/Slider.cpp source/ui/Slider.h source/ui/g_uniforms.h source/ui/IPlanePrimitive.h source/ui/Button.cpp source/ui/Button.h source/ui/Text.cpp source/ui/Text.h source/ui/Marker.cpp source/ui/Marker.h)
 
 # Executable definition and properties
 set(CMAKE_CXX_STANDARD 17)

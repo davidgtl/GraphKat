@@ -13,18 +13,22 @@
 using namespace glm;
 using namespace std;
 
-class LayoutManager {
+class WindowLayout {
 
 public:
     vec2 screenSize;
     vec2 windowSize;
+    vec2 windowNorm;
 
-    LayoutManager(vec2 screenSize, vec2 windowSize);
+    WindowLayout(vec2 screenSize, vec2 windowSize);
 
-    LayoutManager();
-    LayoutManager(const string layout_file);
+    WindowLayout();
 
-    ~LayoutManager() = default;
+    WindowLayout(const string layout_file);
+
+    ~WindowLayout() = default;
+
+    void line_metrics(vec2 size, vec2 &g_uv_norm, float &g_bandwidth, float &g_transition);
 
     void updateWindowSize(vec2 windowSize);
 
@@ -54,5 +58,7 @@ private:
 
 
 };
+
+static WindowLayout win_layout;
 
 

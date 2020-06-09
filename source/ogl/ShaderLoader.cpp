@@ -5,7 +5,6 @@
 #include "ShaderLoader.h"
 #include "Shader.h"
 #include "ProgramShader.h"
-#include "dataflow/Context.h"
 #include <pugixml.hpp>
 #include <iostream>
 #include <fstream>
@@ -26,13 +25,10 @@ map<string, GLuint> ShaderLoader::s_mapShaderType =
                 {"geom", Shader::GEOMETRY_SHADER},
         };
 
-
-map<string, Shader> ShaderLoader::shaderMap = {};
 map<string, ProgramShader> ShaderLoader::programMap = {};
+map<string, Shader> ShaderLoader::shaderMap = {};
 
 Shader ShaderLoader::resolveShader(pugi::xml_node shader_node) {
-
-    Context ctx = Context("shader");
 
     auto a_ref = shader_node.attribute("ref");
     auto a_src = shader_node.attribute("src");
@@ -63,7 +59,7 @@ Shader ShaderLoader::resolveShader(pugi::xml_node shader_node) {
 }
 
 
-Context *ShaderLoader::LoadShaders(const char *shaders_path) {
+void ShaderLoader::LoadShaders(const char *shaders_path) {
     pugi::xml_document doc;
 
     ifstream stream(shaders_path);
@@ -77,8 +73,6 @@ Context *ShaderLoader::LoadShaders(const char *shaders_path) {
 
     pugi::xpath_node_set xpath_programs = doc.select_nodes("/shaders/programs/program");
 
-    auto ctx = Context::createContext("/shaders/");
-
     /* Load and compile root program shaders */
     for (auto xpath_program : xpath_programs) {
         pugi::xml_node xml_program = xpath_program.node();
@@ -91,11 +85,8 @@ Context *ShaderLoader::LoadShaders(const char *shaders_path) {
         for (auto node : xml_shaders)
             shaders.push_back(resolveShader(node));
 
-        Context::CurrentContext = ctx->createSubContext(name);
-        Context::CurrentContext->createEndpoint("program", ProgramShader(shaders));
+        programMap.emplace(name, ProgramShader(shaders));
         glCheckError();
 
     }
-
-    return ctx;
 }
