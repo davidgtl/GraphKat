@@ -35,6 +35,7 @@
 #include <Foo.h>
 #include <Bar.h>
 #include <random>
+#include "typing/TypeInfo.h"
 
 using namespace std;
 using namespace glm;
@@ -504,30 +505,6 @@ void stdmap_vs_ifs_tb() {
 
 
 int main(int argc, char *argv[]) {
-    TB::typeinfo();
-    fatal_error();
-
-    TB::deallocating();
-    fatal_error();
-
-    TB::run_anyvector();
-    fatal_error();
-    indirect_tb();
-    GLuint i;
-    cin >> i;
-
-    Bar b;
-    b.c = 100;
-    Foo f = Foo(b);
-    b.c = 200;
-    cout << f.bar.c;
-    fatal_error();
-
-    std::string_view names[] = {"ana", "are", "mere", "djkfhksjfdfnrekfnkerjnferbhvbivnvnrjnjkdnkfjvndkjg"};
-
-    cout << sizeof(names) << "/" << sizeof(std::string_view) << "\n";
-    for (int i = 0; i < sizeof(names) / sizeof(std::string_view); i++)
-        cout << names[i] << "\n";
 
     auto in_ctx = new Context();
     auto out_ctx = new Context();

@@ -49,12 +49,6 @@ namespace FancyTypes {
 
     struct TypeInfo {
 
-        template<typename T>
-        explicit
-        TypeInfo(_internal::tag<T> t) :create(_internal::allocate<T>), initialize(_internal::initialize<T>),
-                                       copy(_internal::copy<T>), hasIterator(false),
-                                       size(_internal::size_sum<T>), toStream(_internal::toStream<T>) {}
-
         TypeInfo(t_create f_create, t_initialize f_initialize, t_copy f_copy, bool has_iterator, t_size f_size,
                  t_toStream f_toStream) :
                 create(f_create), initialize(f_initialize), copy(f_copy), hasIterator(has_iterator),

@@ -37,7 +37,10 @@ namespace FancyTypes {
         }
 
     public:
-        iterator(C<T> container, Indexes... sizes) : container(&container), sizes{sizes...} {}
+        iterator(C<T> container, Indexes... sizes) : container(&container), sizes{sizes...} {
+            //for(int i = sizeof...(Indexes) - 1; i >= 1; i++)
+            //    this->sizes[i-1] *= this->sizes[i];
+        }
 
         template<std::size_t... Is>
         size_t do_the_thing(std::index_sequence<Is...>, Indexes ...indexes) {

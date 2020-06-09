@@ -26,11 +26,20 @@ namespace FancyTypes {
     template<typename T, TypeInfo &typeinfo>
     using primitive_type = TypeAccess<T, nullptr, access<T>, typeinfo>;
 
-    TypeInfo int_i(tag<int>{});
-    TypeInfo uint_i(tag<unsigned int>{});
-    TypeInfo float_i(tag<float>{});
-    TypeInfo double_i(tag<double>{});
-    TypeInfo string_i(tag<string>{});
+    template<typename T>
+    TypeInfo create_type() {
+        return TypeInfo(_internal::allocate<T>, _internal::initialize<T>,
+                _internal::copy<T>, false,
+                _internal::size_sum<T>, _internal::toStream<T>);
+    }
+
+    //TypeInfo int_i<int>();
+    //TypeInfo int_i(tag<int>{});
+    auto int_i = create_type<int>();
+    auto uint_i = create_type<unsigned int>();
+    auto float_i = create_type<float>();
+    auto double_i = create_type<double>();
+    auto string_i = create_type<string>();
 
     TypeInfo vec3_i = FancyTypes::TypeInfo::with_toString<glm::vec3>([](std::ostream &cout, void *ptr) {
         auto val = (glm::vec3 *) ptr;

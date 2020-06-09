@@ -3,3 +3,9 @@
 //
 
 #include "TypeInfo.h"
+
+namespace FancyTypes {
+    void do_the_thing() {
+        std::cout << "I did the thing";
+    }
+}
