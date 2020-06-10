@@ -20,10 +20,10 @@ void Marker::draw() {
     IPlanePrimitive::draw();
 }
 
-void Marker::on_move(double x, double y) {
+void Marker::on_move(vec2 pos) {
 }
 
-void Marker::on_scroll(double x, double y) {
+void Marker::on_scroll(vec2 off) {
 }
 
 void Marker::on_button(int button, int action, int mods) {

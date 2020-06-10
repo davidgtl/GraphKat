@@ -14,9 +14,9 @@ private:
 public:
     Button(vec3 color, float value, vec2 origin, vec2 size, float z);
 
-    void on_move(double x, double y) override;
+    void on_move(vec2 pos) override;
 
-    void on_scroll(double x, double y) override;
+    void on_scroll(vec2 off) override;
 
     void on_button(int button, int action, int mods) override;
 

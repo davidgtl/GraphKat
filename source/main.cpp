@@ -37,6 +37,7 @@
 #include "ui/Text.h"
 #include "ui/Button.h"
 #include "ui/Marker.h"
+#include "ui/IMouseEvents.h"
 
 using namespace std;
 using namespace glm;
@@ -51,6 +52,14 @@ BitMap2D<IMouseInteractable> *hitmap = nullptr;
 
 vec2 absToRel(vec2 win, vec2 compPos, vec2 compSize) {
     return (win - compPos) / compSize;
+}
+
+vec2 winrel(vec2 pos) {
+    return pos / win_layout.windowSize;
+}
+
+vec2 winrel(float x, float y) {
+    return vec2(x, y) / win_layout.windowSize;
 }
 
 void invalidate() {
@@ -89,7 +98,7 @@ void keyHeldCallback(double dt) {
 double lxpos, lypos;
 double a_xpos = 0.0f, a_ypos = 0.0f;
 float mouseSensitivity = 0.001;
-
+IMouseInteractable *last_elem = nullptr;
 
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
     if (xpos < 0 || ypos < 0 || xpos >= win_layout.windowSize.x || ypos >= win_layout.windowSize.y)
@@ -97,9 +106,13 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 
     auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
     if (elem != nullptr) {
-        elem->on_move(xpos, ypos);
+        elem->on_move(winrel(xpos, ypos));
     }
 
+    if (last_elem != elem && last_elem != nullptr)
+        last_elem->on_leave();
+
+    last_elem = elem;
     /*if (!captured) {
         lxpos = xpos;
         lypos = ypos;
@@ -149,7 +162,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
     auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
     if (elem != nullptr)
-        elem->on_scroll(xoffset, yoffset);
+        elem->on_scroll(vec2(offX, offY));
 
     invalidate();
 }
