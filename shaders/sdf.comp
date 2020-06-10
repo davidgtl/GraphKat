@@ -1,0 +1,347 @@
+#version 430 core
+#define deltaN 0.01
+#define delta 0.0001
+#define deltaSunHit 0.01
+#define deltaAway 0.01
+#define deltaSun 0.001
+#define deltaLocalMax 0.001
+#define DEBUG true
+#define DEBUG_PIXEL ivec2(400, 512)
+writeonly uniform image2D framebuffer;//rgba32f
+//layout(binding = 1) uniform sampler2D noise;
+
+uniform vec3 eye;
+uniform vec3 ray00;
+uniform vec3 ray01;
+uniform vec3 ray10;
+uniform vec3 ray11;
+
+vec3 sunpos = vec3(1.0, 1.0, 0.2) * 10;
+vec3 suncol = vec3(1.0, 1.0, 1.0);
+float sunsize = 4.0;
+
+
+float sdInfiniplane(vec3 p, vec3 o, vec3 n)
+{
+    vec3 dv = p - o;
+    float dist = dot(dv, n);
+    return dist;
+}
+
+float sdCeby(vec3 p, vec3 o, float s)
+{
+    //vec3 d = abs(p-o) - s;
+    //return max(max(d.x, d.y), d.z);
+    vec3 d = abs(p-o) - s;
+    return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
+}
+
+float sdSphere(vec3 p, vec3 o, float s)
+{
+    return length(p-o)-s;
+}
+
+float intersectSDF(float distA, float distB) {
+    return max(distA, distB);
+}
+
+float unionSDF(float distA, float distB) {
+    return min(distA, distB);
+}
+
+float differenceSDF(float distA, float distB) {
+    return max(distA, -distB);
+}
+
+//scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
+float scDist(vec3 p)
+{
+    float minDist = intersectSDF(
+    sdCeby(p, vec3(0, 0.0, 0), 1.0),
+    sdSphere(p, vec3(0, 0.0, 0), 1.3)
+    );
+
+    minDist = min(minDist, sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0)));
+
+    minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
+    minDist = min(minDist, sdSphere(p, sunpos, sunsize));
+
+    return minDist;
+}
+
+//objects with different colors implemented here
+float scDist(vec3 p, out vec3 color)
+{
+    float lastminDist  = 1000.0;
+    vec3 finalColor = vec3(1.0, 0.0, 0.0);
+
+    //object
+    float minDist = intersectSDF(
+    sdCeby(p, vec3(0, 0.0, 0), 1.0),
+    sdSphere(p, vec3(0, 0.0, 0), 1.3)
+    );
+    //if its ditance is used update the final color with its color
+    if (minDist < lastminDist)
+    finalColor = vec3(1.0, 1.0, 1.0) * 0.8;
+    lastminDist = minDist;
+
+    minDist = min(minDist, sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0)));
+    if (minDist < lastminDist)
+    finalColor = vec3(0.019, 0.509, 1.0);
+    lastminDist = minDist;
+
+    minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
+    if (minDist < lastminDist)
+    finalColor = vec3(10, 0, 0);
+    lastminDist = minDist;
+
+    minDist = min(minDist, sdSphere(p, sunpos, sunsize));
+    if (minDist < lastminDist)
+    finalColor = vec3(1.0, 1.0, 1.0);
+    lastminDist = minDist;
+
+    color = finalColor;
+    return minDist;
+}
+
+vec3 normal(vec3 p){
+    vec3 res = vec3(
+    scDist(vec3(p.x + deltaN, p.y, p.z)) - scDist(vec3(p.x - deltaN, p.y, p.z)),
+    scDist(vec3(p.x, p.y + deltaN, p.z)) - scDist(vec3(p.x, p.y - deltaN, p.z)),
+    scDist(vec3(p.x, p.y, p.z + deltaN)) - scDist(vec3(p.x, p.y, p.z - deltaN))
+    );
+
+    return normalize(res);
+}
+
+float map(float x, float as, float ae, float bs, float be)
+{
+    return (x-as)/(ae-as)*(be-bs) + bs;
+}
+
+float mapc(float x, float as, float ae, float bs, float be)
+{
+    return clamp((x-as)/(ae-as)*(be-bs) + bs, bs, be);
+}
+
+/*
+chop off the [1.0, 8.0] region from 1/x^2
+remap the ys to [0,1]
+remap the input x from [0.0, 1.0] -> [1.0, 8.0] with no clamping => allows light to fall off naturally
+*/
+float falloff(float x, float beg, float end)
+{
+    if (x < 0.0) return 1.0;
+
+    float begv = 1.0/(beg*beg);
+    float endv = 1.0/(end*end);
+    float norm = 1.0/(begv - endv);
+    float v = map(x, 0.0, 1.0, beg, end);
+    return clamp((1.0/(v*v) - endv) * norm, 0.0, 1.0);
+}
+
+/*
+pre: intensity(parameter) != intesity(lint) in description
+
+Le "David Light Model" axioms:
+
+* At intesity 0.0 any color should be black
+* At intensity 1.0 any color should be white
+* Light intesity is directly proportional to 1/r^2 from which I use the [1.0, 8.0] region
+* Raw RGB data is received therefore a gamma correction is needed #sRGB
+* When should I blend the color to white? Hmm.. Let's apply Pareto => pow(lint, 35.0) which is almost 0 at 80% 1 at 100%
+* Final color shoudn't be brighter than the light => surface * light
+* Assume that multiplying a color by its intensity is a good way to control the lightness
+- forgot about normals T_T
+
+post:oh my god a blue plane actually looks green under yellow light without more debugging
+*/
+
+//todo: do the power as the last element
+vec3 mixColors(vec3 surface, vec3 light, float dist, float intensity)
+{
+    float lint = pow(falloff(dist, 1.0, 8.0), 0.454545) * intensity;
+    return mix(surface * light, light, pow(lint, 35.0)) * lint;
+}
+
+/*For Debigging purposes*/
+int curPix = 0;
+void drawbar(float value, float scale, vec3 color)
+{
+    int pixy = int(value * scale);
+    for (int y = 0; y < pixy && y < 1024; y++)
+    imageStore(framebuffer, ivec2(curPix, y), vec4(color, 1.0));
+    curPix++;
+}
+
+vec2 sundist(vec3 p)
+{
+    float intensity = 1.0;
+
+    vec3 cp = p;
+    float minDist = 1000.0;
+    vec3 dirSun = normalize(sunpos - p);
+    vec3 dirHit = -dirSun;
+
+    float tdist = 0.0;//total distance travelled by the ray
+    float calctdist = sdSphere(cp, sunpos, 4.0);//total distance if not blocked by an object
+    float cdist = 0.0;//current distance from current point to closest surface
+    float lastcdist = cdist;
+    float initDist = scDist(cp);
+
+    bool foundFLocalMax = false;//first maximum found = ray has escaped the proximity of the initial hit surface
+    bool foundFLocalMin = false;//first maximum found = ray has escaped the proximity of the initial hit surface
+
+
+    for (int i = 0; i < 100; i++)//>50
+    {
+        lastcdist = cdist;
+        cdist = scDist(cp);
+        cp += cdist * dirSun;
+        tdist += cdist;
+
+        //foundFLocalMax = foundFLocalMax || (cdist <  pow(2.0, i)*initDist);// > deltaLocalMax;
+        //foundFLocalMin = foundFLocalMax && (foundFLocalMin || lastcdist < cdist);
+        //if(foundFLocalMax)
+        // break;
+
+        if (foundFLocalMax)
+        {
+            minDist = min(minDist, cdist);//foundFLocalMax ? lastcdist : minDist;
+            //return vec2(0.0, minDist);
+            //break;
+        }
+        if (DEBUG && gl_GlobalInvocationID.xy == DEBUG_PIXEL)
+        {
+            drawbar(pow(2.0, i), 400.0, vec3(0.0, 0.0, 1.0));
+            //if(2.0*lastcdist < cdist + 0.2)
+            if (foundFLocalMax)
+            drawbar(cdist, 400.0, vec3(1.0, 0.0, 0.0));
+            else if (foundFLocalMin)
+            drawbar(cdist, 400.0, vec3(0.0, 1.0, 0.0));
+            else
+            drawbar(cdist, 400.0, vec3(1.0, 1.0, 1.0));
+
+        }
+
+        //if(foundFLocalMax) break;
+        if (cdist < delta)//there's a hit, pitch black
+        break;
+    }
+
+    //intensity = tdist/calctdist;
+    intensity = tdist;
+    //tdist = calctdist - tdist;
+    //intensity = intensity/(tdist * tdist);
+    //intensity = clamp(intensity*100.0, 0.0, 1.0);
+    intensity *= calctdist -  tdist < deltaSunHit ? 1.0 : 1000.0;
+
+    return vec2(intensity, min(1.0, minDist/sunsize));
+}
+
+
+vec4 trace(vec3 origin, vec3 dir) {
+
+    //return vec4(0.88, 0.0, 0.08, 1.0);
+    vec3 camdir = dir;
+    vec3 cp = origin;//current point
+    float cdist = 0.0;//current distance from current point to closest surface
+    float tdist = 0.0;//total distance travelledby the ray
+
+    float lastHit = 0.0;//last hit distance
+    vec3 finalColor = vec3(0.08, 0.0, 0.08);
+    vec3 currColor = vec3(0.8, 0.5, 0.2);//current object(closest one) color
+    float first = 1.0;
+    float dDist = 0;//distance covered by taking the last step
+    float collisions = 0.0;//number of collisions so far
+
+    for (int i = 0; i < 100 && tdist < 50.0; i++)
+    {
+        cdist = scDist(cp, currColor);
+        cp = cp + cdist * dir;
+        tdist += cdist;
+
+        vec3 norm = normal(cp);
+
+
+        if (currColor.x > 1.0)//special coloring mode for normals
+        currColor = (norm + 1.0) * 0.5;
+
+
+
+        if (cdist < delta)//close enough to an object consider it a collision
+        {
+
+            collisions += 1.0;
+
+
+            //return vec4(currColor / tdist , 1.0);
+            dDist = tdist - lastHit;
+            dDist = dDist * dDist;
+            lastHit = tdist;
+
+
+            float blend = min(0.5, 1.0 / dDist);
+
+            vec2 ldist = sundist(cp - deltaSun * dir);
+            if (ldist.x < deltaSunHit) return vec4(suncol, 1.0);
+            //float illum = ldist.x ;// * min(1.0, light.y); //min(1.0, dot(norm, -camdir));//vec3(1.0,1.0,0.2)));
+
+            //finalColor = first * illum * currColor + (1.0-first) * (currColor * blend + (1-blend) * finalColor); //abs(norm) * clamp(illum, 0.2, 1.0) * multiplier + (1-multiplier) * finalColor;
+            vec3 dirSun = normalize(sunpos - (cp - deltaSun * dir));
+
+            //finalColor = ldist.x * ldist.y * currColor;//basic light model
+            vec3 currColor_Light = mixColors(currColor, suncol, ldist.x * 0.001, ldist.y * dot(norm, dirSun));
+            finalColor = first * currColor_Light
+            + (1.0-first) * (currColor_Light * blend + (1-blend) * finalColor);//actually thought out light model
+
+            //finalColor = vec3(illum.x);
+            //return vec4(finalColor, 1.0);
+
+            first = min(0.0, first);
+
+            dir = normalize(reflect(dir, norm));
+            cp = cp + deltaAway * dir;//run away from the current point to avoid multiple tiny iterations
+
+
+            if (collisions > 1.5f)//0.5 = first hit, 1.5 = second hit, etc.
+            break;//stop at nth bounce
+            //return vec4(vec3(1.0,1.0,1.0) * (1.0 - dDist * 0.01), 1.0);//hit distance,
+            //return vec4(currColor, 1.0);//hit color
+            //return vec4((norm + 1.0) * 0.5 , 1.0);//hit normal
+            //return vec4((dir + 1.0) * 0.5 , 1.0);//hit new direction
+        }
+
+
+    }
+    //return vec4(1.0,0.0,0.0, 1.0);
+
+    //return vec4(collisions*vec3(0.1,0.2,0.1),1.0);
+
+    return vec4(finalColor, 1.0);
+}
+
+
+
+
+
+layout (local_size_x = 8, local_size_y = 8) in;
+
+void main(void) {
+    ivec2 pix = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(framebuffer);
+    if (pix.x >= size.x || pix.y >= size.y) {
+        return;
+    }
+    vec2 pos = vec2(pix) / vec2(size.x, size.y);
+    vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
+    dir = normalize(dir);
+
+    vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+    trace(eye, dir);
+    if (DEBUG)// && pix == DEBUG_PIXEL)
+    imageStore(framebuffer, pix, vec4(1.0, 0.5, 0.5, 1.0));
+    else
+    imageStore(framebuffer, pix, color);
+
+}

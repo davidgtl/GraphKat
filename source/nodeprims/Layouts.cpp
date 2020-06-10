@@ -13,4 +13,9 @@ namespace Layouts {
             hitmap.set(o, o->origin(), o->size());
         }
     }
+
+    void PopulateHitmap(BitMap2D<IMouseInteractable> &hitmap, IMouseInteractable *object) {
+        hitmap.insert(object);
+        hitmap.set(object, object->origin(), object->size());
+    }
 }

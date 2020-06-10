@@ -38,6 +38,7 @@
 #include "ui/Button.h"
 #include "ui/Marker.h"
 #include "ui/IMouseEvents.h"
+#include "ui/Image.h"
 
 using namespace std;
 using namespace glm;
@@ -113,20 +114,6 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
         last_elem->on_leave();
 
     last_elem = elem;
-    /*if (!captured) {
-        lxpos = xpos;
-        lypos = ypos;
-
-        if (last_ctx != nullptr)
-            ESV(last_ctx, color, vec3(0.3, 0.3, 1.0));
-        if (ctx != nullptr)
-            ESV(ctx, color, vec3(1.0, 0.3, 0.3));
-        last_ctx = ctx;
-
-        invalidate();
-        return;
-    }*/
-
 
     double dy = lypos - ypos;//inverted Y
     double dx = lxpos - xpos;//inverted X
@@ -235,15 +222,11 @@ vector<IRenderable *> buildScene() {
 
     auto *p1 = new Marker(vec3(0.3, 0.8, 1.0), 1, 0, vec2(0.01f, 0.01f),
             vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f);
-    auto *p2 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.2), vec2(1, 0.2), 0.1f);
-    auto *p3 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.4), vec2(1, 0.2), 0.1f);
-    auto *p4 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.6), vec2(1, 0.2), 0.1f);
-    auto *p5 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0, 0.8), vec2(1, 0.2), 0.1f);
-    auto *p6 = new Button(vec3(0.3, 0.8, 1.0), 0, vec2(0.3, 0.1), vec2(0.1, 0.05), 0.1f);
+    auto *p2 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0.8, 0.8), vec2(0.15, 0.05), 0.1f);
 
-    Layouts::PopulateHitmap(*hitmap, {p1, p2, p3, p4, p5, p6});
+    Layouts::PopulateHitmap(*hitmap, {p1, p2});
 
-    return {p1, p2, p3, p4, p5, p6};
+    return {p1, p2};
 }
 
 int main(int argc, char *argv[]) {
@@ -279,6 +262,12 @@ int main(int argc, char *argv[]) {
 
     Plane p = Plane(vec2(0, 0), vec2(1, 1), 0.0);
 
+    auto sdf_tex = Texture(1024, 1024, GL_RGBA32F);
+    auto sdf_prog = ShaderLoader::programMap["sdf"];
+    auto image_prog = ShaderLoader::programMap["image"];
+
+    renderables.push_back(new Image(&sdf_tex, vec2(0.05, 0.3), vec2(0.65, 0.65), 0));
+
     resized = true;
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
@@ -288,6 +277,33 @@ int main(int argc, char *argv[]) {
         }
         if (invalidated) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+            sdf_tex.bindImage(0);
+
+            /*Calculate the forward rays for the corners of the camera projection screen*/
+//            mat4 cam = getCamera();
+//            mat4 invcam = inverse(cam);
+//
+//            vec4 calc = invcam * vec4(-1, -1, 0, 1); calc /= calc.w;
+//            vec3 ray00 = vec3(calc);
+//            calc = invcam * vec4(-1, 1, 0, 1); calc /= calc.w;
+//            vec3 ray01 = vec3(calc);
+//            calc = invcam * vec4(1, -1, 0, 1); calc /= calc.w;
+//            vec3 ray10 = vec3(calc);
+//            calc = invcam * vec4(1, 1, 0, 1); calc /= calc.w;
+//            vec3 ray11 = vec3(calc);
+
+            sdf_prog.use();
+            //glUniform1f(glGetUniformLocation(csprogShader, "roll"), interp*10);
+            sdf_prog.setUniform("eye", vec3(0, 0, 2));
+            sdf_prog.setUniform("ray00", vec3(0, 0, 0));
+            sdf_prog.setUniform("ray01", vec3(0, 1, 0));
+            sdf_prog.setUniform("ray11", vec3(1, 1, 0));
+            sdf_prog.setUniform("ray10", vec3(1, 0, 0));
+
+            glDispatchCompute(sdf_tex.width / 8, sdf_tex.height / 8, 1); //1024 512^2 threads in blocks of 16^2*/
+
 
             //screen.update(offX, offY);
             //baseShader.use();

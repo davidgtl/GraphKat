@@ -21,14 +21,17 @@ public:
     std::string type;
     std::string path;
     int width, height;
+    GLenum format;
 
     Texture(const char *path);
 
-    Texture(int width, int height);
+    Texture(int width, int height, GLenum format = GL_RED);
 
     ~Texture();
 
     void bindTexture(int unit = 0);
+
+    void bindImage(int unit, int access = GL_WRITE_ONLY);
 
     void generateMipmap();
 

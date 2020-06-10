@@ -39,5 +39,14 @@
             <shader src="shaders/ui/button.frag"/>
         </program>
 
+        <program name="sdf">
+            <shader src="shaders/sdf.comp"/>
+        </program>
+
+        <program name="image">
+            <shader ref="base"/>
+            <shader src="shaders/image.frag"/>
+        </program>
+
     </programs>
 </shaders>

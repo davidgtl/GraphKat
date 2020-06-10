@@ -23,6 +23,7 @@ Texture::Texture(const char *path) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    this->format = GL_RGBA32F;
     stbi_image_free(data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -32,17 +33,19 @@ Texture::Texture(const char *path) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-Texture::Texture(int width, int height) {
+Texture::Texture(int width, int height, GLenum format) {
     this->width = width;
     this->height = height;
+    this->format = format;
+
 
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
 
-    unsigned char *data = (unsigned char *) malloc(sizeof(unsigned char)*width*height*3);
-    memset(data, 0, sizeof(unsigned char)*width*height*3);
+    unsigned char *data = (unsigned char *) malloc(sizeof(unsigned char) * width * height * 3);
+    memset(data, 127, sizeof(unsigned char) * width * height * 3);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data); //CHECK ME: are formats ok
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -52,6 +55,8 @@ Texture::Texture(int width, int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glCheckError();
 }
 
 
@@ -61,6 +66,20 @@ Texture::~Texture() {
 void Texture::bindTexture(int unit) {
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, id);
+}
+
+
+void Texture::bindImage(int unit, int access) {
+    /*
+     * GLuint unit,
+     GLuint texture,
+     GLint level,
+     GLboolean layered,
+     GLint layer,
+     GLenum access,
+     GLenum format);
+     */
+    glBindImageTexture(unit, id, 0, GL_FALSE, 0, access, format);
 }
 
 void Texture::generateMipmap() {
