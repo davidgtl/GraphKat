@@ -7,6 +7,20 @@
 void SDF_Renderer::draw() {
     texture.bindImage(0);//FIXME: query uniforms for location
     sdf_prog->use();
+
+    /*Calculate the forward rays for the corners of the camera projection screen*/
+//            mat4 cam = getCamera();
+//            mat4 invcam = inverse(cam);
+//
+//            vec4 calc = invcam * vec4(-1, -1, 0, 1); calc /= calc.w;
+//            vec3 ray00 = vec3(calc);
+//            calc = invcam * vec4(-1, 1, 0, 1); calc /= calc.w;
+//            vec3 ray01 = vec3(calc);
+//            calc = invcam * vec4(1, -1, 0, 1); calc /= calc.w;
+//            vec3 ray10 = vec3(calc);
+//            calc = invcam * vec4(1, 1, 0, 1); calc /= calc.w;
+//            vec3 ray11 = vec3(calc);
+
     //glUniform1f(glGetUniformLocation(csprogShader, "roll"), interp*10);
     sdf_prog->setUniform("eye", vec3(0, 0, 2));
     sdf_prog->setUniform("ray00", vec3(0, 0, 0));

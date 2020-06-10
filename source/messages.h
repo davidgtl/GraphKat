@@ -1,11 +1,21 @@
 #pragma once
 
 #include <iostream>
+#include <string>
+#include <sstream>
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
+template<class... Args>
+std::string format(Args &&... args) {
+    std::ostringstream ostr;
+
+    (ostr << ... << args);
+
+    return ostr.str();
+}
 
 inline void fatal_error() {
     glfwTerminate();

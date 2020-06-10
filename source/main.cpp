@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <sstream>
 #include "io.h"
 #include "ogl/PointModel.h"
 #include "ogl/Shader.h"
@@ -254,13 +253,10 @@ int main(int argc, char *argv[]) {
     hitmap = new BitMap2D<IMouseInteractable>(10, win_layout.windowSize.x, win_layout.windowSize.y);
     auto renderables = buildScene();
 
-    auto *mouse_text = new Text(textRenderer, "uninit",
+    auto mouse_text = Text(textRenderer, "uninit",
             win_layout.sisc(80, 80), win_layout.sisc(8), 0.1f, vec4(1, 0.8, 0.5, 1), -1);
 
-    renderables.push_back(mouse_text);
-
-
-    Plane p = Plane(vec2(0, 0), vec2(1, 1), 0.0);
+    renderables.push_back(&mouse_text);
 
     auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0);
     renderables.push_back(&sdf_renderer);
@@ -275,44 +271,10 @@ int main(int argc, char *argv[]) {
         if (invalidated) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            /*Calculate the forward rays for the corners of the camera projection screen*/
-//            mat4 cam = getCamera();
-//            mat4 invcam = inverse(cam);
-//
-//            vec4 calc = invcam * vec4(-1, -1, 0, 1); calc /= calc.w;
-//            vec3 ray00 = vec3(calc);
-//            calc = invcam * vec4(-1, 1, 0, 1); calc /= calc.w;
-//            vec3 ray01 = vec3(calc);
-//            calc = invcam * vec4(1, -1, 0, 1); calc /= calc.w;
-//            vec3 ray10 = vec3(calc);
-//            calc = invcam * vec4(1, 1, 0, 1); calc /= calc.w;
-//            vec3 ray11 = vec3(calc);
-
-            //screen.update(offX, offY);
-            //baseShader.use();
-            //glUniform2f(glGetUniformLocation(baseShader, "offset"), offX, offY);
-            //screen.draw();
-            //plane1.draw();
-
-
-            /*markerShader.use();
-            glUniform3f(glGetUniformLocation(markerShader, "color"), 0.3, 0.8, 1.0);
-            glUniform2fv(glGetUniformLocation(markerShader, "border_size"), 1,
-                         reinterpret_cast<const GLfloat *>(&p3_brd));
-            glUniform1i(glGetUniformLocation(markerShader, "shape"), 1);
-            glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);*/
-            //plane3.draw();
+            mouse_text.update_text(format("x: ", lxpos, ", y: ", lypos));
 
             for (auto &r : renderables)
                 r->draw();
-
-            stringstream str;
-            str << "x: " << lxpos << ", y: " << lypos;
-            mouse_text->update_text(str.str());
-            //textRenderer.drawText(str.str().c_str(), win_layout.sisc(80, 80), win_layout.sisc(8), vec4(1, 0.8, 0.5, 1),
-            //       -1);
-
-            //textRenderer.
 
             glfwSwapBuffers(window);
             //invalidated = false;
