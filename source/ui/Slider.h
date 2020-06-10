@@ -22,7 +22,6 @@ public:
 
     void on_leave() override;
 
-public:
     void on_button(int button, int action, int mods) override;
 
     void draw() override;

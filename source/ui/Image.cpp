@@ -10,6 +10,6 @@ Image::Image(Texture *texture, vec2 origin, vec2 size, float z)
 
 void Image::draw() {
     shader->use();
-    _texture->bindTexture(0);
+    _texture->bindTexture(0);//FIXME: query uniforms for location
     IPlanePrimitive::draw();
 }

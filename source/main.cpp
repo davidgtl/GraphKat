@@ -39,6 +39,7 @@
 #include "ui/Marker.h"
 #include "ui/IMouseEvents.h"
 #include "ui/Image.h"
+#include "ui/SDF_Renderer.h"
 
 using namespace std;
 using namespace glm;
@@ -126,7 +127,6 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
     if (action == GLFW_PRESS || action == GLFW_RELEASE) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            cout << "mevent " << captured << endl;
             captured = !captured;
 
             auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
@@ -262,11 +262,8 @@ int main(int argc, char *argv[]) {
 
     Plane p = Plane(vec2(0, 0), vec2(1, 1), 0.0);
 
-    auto sdf_tex = Texture(1024, 1024, GL_RGBA32F);
-    auto sdf_prog = ShaderLoader::programMap["sdf"];
-    auto image_prog = ShaderLoader::programMap["image"];
-
-    renderables.push_back(new Image(&sdf_tex, vec2(0.05, 0.3), vec2(0.65, 0.65), 0));
+    auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0);
+    renderables.push_back(&sdf_renderer);
 
     resized = true;
     while (!glfwWindowShouldClose(window)) {
@@ -277,9 +274,6 @@ int main(int argc, char *argv[]) {
         }
         if (invalidated) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-            sdf_tex.bindImage(0);
 
             /*Calculate the forward rays for the corners of the camera projection screen*/
 //            mat4 cam = getCamera();
@@ -293,17 +287,6 @@ int main(int argc, char *argv[]) {
 //            vec3 ray10 = vec3(calc);
 //            calc = invcam * vec4(1, 1, 0, 1); calc /= calc.w;
 //            vec3 ray11 = vec3(calc);
-
-            sdf_prog.use();
-            //glUniform1f(glGetUniformLocation(csprogShader, "roll"), interp*10);
-            sdf_prog.setUniform("eye", vec3(0, 0, 2));
-            sdf_prog.setUniform("ray00", vec3(0, 0, 0));
-            sdf_prog.setUniform("ray01", vec3(0, 1, 0));
-            sdf_prog.setUniform("ray11", vec3(1, 1, 0));
-            sdf_prog.setUniform("ray10", vec3(1, 0, 0));
-
-            glDispatchCompute(sdf_tex.width / 8, sdf_tex.height / 8, 1); //1024 512^2 threads in blocks of 16^2*/
-
 
             //screen.update(offX, offY);
             //baseShader.use();
