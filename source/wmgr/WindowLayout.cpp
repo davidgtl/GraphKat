@@ -19,20 +19,20 @@ WindowLayout::WindowLayout() : screenSize(1, 1), windowSize(1, 1),
 
 }
 
+
 WindowLayout::WindowLayout(vec2 screenSize, vec2 windowSize) : screenSize(screenSize), windowSize(windowSize),
                                                                hConstr(), vConstr(), parents() {
-    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
+    recalculate_win_norm();
 }
 
 void WindowLayout::updateWindowSize(vec2 windowSize) {
     this->windowSize = windowSize;
-    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
+    recalculate_win_norm();
 }
 
 void WindowLayout::updateScreenSize(vec2 screenSize) {
     this->screenSize = screenSize;
-    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
-
+    recalculate_win_norm();
 }
 
 void WindowLayout::addPlane(const Plane &p, LayoutConstraint horizontal, LayoutConstraint vertical) {
@@ -142,7 +142,11 @@ void WindowLayout::line_metrics(vec2 size, vec2 &g_uv_norm, float &g_bandwidth, 
 
     g_uv_norm = size * windowNorm / glm::min(size.x, size.y);
 
-    float base = 1 / glm::min((size * windowSize).x, (size * windowSize).y);
+    float base = 1.0f / glm::min((size * windowSize).x, (size * windowSize).y);
     g_bandwidth = base * 3;
     g_transition = base * 2;
+}
+
+void WindowLayout::recalculate_win_norm() {
+    windowNorm = windowSize / glm::min(windowSize.x, windowSize.y);
 }

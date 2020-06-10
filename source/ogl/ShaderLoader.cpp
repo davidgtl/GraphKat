@@ -25,8 +25,9 @@ map<string, GLuint> ShaderLoader::s_mapShaderType =
                 {"geom", Shader::GEOMETRY_SHADER},
         };
 
-map<string, ProgramShader> ShaderLoader::programMap = {};
+
 map<string, Shader> ShaderLoader::shaderMap = {};
+map<string, ProgramShader> ShaderLoader::programMap = {};
 
 Shader ShaderLoader::resolveShader(pugi::xml_node shader_node) {
 

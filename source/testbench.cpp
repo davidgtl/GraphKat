@@ -205,6 +205,79 @@ void test_indexing() {
 
 }
 
+
+void indirect_tb() {
+    vector<int> original;
+    vector<int> first;
+    vector<int> second;
+    vector<int> third;
+
+    int N = 100000000;
+
+    for (int i = 0; i < N; i++) {
+        original.push_back(i);
+        first.push_back(original[i]);
+        second.push_back(first[i]);
+        third.push_back(second[i]);
+    }
+
+
+    int total = 0;
+    auto t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[first[second[third[i]]]];
+
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[first[i]];
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[first[second[i]]];
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    total = 0;
+    t0 = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++) {
+        total += original[i];
+    }
+
+    t1 = std::chrono::high_resolution_clock::now();
+
+    cout << "Avg time:"
+         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
+         << ",    ans: " << total << "\n";
+
+    //fatal_error();
+}
+
 void TB::run_windowing() {
     algo();
 

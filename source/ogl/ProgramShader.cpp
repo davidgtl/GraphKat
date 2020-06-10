@@ -24,19 +24,19 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
         fatal_error("");
     }
 
-    struct uniform_info_t
-    {
+    struct uniform_info_t {
         GLint location;
         GLsizei count;
     };
+
+    uniforms = {};
 
     GLint uniform_count = 0;
     glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &uniform_count);
 
     cout << "Hello Shadder!\n";
-    if (uniform_count != 0)
-    {
-        GLint 	max_name_len = 0;
+    if (uniform_count != 0) {
+        GLint max_name_len = 0;
         GLsizei length = 0;
         GLsizei count = 0;
         GLenum 	type = GL_NONE;

@@ -218,19 +218,6 @@ float randf() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-
-class my_visitor : public boost::static_visitor<float> {
-public:
-    float operator()(int i) const {
-        return i;
-    }
-
-    float operator()(const std::string &str) const {
-        return str.length();
-    }
-};
-
-
 vector<IRenderable *> buildScene() {
 
     auto *p1 = new Marker(vec3(0.3, 0.8, 1.0), 1, 0, vec2(0.01f, 0.01f),
@@ -244,78 +231,6 @@ vector<IRenderable *> buildScene() {
     Layouts::PopulateHitmap(*hitmap, {p1, p2, p3, p4, p5, p6});
 
     return {p1, p2, p3, p4, p5, p6};
-}
-
-void indirect_tb() {
-    vector<int> original;
-    vector<int> first;
-    vector<int> second;
-    vector<int> third;
-
-    int N = 100000000;
-
-    for (int i = 0; i < N; i++) {
-        original.push_back(i);
-        first.push_back(original[i]);
-        second.push_back(first[i]);
-        third.push_back(second[i]);
-    }
-
-
-    int total = 0;
-    auto t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++) {
-        total += original[first[second[third[i]]]];
-
-    }
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    cout << "Avg time:"
-         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
-         << ",    ans: " << total << "\n";
-
-    total = 0;
-    t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++) {
-        total += original[first[i]];
-    }
-
-    t1 = std::chrono::high_resolution_clock::now();
-
-    cout << "Avg time:"
-         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
-         << ",    ans: " << total << "\n";
-
-    total = 0;
-    t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++) {
-        total += original[first[second[i]]];
-    }
-
-    t1 = std::chrono::high_resolution_clock::now();
-
-    cout << "Avg time:"
-         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
-         << ",    ans: " << total << "\n";
-
-    total = 0;
-    t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++) {
-        total += original[i];
-    }
-
-    t1 = std::chrono::high_resolution_clock::now();
-
-    cout << "Avg time:"
-         << static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()) / 1000
-         << ",    ans: " << total << "\n";
-
-    fatal_error();
 }
 
 int main(int argc, char *argv[]) {
@@ -341,7 +256,13 @@ int main(int argc, char *argv[]) {
 
 
     hitmap = new BitMap2D<IMouseInteractable>(10, win_layout.windowSize.x, win_layout.windowSize.y);
-    //auto renderables = buildScene();
+    auto renderables = buildScene();
+
+    auto *mouse_text = new Text(textRenderer, "uninit",
+            win_layout.sisc(80, 80), win_layout.sisc(8), 0.1f, vec4(1, 0.8, 0.5, 1), -1);
+
+    renderables.push_back(mouse_text);
+
 
     Plane p = Plane(vec2(0, 0), vec2(1, 1), 0.0);
 
@@ -370,19 +291,15 @@ int main(int argc, char *argv[]) {
             glUniform1i(glGetUniformLocation(markerShader, "filled"), 1);*/
             //plane3.draw();
 
-            //for (auto &r : renderables)
-            //    r->draw();
+            for (auto &r : renderables)
+                r->draw();
 
             stringstream str;
+            str << "x: " << lxpos << ", y: " << lypos;
+            mouse_text->update_text(str.str());
+            //textRenderer.drawText(str.str().c_str(), win_layout.sisc(80, 80), win_layout.sisc(8), vec4(1, 0.8, 0.5, 1),
+            //       -1);
 
-            //str << "x: " << lxpos << ", y: " << lypos;
-            textRenderer.drawText(str.str().c_str(), win_layout.sisc(80, 80), win_layout.sisc(8), vec4(1, 0.8, 0.5, 1),
-                    -1);
-
-            auto &psh = ShaderLoader::programMap["slider"];
-            psh.use();
-            //psh.setUniform("offset", vec2(0.5, 0.5));
-            p.draw();
             //textRenderer.
 
             glfwSwapBuffers(window);

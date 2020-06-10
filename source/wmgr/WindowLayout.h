@@ -54,11 +54,13 @@ private:
 
     float resolveSize(wsize s, bool horizontal);
 
+    void recalculate_win_norm();
+
     tuple<float, float> resolveConstraint(LayoutConstraint con, bool horizontal);
 
 
 };
 
-static WindowLayout win_layout;
+inline WindowLayout win_layout;
 
 

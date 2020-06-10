@@ -12,3 +12,7 @@ Text::Text(FontRenderer &fr, string text, vec2 origin, vec2 size, float z, vec4 
 void Text::draw() {
     fr->drawText(text.c_str(), origin(), size(), color, align);
 }
+
+void Text::update_text(string str) {
+    this->text = str;
+}

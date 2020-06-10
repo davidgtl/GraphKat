@@ -12,7 +12,7 @@
 #include "ogl/FontRenderer.h"
 
 
-class Text : public IMouseInteractable, IRenderable {
+class Text : public IMouseInteractable, public IRenderable {
 public:
 
     Text(FontRenderer &fr, string text, vec2 origin, vec2 size, float z,
@@ -22,6 +22,8 @@ public:
         _origin = origin;
         _size = size;
     }
+
+    void update_text(string str);
 
     vec2 origin() override {
         return _origin;

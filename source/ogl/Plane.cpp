@@ -23,7 +23,7 @@ void Plane::init(bool invertY) {
 
     glBindVertexArray(vao);
 
-    int indices[] = {
+    unsigned int indices[] = {
             0, 1, 2,
             2, 1, 3
     };
@@ -81,7 +81,6 @@ void Plane::draw() {
 }
 
 void Plane::updateVertices(vec2 origin, vec2 size, float z) {
-    glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     this->_origin = origin;
@@ -101,7 +100,8 @@ void Plane::updateVertices(vec2 origin, vec2 size, float z) {
             end.x, end.y, z
     };
 
-    glBufferSubData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), 0, vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * 3 * sizeof(float), vertices);
+    //glBufferData(GL_ARRAY_BUFFER, 4*3*sizeof(float), vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
