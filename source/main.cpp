@@ -102,21 +102,22 @@ float mouseSensitivity = 0.001;
 IMouseInteractable *last_elem = nullptr;
 
 static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
-    if (xpos < 0 || ypos < 0 || xpos >= win_layout.windowSize.x || ypos >= win_layout.windowSize.y)
-        return;
 
-    auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
+    auto elem = last_elem;
+    if (!captured && !(xpos < 0 || ypos < 0 || xpos >= win_layout.windowSize.x || ypos >= win_layout.windowSize.y))
+        elem = hitmap->getFirst(xpos, win_layout.windowSize.y - ypos);
+
     if (elem != nullptr) {
-        elem->on_move(winrel(xpos, ypos));
+        if (captured)
+            elem->on_move_captured(vec2(xpos - lxpos, ypos - lypos));
+        else
+            elem->on_move(winrel(xpos, ypos));
     }
 
     if (last_elem != elem && last_elem != nullptr)
         last_elem->on_leave();
 
     last_elem = elem;
-
-    double dy = lypos - ypos;//inverted Y
-    double dx = lxpos - xpos;//inverted X
 
     lxpos = xpos;
     lypos = ypos;
@@ -125,16 +126,13 @@ static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
     if (action == GLFW_PRESS || action == GLFW_RELEASE) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            captured = !captured;
+        //if (button == GLFW_MOUSE_BUTTON_LEFT) {
 
-            auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
-            if (elem != nullptr)
-                elem->on_button(button, action, mods);
+        if (last_elem != nullptr)
+            last_elem->on_button(button, action, mods);
 
-            //glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-            invalidate();
-        }
+        invalidate();
+        //}
     }
 }
 
@@ -145,10 +143,10 @@ void echo();
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     offX -= xoffset * 0.01;
     offY += yoffset * 0.01;
+    auto elem = last_elem;
 
-    auto elem = hitmap->getFirst(lxpos, win_layout.windowSize.y - lypos);
-    if (elem != nullptr)
-        elem->on_scroll(vec2(offX, offY));
+    if (last_elem != nullptr)
+        last_elem->on_scroll(vec2(offX, offY));
 
     invalidate();
 }
@@ -259,6 +257,7 @@ int main(int argc, char *argv[]) {
     renderables.push_back(&mouse_text);
 
     auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0);
+    Layouts::PopulateHitmap(*hitmap, &sdf_renderer);
     renderables.push_back(&sdf_renderer);
 
     resized = true;

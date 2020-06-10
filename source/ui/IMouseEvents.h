@@ -32,6 +32,8 @@ public:
 
     virtual void on_move(glm::vec2 pos) {}
 
+    virtual void on_move_captured(glm::vec2 dpos) {}
+
     virtual void on_scroll(glm::vec2 off) {}
 
     virtual void on_leave() {}

@@ -338,10 +338,13 @@ void main(void) {
     dir = normalize(dir);
 
     vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
-    trace(eye, dir);
-    if (DEBUG)// && pix == DEBUG_PIXEL)
+    color = trace(eye, dir);
+    if (DEBUG && pix == DEBUG_PIXEL)
     imageStore(framebuffer, pix, vec4(1.0, 0.5, 0.5, 1.0));
     else
     imageStore(framebuffer, pix, color);
+
+    if (dir.x > 0 && dir.y > 0 && dir.z > 0)
+    imageStore(framebuffer, pix, vec4(dir, 1.0));
 
 }

@@ -11,6 +11,8 @@
 
 namespace Layouts {
     void PopulateHitmap(BitMap2D<IMouseInteractable> &hitmap, const vector<IMouseInteractable *> &objects);
+
+    void PopulateHitmap(BitMap2D<IMouseInteractable> &hitmap, IMouseInteractable *object);
 };
 
 
