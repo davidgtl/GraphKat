@@ -1,6 +1,6 @@
 #version 430 core
 #define deltaN 0.01
-#define delta 0.0001
+#define delta 0.000001
 #define deltaSunHit 0.01
 #define deltaAway 0.01
 #define deltaSun 0.001
@@ -19,7 +19,7 @@ uniform vec3 ray11;
 
 vec3 sunpos = vec3(1.0, 1.0, 0.2) * 10;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
-vec3 ambient = vec3(0.06, 0.085, 0.1);
+vec3 ambient = vec3(0.12, 0.17, 0.2);
 float sunsize = 4.0;
 
 
@@ -71,38 +71,48 @@ float scDist(vec3 p)
     return minDist;
 }
 
+void obj_comp(float minDist, float lastminDist, vec3 color, int object, inout vec3 o_color, inout int o_object){
+    if (minDist < lastminDist){
+        o_color = color;
+        o_object = object;
+    }
+}
+
 //objects with different colors implemented here
-float scDist(vec3 p, out vec3 color)
+float scDist(vec3 p, out vec3 color, out int object)
 {
     float lastminDist  = 1000.0;
-    vec3 finalColor = vec3(1.0, 0.0, 0.0);
+    vec3 final_color = vec3(1.0, 0.0, 0.0);
+    int final_object = 0;
 
     //object
     float minDist = intersectSDF(
     sdCeby(p, vec3(0, 0.0, 0), 1.0),
     sdSphere(p, vec3(0, 0.0, 0), 1.3)
     );
+
     //if its ditance is used update the final color with its color
-    if (minDist < lastminDist)
-    finalColor = vec3(1.0, 1.0, 1.0) * 0.8;
+    obj_comp(minDist, lastminDist, vec3(0.8), 1, final_color, final_object);
     lastminDist = minDist;
+
 
     minDist = min(minDist, sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0)));
-    if (minDist < lastminDist)
-    finalColor = vec3(0.019, 0.509, 1.0);
+    obj_comp(minDist, lastminDist, vec3(0.019, 0.509, 1.0), 2, final_color, final_object);
     lastminDist = minDist;
+
 
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
-    if (minDist < lastminDist)
-    finalColor = vec3(10, 0, 0);
+    obj_comp(minDist, lastminDist, vec3(10, 0, 0), 2, final_color, final_object);
     lastminDist = minDist;
+
 
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
-    if (minDist < lastminDist)
-    finalColor = vec3(1.0, 1.0, 1.0);
+    obj_comp(minDist, lastminDist, suncol, 3, final_color, final_object);
     lastminDist = minDist;
 
-    color = finalColor;
+
+    color = final_color;
+    object = final_object;
     return minDist;
 }
 
@@ -178,35 +188,27 @@ vec3 sundist(vec3 p)
     float calctdist = sdSphere(cp, sunpos, sunsize);//total distance if not blocked by an object
     float cdist = 0.0;//current distance from current point to closest surface
 
-    bool foundFLocalMax = false;//first maximum found = ray has escaped the proximity of the initial hit surface
-    bool foundFLocalMin = false;//first maximum found = ray has escaped the proximity of the initial hit surface
-
+    vec3 cur_obj_color = vec3(0.8, 0.5, 0.2);//current object(closest one) color
+    int cur_obj = 0;
 
     for (int i = 0; i < 100; i++)//>50
     {
-        cdist = scDist(cp);
+        cdist = scDist(cp, cur_obj_color, cur_obj);
         cp += cdist * dirSun;
 
-        //foundFLocalMax = foundFLocalMax || (cdist <  pow(2.0, i)*initDist);// > deltaLocalMax;
-        //foundFLocalMin = foundFLocalMax && (foundFLocalMin || lastcdist < cdist);
-        //if(foundFLocalMax)
-        // break;
 
-        if (foundFLocalMax)
-        {
-            minDist = min(minDist, cdist);//foundFLocalMax ? lastcdist : minDist;
-            //return vec2(0.0, minDist);
-            //break;
-        }
+        if (cur_obj != 3)
+            minDist = min(minDist, cdist);
+
         if (DEBUG && gl_GlobalInvocationID.xy == DEBUG_PIXEL)
         {
             drawbar(pow(2.0, i), 400.0, vec3(0.0, 0.0, 1.0));
             //if(2.0*lastcdist < cdist + 0.2)
-            if (foundFLocalMax)
+            /*if (foundFLocalMax)
             drawbar(cdist, 400.0, vec3(1.0, 0.0, 0.0));
             else if (foundFLocalMin)
             drawbar(cdist, 400.0, vec3(0.0, 1.0, 0.0));
-            else
+            else*/
             drawbar(cdist, 400.0, vec3(1.0, 1.0, 1.0));
 
         }
@@ -219,14 +221,14 @@ vec3 sundist(vec3 p)
     tdist = length(p-cp);
     float is_hit = calctdist -  tdist < deltaSunHit ? 1.0 : 0.0;
 
-    return vec3(is_hit, tdist, min(1.0, minDist));
+    return vec3(is_hit, tdist, minDist);
 }
 
 vec3 skycolor(vec3 dir){
-    vec3 horizon = vec3(0.788,0.855,0.95);
-    vec3 zenith = vec3(0.32,0.70,0.97);
+    vec3 horizon = vec3(0.788, 0.855, 0.95);
+    vec3 zenith = vec3(0.32, 0.70, 0.97);
 
-    float blend = max(0.0, dot(dir, vec3(0.0,1.0,0.0)));
+    float blend = max(0.0, dot(dir, vec3(0.0, 1.0, 0.0)));
 
     return mix(horizon, zenith, blend);
 }
@@ -242,14 +244,15 @@ vec4 trace(vec3 origin, vec3 dir) {
     float lastHit = 0.0;//last hit distance
     vec3 finalColor = skycolor(dir);
     vec3 cur_obj_color = vec3(0.8, 0.5, 0.2);//current object(closest one) color
-    float first = 1.0;
+    int cur_obj = 0;
     float dDist = 0;//distance covered by taking the last step
     float collisions = 0.0;//number of collisions so far
 
+    float fresnel = 0;
 
     for (int i = 0; i < 100 && tdist < 50.0; i++)
     {
-        cdist = scDist(cp, cur_obj_color);
+        cdist = scDist(cp, cur_obj_color, cur_obj);
         cp = cp + cdist * dir;
         tdist += cdist;
 
@@ -272,33 +275,34 @@ vec4 trace(vec3 origin, vec3 dir) {
 
             vec3 sun_dir = normalize(sunpos - cp);
             vec3 sun_info = sundist(cp - deltaSun * dir);
-            vec3 col_amb = ambient * 2.0;
-            //vec3 col_sun = (suncol * falloff(sun_info.y, 1.0, 0.5) * dot(norm, sun_dir)) * sun_info.x;
-            vec3 col_sun = (suncol * dot(norm, sun_dir)) * sun_info.x;
+            vec3 col_amb = ambient;
+            vec3 col_sun = (suncol * falloff(sun_info.y, 5.0, 0.1) * dot(norm, sun_dir)) * sun_info.x;
+
 
             vec3 direct_color = cur_obj_color * (col_amb + col_sun);
+            direct_color = cur_obj == 3 ? cur_obj_color : direct_color;
 
 
-            //float illum = ldist.x ;// * min(1.0, light.y); //min(1.0, dot(norm, -camdir));//vec3(1.0,1.0,0.2)));
+            // if first collision
+            if (collisions < 1.5){
+                finalColor = direct_color;
+                fresnel = 1.0 - dot(norm, -dir);
+            } else {
+                finalColor += fresnel * direct_color;
+            }
 
-            //finalColor = first * illum * currColor + (1.0-first) * (currColor * blend + (1-blend) * finalColor); //abs(norm) * clamp(illum, 0.2, 1.0) * multiplier + (1-multiplier) * finalColor;
-
-            //finalColor = ldist.x * ldist.y * currColor;//basic light model
-
-
-            //mixColors(currColor, suncol, ldist.x * 0.001, ldist.y * dot(norm, dirSun));
-            finalColor = direct_color;
 
             //finalColor = vec3(illum.x);
             //return vec4(finalColor, 1.0);
 
-            first = min(0.0, first);
+
+
 
             dir = normalize(reflect(dir, norm));
             cp = cp + deltaAway * dir;//run away from the current point to avoid multiple tiny iterations
 
 
-            if (collisions > 0.5f)//0.5 = first hit, 1.5 = second hit, etc.
+            if (collisions > 1.5f)//0.5 = first hit, 1.5 = second hit, etc.
             break;//stop at nth bounce
             //return vec4(vec3(1.0,1.0,1.0) * (1.0 - dDist * 0.01), 1.0);//hit distance,
             //return vec4(currColor, 1.0);//hit color
