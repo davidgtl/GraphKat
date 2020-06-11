@@ -17,10 +17,10 @@ uniform vec3 ray01;
 uniform vec3 ray10;
 uniform vec3 ray11;
 
-vec3 sunpos = vec3(1.0, 1.0, 0.2) * 10;
+vec3 sunpos = vec3(1.0, 2, 0.2) * 5;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
 vec3 ambient = vec3(0.12, 0.17, 0.2);
-float sunsize = 4.0;
+float sunsize = 0.1;
 
 
 float sdInfiniplane(vec3 p, vec3 o, vec3 n)
@@ -91,6 +91,7 @@ float scDist(vec3 p, out vec3 color, out int object)
     sdSphere(p, vec3(0, 0.0, 0), 1.3)
     );
 
+        //TODO: put properties into struct indexed by object int
     //if its ditance is used update the final color with its color
     obj_comp(minDist, lastminDist, vec3(0.8), 1, final_color, final_object);
     lastminDist = minDist;
@@ -181,35 +182,51 @@ vec3 sundist(vec3 p)
 
     vec3 cp = p;
     float minDist = 1000.0;
+    float dist_to_obj = 0.0;
     vec3 dirSun = normalize(sunpos - p);
     vec3 dirHit = -dirSun;
 
     float tdist = 0.0;//total distance travelled by the ray
     float calctdist = sdSphere(cp, sunpos, sunsize);//total distance if not blocked by an object
     float cdist = 0.0;//current distance from current point to closest surface
+    float lastcdist = 0.0;
 
     vec3 cur_obj_color = vec3(0.8, 0.5, 0.2);//current object(closest one) color
     int cur_obj = 0;
+    int first = 0;
 
-    for (int i = 0; i < 100; i++)//>50
+    for (int i = 0; i < 200; i++)//>50
     {
         cdist = scDist(cp, cur_obj_color, cur_obj);
         cp += cdist * dirSun;
 
+        if(cdist < lastcdist)
+            first = 1;
 
-        if (cur_obj != 3)
-            minDist = min(minDist, cdist);
+        lastcdist = cdist;
+
+
+        if (cur_obj != 3 && first == 1 && cdist < minDist){
+            minDist = cdist;
+            dist_to_obj = length(cp - p);
+            if (DEBUG && gl_GlobalInvocationID.xy == DEBUG_PIXEL)
+            {
+                //drawbar(cdist, 400.0, vec3(0.7, 0.1, 0.0));
+            }
+        }
 
         if (DEBUG && gl_GlobalInvocationID.xy == DEBUG_PIXEL)
         {
-            drawbar(pow(2.0, i), 400.0, vec3(0.0, 0.0, 1.0));
+            //drawbar(pow(2.0, i), 400.0, vec3(0.0, 0.0, 1.0));
             //if(2.0*lastcdist < cdist + 0.2)
             /*if (foundFLocalMax)
             drawbar(cdist, 400.0, vec3(1.0, 0.0, 0.0));
             else if (foundFLocalMin)
             drawbar(cdist, 400.0, vec3(0.0, 1.0, 0.0));
             else*/
-            drawbar(cdist, 400.0, vec3(1.0, 1.0, 1.0));
+            vec3 bar_col = cur_obj == 3 ? vec3(0.0, 0.0, 0.0) : vec3(0.0, 0.1, 0.7);
+            //drawbar(cdist, 400.0, bar_col);
+            //drawbar(cdist, 400.0, bar_col);
 
         }
 
@@ -276,7 +293,9 @@ vec4 trace(vec3 origin, vec3 dir) {
             vec3 sun_dir = normalize(sunpos - cp);
             vec3 sun_info = sundist(cp - deltaSun * dir);
             vec3 col_amb = ambient;
-            vec3 col_sun = (suncol * falloff(sun_info.y, 5.0, 0.1) * dot(norm, sun_dir)) * sun_info.x;
+            float shadow = clamp(sun_info.z / sunsize, 0, 1);//TODO: do the shadow math
+            //vec3 col_sun = suncol * falloff(sun_info.y, 200.0, 0.5) * dot(norm, sun_dir) * shadow;
+            vec3 col_sun = suncol * falloff(sun_info.y, 50.0, 0.3) * dot(norm, sun_dir) * sun_info.x * shadow;
 
 
             vec3 direct_color = cur_obj_color * (col_amb + col_sun);
@@ -287,8 +306,11 @@ vec4 trace(vec3 origin, vec3 dir) {
             if (collisions < 1.5){
                 finalColor = direct_color;
                 fresnel = 1.0 - dot(norm, -dir);
+
+                //finalColor = shadow * vec3(1.0);
+
             } else {
-                finalColor += fresnel * direct_color;
+                finalColor += 0.8 * fresnel * direct_color;
             }
 
 
@@ -302,7 +324,7 @@ vec4 trace(vec3 origin, vec3 dir) {
             cp = cp + deltaAway * dir;//run away from the current point to avoid multiple tiny iterations
 
 
-            if (collisions > 1.5f)//0.5 = first hit, 1.5 = second hit, etc.
+            if (collisions > 2.5f)//0.5 = first hit, 1.5 = second hit, etc.
             break;//stop at nth bounce
             //return vec4(vec3(1.0,1.0,1.0) * (1.0 - dDist * 0.01), 1.0);//hit distance,
             //return vec4(currColor, 1.0);//hit color
