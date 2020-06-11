@@ -36,12 +36,12 @@ void SDF_Renderer::draw() {
 
     float screen_dist = 0.001;
     // 90 deg fov
-    float fovx = 50 / 180.0 * PI;
-    float fovy = fovx * size().y / size().x;
+    float fovx = 80 / 180.0 * PI;
+    float fovy = 80 / 180.0 * PI;
 
     right *= tan(fovx / 2) * screen_dist;
     forward = eye_pos + forward * screen_dist;
-    up *= tan(fovy / 2) * screen_dist;
+    up *= tan(fovy / 2) * screen_dist * size().y / size().x;
 
     sdf_prog->setUniform("eye", eye_pos);
     sdf_prog->setUniform("ray00", forward - right - up);

@@ -304,7 +304,7 @@ vec4 trace(vec3 origin, vec3 dir) {
             cp = cp + deltaAway * dir;//run away from the current point to avoid multiple tiny iterations
 
 
-            if (collisions > 1.5f)//0.5 = first hit, 1.5 = second hit, etc.
+            if (collisions > 0.5f)//0.5 = first hit, 1.5 = second hit, etc.
             break;//stop at nth bounce
             //return vec4(vec3(1.0,1.0,1.0) * (1.0 - dDist * 0.01), 1.0);//hit distance,
             //return vec4(currColor, 1.0);//hit color

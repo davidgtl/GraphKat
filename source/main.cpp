@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
 
     glfwSetErrorCallback(errorCallback);
 
-    win_layout.updateWindowSize(vec2(1280, 720));
+    win_layout.updateWindowSize(vec2(1024, 1024));
     GLFWwindow *window = initialize(win_layout.windowSize.x, win_layout.windowSize.y);
     if (!window) {
         return 0;
