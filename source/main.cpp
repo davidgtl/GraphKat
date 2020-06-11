@@ -39,6 +39,8 @@
 #include "ui/IMouseEvents.h"
 #include "ui/Image.h"
 #include "ui/SDF_Renderer.h"
+#include "utils/Timer.h"
+#include "inputs/Keyboard.h"
 
 using namespace std;
 using namespace glm;
@@ -237,7 +239,7 @@ int main(int argc, char *argv[]) {
     }
     updateScreenSize();
     framebuffer_size_callback(window, win_layout.windowSize.x, win_layout.windowSize.y);
-
+    win_keybd = new Keyboard(window);
     glClearColor(0.094f, 0.086f, 0.109f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -261,6 +263,7 @@ int main(int argc, char *argv[]) {
     renderables.push_back(&sdf_renderer);
 
     resized = true;
+    timer time;
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", win_layout.windowSize.x, win_layout.windowSize.y,
@@ -268,6 +271,10 @@ int main(int argc, char *argv[]) {
             resized = false;
         }
         if (invalidated) {
+
+            time.tick();
+            sdf_renderer.on_tick(time.ms());
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             mouse_text.update_text(format("x: ", lxpos, ", y: ", lypos));
