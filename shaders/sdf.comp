@@ -5,6 +5,7 @@
 #define deltaAway 0.01
 #define deltaSun 0.001
 #define deltaLocalMax 0.001
+#define PI 3.1415927
 #define DEBUG true
 #define DEBUG_PIXEL ivec2(400, 512)
 writeonly uniform image2D framebuffer;//rgba32f
@@ -18,6 +19,7 @@ uniform vec3 ray11;
 
 vec3 sunpos = vec3(1.0, 1.0, 0.2) * 10;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
+vec3 ambient = vec3(0.06, 0.085, 0.1);
 float sunsize = 4.0;
 
 
@@ -125,19 +127,16 @@ float mapc(float x, float as, float ae, float bs, float be)
 }
 
 /*
-chop off the [1.0, 8.0] region from 1/x^2
-remap the ys to [0,1]
-remap the input x from [0.0, 1.0] -> [1.0, 8.0] with no clamping => allows light to fall off naturally
+intensity I at distance x = 0
+spread of light is in [0,1) which maps to [0,pi/2)
+x is distance
 */
-float falloff(float x, float beg, float end)
+float falloff(float x, float I, float spread)
 {
-    if (x < 0.0) return 1.0;
+    if (x < 0.0) return I;
+    if (spread > 0.999999) return 0.0;
 
-    float begv = 1.0/(beg*beg);
-    float endv = 1.0/(end*end);
-    float norm = 1.0/(begv - endv);
-    float v = map(x, 0.0, 1.0, beg, end);
-    return clamp((1.0/(v*v) - endv) * norm, 0.0, 1.0);
+    return I / pow(1.0 + x * tan(spread * PI / 2.0), 2.0);
 }
 
 /*
@@ -157,13 +156,6 @@ Le "David Light Model" axioms:
 post:oh my god a blue plane actually looks green under yellow light without more debugging
 */
 
-//todo: do the power as the last element
-vec3 mixColors(vec3 surface, vec3 light, float dist, float intensity)
-{
-    float lint = pow(falloff(dist, 1.0, 8.0), 0.454545) * intensity;
-    return mix(surface * light, light, pow(lint, 35.0)) * lint;
-}
-
 /*For Debigging purposes*/
 int curPix = 0;
 void drawbar(float value, float scale, vec3 color)
@@ -174,9 +166,8 @@ void drawbar(float value, float scale, vec3 color)
     curPix++;
 }
 
-vec2 sundist(vec3 p)
+vec3 sundist(vec3 p)
 {
-    float intensity = 1.0;
 
     vec3 cp = p;
     float minDist = 1000.0;
@@ -184,10 +175,8 @@ vec2 sundist(vec3 p)
     vec3 dirHit = -dirSun;
 
     float tdist = 0.0;//total distance travelled by the ray
-    float calctdist = sdSphere(cp, sunpos, 4.0);//total distance if not blocked by an object
+    float calctdist = sdSphere(cp, sunpos, sunsize);//total distance if not blocked by an object
     float cdist = 0.0;//current distance from current point to closest surface
-    float lastcdist = cdist;
-    float initDist = scDist(cp);
 
     bool foundFLocalMax = false;//first maximum found = ray has escaped the proximity of the initial hit surface
     bool foundFLocalMin = false;//first maximum found = ray has escaped the proximity of the initial hit surface
@@ -195,10 +184,8 @@ vec2 sundist(vec3 p)
 
     for (int i = 0; i < 100; i++)//>50
     {
-        lastcdist = cdist;
         cdist = scDist(cp);
         cp += cdist * dirSun;
-        tdist += cdist;
 
         //foundFLocalMax = foundFLocalMax || (cdist <  pow(2.0, i)*initDist);// > deltaLocalMax;
         //foundFLocalMin = foundFLocalMax && (foundFLocalMin || lastcdist < cdist);
@@ -229,16 +216,20 @@ vec2 sundist(vec3 p)
         break;
     }
 
-    //intensity = tdist/calctdist;
-    intensity = tdist;
-    //tdist = calctdist - tdist;
-    //intensity = intensity/(tdist * tdist);
-    //intensity = clamp(intensity*100.0, 0.0, 1.0);
-    intensity *= calctdist -  tdist < deltaSunHit ? 1.0 : 1000.0;
+    tdist = length(p-cp);
+    float is_hit = calctdist -  tdist < deltaSunHit ? 1.0 : 0.0;
 
-    return vec2(intensity, min(1.0, minDist));
+    return vec3(is_hit, tdist, min(1.0, minDist));
 }
 
+vec3 skycolor(vec3 dir){
+    vec3 horizon = vec3(0.788,0.855,0.95);
+    vec3 zenith = vec3(0.32,0.70,0.97);
+
+    float blend = max(0.0, dot(dir, vec3(0.0,1.0,0.0)));
+
+    return mix(horizon, zenith, blend);
+}
 
 vec4 trace(vec3 origin, vec3 dir) {
 
@@ -249,31 +240,27 @@ vec4 trace(vec3 origin, vec3 dir) {
     float tdist = 0.0;//total distance travelledby the ray
 
     float lastHit = 0.0;//last hit distance
-    vec3 finalColor = vec3(0.08, 0.0, 0.08);
-    vec3 currColor = vec3(0.8, 0.5, 0.2);//current object(closest one) color
+    vec3 finalColor = skycolor(dir);
+    vec3 cur_obj_color = vec3(0.8, 0.5, 0.2);//current object(closest one) color
     float first = 1.0;
     float dDist = 0;//distance covered by taking the last step
     float collisions = 0.0;//number of collisions so far
 
+
     for (int i = 0; i < 100 && tdist < 50.0; i++)
     {
-        cdist = scDist(cp, currColor);
+        cdist = scDist(cp, cur_obj_color);
         cp = cp + cdist * dir;
         tdist += cdist;
 
         vec3 norm = normal(cp);
 
-
-        if (currColor.x > 1.0)//special coloring mode for normals
-        currColor = (norm + 1.0) * 0.5;
-
-
+        if (cur_obj_color.x > 1.0)//special coloring mode for normals
+        cur_obj_color = (norm + 1.0) * 0.5;
 
         if (cdist < delta)//close enough to an object consider it a collision
         {
-
             collisions += 1.0;
-
 
             //return vec4(currColor / tdist , 1.0);
             dDist = tdist - lastHit;
@@ -283,17 +270,24 @@ vec4 trace(vec3 origin, vec3 dir) {
 
             float blend = min(0.5, 1.0 / dDist);
 
-            vec2 ldist = sundist(cp - deltaSun * dir);
-            if (ldist.x < deltaSunHit) return vec4(suncol, 1.0);
+            vec3 sun_dir = normalize(sunpos - cp);
+            vec3 sun_info = sundist(cp - deltaSun * dir);
+            vec3 col_amb = ambient * 2.0;
+            //vec3 col_sun = (suncol * falloff(sun_info.y, 1.0, 0.5) * dot(norm, sun_dir)) * sun_info.x;
+            vec3 col_sun = (suncol * dot(norm, sun_dir)) * sun_info.x;
+
+            vec3 direct_color = cur_obj_color * (col_amb + col_sun);
+
+
             //float illum = ldist.x ;// * min(1.0, light.y); //min(1.0, dot(norm, -camdir));//vec3(1.0,1.0,0.2)));
 
             //finalColor = first * illum * currColor + (1.0-first) * (currColor * blend + (1-blend) * finalColor); //abs(norm) * clamp(illum, 0.2, 1.0) * multiplier + (1-multiplier) * finalColor;
-            vec3 dirSun = normalize(sunpos - (cp - deltaSun * dir));
 
             //finalColor = ldist.x * ldist.y * currColor;//basic light model
-            vec3 currColor_Light = mixColors(currColor, suncol, ldist.x * 0.001, ldist.y * dot(norm, dirSun));
-            finalColor = first * currColor_Light
-            + (1.0-first) * (currColor_Light * blend + (1-blend) * finalColor);//actually thought out light model
+
+
+            //mixColors(currColor, suncol, ldist.x * 0.001, ldist.y * dot(norm, dirSun));
+            finalColor = direct_color;
 
             //finalColor = vec3(illum.x);
             //return vec4(finalColor, 1.0);
@@ -337,6 +331,7 @@ void main(void) {
 
     vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
     color = trace(eye, dir);
+    //color.xyz = pow(color.xyz, vec3(1.2));//adjust gamma
     if (DEBUG && pix == DEBUG_PIXEL)
     imageStore(framebuffer, pix, vec4(1.0, 0.5, 0.5, 1.0));
     else

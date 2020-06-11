@@ -219,13 +219,13 @@ float randf() {
 
 vector<IRenderable *> buildScene() {
 
-    auto *p1 = new Marker(vec3(0.3, 0.8, 1.0), 1, 0, vec2(0.01f, 0.01f),
-            vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f);
+    //auto *p1 = new Marker(vec3(0.3, 0.8, 1.0), 1, 0, vec2(0.01f, 0.01f),
+    //        vec2(0.1, 0.1), vec2(0.2, 0.05), 0.1f);
     auto *p2 = new Slider(vec3(0.3, 0.8, 1.0), 0, vec2(0.8, 0.8), vec2(0.15, 0.05), 0.1f);
 
-    Layouts::PopulateHitmap(*hitmap, {p1, p2});
+    Layouts::PopulateHitmap(*hitmap, {p2});
 
-    return {p1, p2};
+    return {p2};
 }
 
 int main(int argc, char *argv[]) {
