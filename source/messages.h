@@ -5,8 +5,15 @@
 #include <sstream>
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <glm/gtx/string_cast.hpp>
 
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
+
+
+template<glm::length_t L, typename T, glm::qualifier Q>
+std::ostream &operator<<(std::ostream &out, const glm::vec<L, T, Q> &g) {
+    return out << glm::to_string(g);
+}
 
 template<class... Args>
 std::string format(Args &&... args) {

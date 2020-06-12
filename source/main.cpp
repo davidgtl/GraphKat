@@ -42,6 +42,10 @@
 #include "utils/Timer.h"
 #include "inputs/Keyboard.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+
+#include <tiny_obj_loader.h>
+
 using namespace std;
 using namespace glm;
 
@@ -217,6 +221,81 @@ float randf() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
+void load_object() {
+    std::string inputfile = "models/nanosuit/nanosuit.obj";
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+
+    std::string warn;
+    std::string err;
+
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inputfile.c_str());
+
+    if (!warn.empty()) {
+        std::cout << warn << std::endl;
+    }
+
+    if (!err.empty()) {
+        std::cerr << err << std::endl;
+    }
+
+    if (!ret) {
+        fatal_error("could not load object");
+    }
+
+    bool bound_init = false;
+    vec3 bound_min;
+    vec3 bound_max;
+    // Loop over shapes
+    for (size_t s = 0; s < shapes.size(); s++) {
+        // Loop over faces(polygon)
+        size_t index_offset = 0;
+        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+            int fv = shapes[s].mesh.num_face_vertices[f];
+
+            // Loop over vertices in the face.
+            for (size_t v_off = 0; v_off < fv; v_off++) {
+                // access to vertex
+                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v_off];
+                vec3 v = vec3(
+                        attrib.vertices[3 * idx.vertex_index + 0],
+                        attrib.vertices[3 * idx.vertex_index + 1],
+                        attrib.vertices[3 * idx.vertex_index + 2]
+                );
+                vec3 n = vec3(
+                        attrib.normals[3 * idx.normal_index + 0],
+                        attrib.normals[3 * idx.normal_index + 1],
+                        attrib.normals[3 * idx.normal_index + 2]
+                );
+                vec2 t = vec2(
+                        attrib.texcoords[2 * idx.texcoord_index + 0],
+                        attrib.texcoords[2 * idx.texcoord_index + 1]
+                );
+                // Optional: vertex colors
+                // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
+                // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
+                // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
+
+                if (bound_init) {
+                    bound_min = glm::min(bound_min, v);
+                    bound_max = glm::max(bound_max, v);
+                } else {
+                    bound_min = v;
+                    bound_max = v;
+                }
+            }
+            index_offset += fv;
+
+            // per-face material
+            shapes[s].mesh.material_ids[f];
+        }
+    }
+
+    cout << format("bound_min: ", bound_min, ", bound_max: ", bound_max, "\n");
+
+}
+
 vector<IRenderable *> buildScene() {
 
     //auto *p1 = new Marker(vec3(0.3, 0.8, 1.0), 1, 0, vec2(0.01f, 0.01f),
@@ -227,6 +306,7 @@ vector<IRenderable *> buildScene() {
 
     return {p2};
 }
+
 
 int main(int argc, char *argv[]) {
 
@@ -257,6 +337,8 @@ int main(int argc, char *argv[]) {
             win_layout.sisc(80, 80), win_layout.sisc(8), 0.1f, vec4(1, 0.8, 0.5, 1), -1);
 
     renderables.push_back(&mouse_text);
+
+    load_object();
 
     auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0);
     Layouts::PopulateHitmap(*hitmap, &sdf_renderer);

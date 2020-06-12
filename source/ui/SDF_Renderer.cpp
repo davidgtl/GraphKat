@@ -4,6 +4,7 @@
 
 #include "SDF_Renderer.h"
 #include "inputs/Keyboard.h"
+#include "messages.h"
 
 #define PI glm::pi<float>()
 
@@ -58,8 +59,8 @@ SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z)
         : texture(1024, 1024, GL_RGBA32F), Image(&texture, origin, size, z),
           sdf_prog(&ShaderLoader::programMap["sdf"]) {
     eye_pos = vec3(0, 5, -5);
-    pitch = 0;
-    yaw = 0;
+    pitch = -0.56;
+    yaw = 1.68;
 }
 
 void SDF_Renderer::on_move_captured(glm::vec2 dpos) {
@@ -71,6 +72,8 @@ void SDF_Renderer::on_move_captured(glm::vec2 dpos) {
 
     if (pitch <= -PI / 2)
         pitch = -PI / 2;
+
+    //std::cout << format("pitch ", pitch, ", yaw ", yaw, "\n");
 }
 
 void SDF_Renderer::on_tick(float dt_ms) {

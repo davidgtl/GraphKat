@@ -84,3 +84,8 @@ target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
 set(PUGIXML_DIR "${LIB_DIR}/pugixml")
 add_subdirectory(${PUGIXML_DIR})
 target_link_libraries(${PROJECT_NAME} pugixml)
+
+# tiny obj loader
+set(TOL_DIR "${LIB_DIR}/tinyobjloader")
+add_subdirectory(${TOL_DIR})
+target_link_libraries(${PROJECT_NAME} tinyobjloader)
