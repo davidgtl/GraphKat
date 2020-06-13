@@ -222,7 +222,7 @@ float randf() {
 }
 
 void load_object() {
-    std::string inputfile = "models/nanosuit/nanosuit.obj";
+    std::string inputfile = "models/teapot.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -262,8 +262,8 @@ void load_object() {
                         attrib.vertices[3 * idx.vertex_index + 0],
                         attrib.vertices[3 * idx.vertex_index + 1],
                         attrib.vertices[3 * idx.vertex_index + 2]
-                );
-                vec3 n = vec3(
+                ) + vec3(3, 0, 2);
+                /*vec3 n = vec3(
                         attrib.normals[3 * idx.normal_index + 0],
                         attrib.normals[3 * idx.normal_index + 1],
                         attrib.normals[3 * idx.normal_index + 2]
@@ -271,7 +271,7 @@ void load_object() {
                 vec2 t = vec2(
                         attrib.texcoords[2 * idx.texcoord_index + 0],
                         attrib.texcoords[2 * idx.texcoord_index + 1]
-                );
+                );*/
                 // Optional: vertex colors
                 // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
                 // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
@@ -281,6 +281,7 @@ void load_object() {
                     bound_min = glm::min(bound_min, v);
                     bound_max = glm::max(bound_max, v);
                 } else {
+                    bound_init = true;
                     bound_min = v;
                     bound_max = v;
                 }
@@ -307,9 +308,43 @@ vector<IRenderable *> buildScene() {
     return {p2};
 }
 
+void snap_to_zero(vec3 &p) {
+    float zero = 0.000001;
+    if (p.x < zero) p.x = 0;
+    if (p.y < zero) p.y = 0;
+    if (p.z < zero) p.z = 0;
+}
+
+void gen_sphere() {
+    using namespace glm;
+
+    cout << "Planified sphere: \n";
+    vec3 origin(0, 0, 0);
+    float radius = 1;
+    float pi = glm::pi<float>();
+    for (int p = 0; p < 4; p++)
+        for (int y = 0; y < 8; y++) {
+            float pitch = -pi / 2 + pi / 8 + pi * p / 4;
+            float yaw = 0 + 2 * pi / 16 + 2 * pi * y / 8;
+            vec3 normal = normalize(vec3(cos(yaw), sin(pitch), sin(yaw)));
+            vec3 cp = radius * normal;
+
+            snap_to_zero(normal);
+            snap_to_zero(cp);
+
+            cout << format("{",
+                    "{", cp.x, ",", cp.y, ",", cp.z, "},",
+                    "{", normal.x, ",", normal.y, ",", normal.z, "}",
+                    "},\n");
+        }
+
+    cout << "\n\n";
+
+}
+
 
 int main(int argc, char *argv[]) {
-
+    //gen_sphere();
     glfwSetErrorCallback(errorCallback);
 
     win_layout.updateWindowSize(vec2(1024, 1024));

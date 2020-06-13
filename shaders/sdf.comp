@@ -9,7 +9,49 @@
 #define DEBUG true
 #define DEBUG_PIXEL ivec2(400, 512)
 writeonly uniform image2D framebuffer;//rgba32f
+//layout(binding = 1) uniform image2D object_map;//rgba32f
+//layout(binding = 2) uniform image2D object_texture;//rgba32f
 //layout(binding = 1) uniform sampler2D noise;
+
+struct Plane{
+    vec3 origin;
+    vec3 normal;
+};
+
+Plane aprx_sphere[32] = {
+{ { 0.678598, 0, 0.281085 }, { 0.678598, 0, 0.281085 } },
+{ { 0.281085, 0, 0.678598 }, { 0.281085, 0, 0.678598 } },
+{ { 0, 0, 0.678598 }, { 0, 0, 0.678598 } },
+{ { 0, 0, 0.281085 }, { 0, 0, 0.281085 } },
+{ { 0, 0, 0 }, { 0, 0, 0 } },
+{ { 0, 0, 0 }, { 0, 0, 0 } },
+{ { 0.281085, 0, 0 }, { 0.281085, 0, 0 } },
+{ { 0.678598, 0, 0 }, { 0.678598, 0, 0 } },
+{ { 0.862856, 0, 0.357407 }, { 0.862856, 0, 0.357407 } },
+{ { 0.357407, 0, 0.862856 }, { 0.357407, 0, 0.862856 } },
+{ { 0, 0, 0.862856 }, { 0, 0, 0.862856 } },
+{ { 0, 0, 0.357407 }, { 0, 0, 0.357407 } },
+{ { 0, 0, 0 }, { 0, 0, 0 } },
+{ { 0, 0, 0 }, { 0, 0, 0 } },
+{ { 0.357407, 0, 0 }, { 0.357407, 0, 0 } },
+{ { 0.862856, 0, 0 }, { 0.862856, 0, 0 } },
+{ { 0.862856, 0.357407, 0.357407 }, { 0.862856, 0.357407, 0.357407 } },
+{ { 0.357407, 0.357407, 0.862856 }, { 0.357407, 0.357407, 0.862856 } },
+{ { 0, 0.357407, 0.862856 }, { 0, 0.357407, 0.862856 } },
+{ { 0, 0.357407, 0.357407 }, { 0, 0.357407, 0.357407 } },
+{ { 0, 0.357407, 0 }, { 0, 0.357407, 0 } },
+{ { 0, 0.357407, 0 }, { 0, 0.357407, 0 } },
+{ { 0.357407, 0.357407, 0 }, { 0.357407, 0.357407, 0 } },
+{ { 0.862856, 0.357407, 0 }, { 0.862856, 0.357407, 0 } },
+{ { 0.678598, 0.678598, 0.281085 }, { 0.678598, 0.678598, 0.281085 } },
+{ { 0.281085, 0.678598, 0.678598 }, { 0.281085, 0.678598, 0.678598 } },
+{ { 0, 0.678598, 0.678598 }, { 0, 0.678598, 0.678598 } },
+{ { 0, 0.678598, 0.281085 }, { 0, 0.678598, 0.281085 } },
+{ { 0, 0.678598, 0 }, { 0, 0.678598, 0 } },
+{ { 0, 0.678598, 0 }, { 0, 0.678598, 0 } },
+{ { 0.281085, 0.678598, 0 }, { 0.281085, 0.678598, 0 } },
+{ { 0.678598, 0.678598, 0 }, { 0.678598, 0.678598, 0 } }
+};
 
 uniform vec3 eye;
 uniform vec3 ray00;
@@ -22,6 +64,23 @@ vec3 suncol = vec3(1.0, 1.0, 1.0);
 vec3 ambient = vec3(0.12, 0.17, 0.2);
 float sunsize = 0.1;
 
+
+float sd_aprx_sphere(vec3 pt){
+    vec3 dir = normalize(pt);
+    float pitch = asin(dir.y);
+    float yaw = acos(dir.x);
+
+    int p = int((pitch + PI / 2 - PI / 8) / (PI / 4));
+    int y = int((PI - 0 - 2 * PI / 16) / (2 * PI / 8));
+    int index = p * 4 + y;
+
+    if (index >= 0 && index < 32){
+        vec3 origin = aprx_sphere[index].origin;
+        vec3 normal = aprx_sphere[index].normal;
+
+        return dot(pt - origin, normal);
+    } else return 10000.0;
+}
 
 float sdInfiniplane(vec3 p, vec3 o, vec3 n)
 {
@@ -72,6 +131,7 @@ float scDist(vec3 p)
     minDist = min(minDist, plane);
 
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
+    minDist = min(minDist, sd_aprx_sphere(p));
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
 
     return minDist;
@@ -114,6 +174,10 @@ float scDist(vec3 p, out vec3 color, out int object)
 
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     obj_comp(minDist, lastminDist, vec3(10, 0, 0), 2, final_color, final_object);
+    lastminDist = minDist;
+
+    minDist = min(minDist, sd_aprx_sphere(p));
+    obj_comp(minDist, lastminDist, vec3(0.5, 0.7, 0.9), 4, final_color, final_object);
     lastminDist = minDist;
 
 
