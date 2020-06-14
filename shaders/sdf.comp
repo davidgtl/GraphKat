@@ -13,44 +13,48 @@ writeonly uniform image2D framebuffer;//rgba32f
 //layout(binding = 2) uniform image2D object_texture;//rgba32f
 //layout(binding = 1) uniform sampler2D noise;
 
+struct Node{
+    int chilren[8];
+};
+
 struct Plane{
     vec3 origin;
     vec3 normal;
 };
 
 Plane aprx_sphere[32] = {
-{ { 0.678598, 0, 0.281085 }, { 0.678598, 0, 0.281085 } },
-{ { 0.281085, 0, 0.678598 }, { 0.281085, 0, 0.678598 } },
-{ { 0, 0, 0.678598 }, { 0, 0, 0.678598 } },
-{ { 0, 0, 0.281085 }, { 0, 0, 0.281085 } },
-{ { 0, 0, 0 }, { 0, 0, 0 } },
-{ { 0, 0, 0 }, { 0, 0, 0 } },
-{ { 0.281085, 0, 0 }, { 0.281085, 0, 0 } },
-{ { 0.678598, 0, 0 }, { 0.678598, 0, 0 } },
-{ { 0.862856, 0, 0.357407 }, { 0.862856, 0, 0.357407 } },
-{ { 0.357407, 0, 0.862856 }, { 0.357407, 0, 0.862856 } },
-{ { 0, 0, 0.862856 }, { 0, 0, 0.862856 } },
-{ { 0, 0, 0.357407 }, { 0, 0, 0.357407 } },
-{ { 0, 0, 0 }, { 0, 0, 0 } },
-{ { 0, 0, 0 }, { 0, 0, 0 } },
-{ { 0.357407, 0, 0 }, { 0.357407, 0, 0 } },
-{ { 0.862856, 0, 0 }, { 0.862856, 0, 0 } },
+{ { 0.678598, -0.678598, 0.281085 }, { 0.678598, -0.678598, 0.281085 } },
+{ { 0.281085, -0.678598, 0.678598 }, { 0.281085, -0.678598, 0.678598 } },
+{ { -0.281085, -0.678598, 0.678598 }, { -0.281085, -0.678598, 0.678598 } },
+{ { -0.678598, -0.678598, 0.281085 }, { -0.678598, -0.678598, 0.281085 } },
+{ { -0.678598, -0.678598, -0.281085 }, { -0.678598, -0.678598, -0.281085 } },
+{ { -0.281084, -0.678598, -0.678598 }, { -0.281084, -0.678598, -0.678598 } },
+{ { 0.281085, -0.678598, -0.678598 }, { 0.281085, -0.678598, -0.678598 } },
+{ { 0.678598, -0.678598, -0.281084 }, { 0.678598, -0.678598, -0.281084 } },
+{ { 0.862856, -0.357407, 0.357407 }, { 0.862856, -0.357407, 0.357407 } },
+{ { 0.357407, -0.357407, 0.862856 }, { 0.357407, -0.357407, 0.862856 } },
+{ { -0.357407, -0.357407, 0.862856 }, { -0.357407, -0.357407, 0.862856 } },
+{ { -0.862856, -0.357407, 0.357407 }, { -0.862856, -0.357407, 0.357407 } },
+{ { -0.862856, -0.357407, -0.357407 }, { -0.862856, -0.357407, -0.357407 } },
+{ { -0.357406, -0.357407, -0.862856 }, { -0.357406, -0.357407, -0.862856 } },
+{ { 0.357407, -0.357407, -0.862856 }, { 0.357407, -0.357407, -0.862856 } },
+{ { 0.862856, -0.357407, -0.357406 }, { 0.862856, -0.357407, -0.357406 } },
 { { 0.862856, 0.357407, 0.357407 }, { 0.862856, 0.357407, 0.357407 } },
 { { 0.357407, 0.357407, 0.862856 }, { 0.357407, 0.357407, 0.862856 } },
-{ { 0, 0.357407, 0.862856 }, { 0, 0.357407, 0.862856 } },
-{ { 0, 0.357407, 0.357407 }, { 0, 0.357407, 0.357407 } },
-{ { 0, 0.357407, 0 }, { 0, 0.357407, 0 } },
-{ { 0, 0.357407, 0 }, { 0, 0.357407, 0 } },
-{ { 0.357407, 0.357407, 0 }, { 0.357407, 0.357407, 0 } },
-{ { 0.862856, 0.357407, 0 }, { 0.862856, 0.357407, 0 } },
+{ { -0.357407, 0.357407, 0.862856 }, { -0.357407, 0.357407, 0.862856 } },
+{ { -0.862856, 0.357407, 0.357407 }, { -0.862856, 0.357407, 0.357407 } },
+{ { -0.862856, 0.357407, -0.357407 }, { -0.862856, 0.357407, -0.357407 } },
+{ { -0.357406, 0.357407, -0.862856 }, { -0.357406, 0.357407, -0.862856 } },
+{ { 0.357407, 0.357407, -0.862856 }, { 0.357407, 0.357407, -0.862856 } },
+{ { 0.862856, 0.357407, -0.357406 }, { 0.862856, 0.357407, -0.357406 } },
 { { 0.678598, 0.678598, 0.281085 }, { 0.678598, 0.678598, 0.281085 } },
 { { 0.281085, 0.678598, 0.678598 }, { 0.281085, 0.678598, 0.678598 } },
-{ { 0, 0.678598, 0.678598 }, { 0, 0.678598, 0.678598 } },
-{ { 0, 0.678598, 0.281085 }, { 0, 0.678598, 0.281085 } },
-{ { 0, 0.678598, 0 }, { 0, 0.678598, 0 } },
-{ { 0, 0.678598, 0 }, { 0, 0.678598, 0 } },
-{ { 0.281085, 0.678598, 0 }, { 0.281085, 0.678598, 0 } },
-{ { 0.678598, 0.678598, 0 }, { 0.678598, 0.678598, 0 } }
+{ { -0.281085, 0.678598, 0.678598 }, { -0.281085, 0.678598, 0.678598 } },
+{ { -0.678598, 0.678598, 0.281085 }, { -0.678598, 0.678598, 0.281085 } },
+{ { -0.678598, 0.678598, -0.281085 }, { -0.678598, 0.678598, -0.281085 } },
+{ { -0.281084, 0.678598, -0.678598 }, { -0.281084, 0.678598, -0.678598 } },
+{ { 0.281085, 0.678598, -0.678598 }, { 0.281085, 0.678598, -0.678598 } },
+{ { 0.678598, 0.678598, -0.281084 }, { 0.678598, 0.678598, -0.281084 } }
 };
 
 uniform vec3 eye;
@@ -68,18 +72,31 @@ float sunsize = 0.1;
 float sd_aprx_sphere(vec3 pt){
     vec3 dir = normalize(pt);
     float pitch = asin(dir.y);
-    float yaw = acos(dir.x);
+    float yaw = atan(dir.z, dir.x) + PI;
 
-    int p = int((pitch + PI / 2 - PI / 8) / (PI / 4));
-    int y = int((PI - 0 - 2 * PI / 16) / (2 * PI / 8));
+    int p = int((pitch + PI / 2) / (PI / 4));
+    int y = int((yaw - 0) / (2 * PI / 8));
     int index = p * 4 + y;
+
+    float minDist  = 0.0;
+    if (index >= 15)
+    return 1000.0;
+    /*int i = 0;
+    for(i = 0; i < 32; i++){
+        vec3 origin = aprx_sphere[i].origin;
+        vec3 normal = aprx_sphere[i].normal;
+        minDist = max(minDist, dot(pt - origin, normal));
+    }*/
 
     if (index >= 0 && index < 32){
         vec3 origin = aprx_sphere[index].origin;
         vec3 normal = aprx_sphere[index].normal;
 
         return dot(pt - origin, normal);
+        //return length(pt - origin)-0.1;
     } else return 10000.0;
+    //return dot(pt - origin, normal);
+    //return minDist;
 }
 
 float sdInfiniplane(vec3 p, vec3 o, vec3 n)
@@ -129,9 +146,9 @@ float scDist(vec3 p)
 
 
     minDist = min(minDist, plane);
-
+    //float minDist = plane;
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
-    minDist = min(minDist, sd_aprx_sphere(p));
+    //minDist = min(minDist, sd_aprx_sphere(p));
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
 
     return minDist;
@@ -168,6 +185,7 @@ float scDist(vec3 p, out vec3 color, out int object)
     );
 
     minDist = min(minDist, plane);
+    //float minDist = plane;
     obj_comp(minDist, lastminDist, vec3(0.019, 0.509, 1.0), 2, final_color, final_object);
     lastminDist = minDist;
 
@@ -176,9 +194,9 @@ float scDist(vec3 p, out vec3 color, out int object)
     obj_comp(minDist, lastminDist, vec3(10, 0, 0), 2, final_color, final_object);
     lastminDist = minDist;
 
-    minDist = min(minDist, sd_aprx_sphere(p));
+    /*minDist = min(minDist, sd_aprx_sphere(p));
     obj_comp(minDist, lastminDist, vec3(0.5, 0.7, 0.9), 4, final_color, final_object);
-    lastminDist = minDist;
+    lastminDist = minDist;*/
 
 
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
@@ -272,10 +290,14 @@ vec3 sundist(vec3 p)
     int cur_obj = 0;
     int first = 0;
 
+    float shadow = 1.0;
+
     for (int i = 0; i < 200; i++)//>50
     {
         cdist = scDist(cp, cur_obj_color, cur_obj);
+
         cp += cdist * dirSun;
+        tdist += cdist;
 
         if (cdist < lastcdist)
         first = 1;
@@ -283,8 +305,9 @@ vec3 sundist(vec3 p)
         lastcdist = cdist;
 
 
-        if (cur_obj != 3 && first == 1 && cdist < minDist){
-            minDist = cdist;
+        if (cur_obj != 3 && first == 1){
+            minDist = min(cdist, minDist);
+            shadow = min(shadow, 30.0*cdist/tdist);
             dist_to_obj = length(cp - p);
             if (DEBUG && gl_GlobalInvocationID.xy == DEBUG_PIXEL)
             {
@@ -315,7 +338,7 @@ vec3 sundist(vec3 p)
     tdist = length(p-cp);
     float is_hit = calctdist -  tdist < deltaSunHit ? 1.0 : 0.0;
 
-    return vec3(is_hit, tdist, minDist);
+    return vec3(is_hit, tdist, shadow);
 }
 
 vec3 skycolor(vec3 dir){
@@ -370,9 +393,9 @@ vec4 trace(vec3 origin, vec3 dir) {
             vec3 sun_dir = normalize(sunpos - cp);
             vec3 sun_info = sundist(cp - deltaSun * dir);
             vec3 col_amb = ambient;
-            float shadow = clamp(sun_info.z / sunsize, 0, 1);//TODO: do the shadow math
+            float shadow = sun_info.z;//TODO: do the shadow math
             //vec3 col_sun = suncol * falloff(sun_info.y, 200.0, 0.5) * dot(norm, sun_dir) * shadow;
-            vec3 col_sun = suncol * falloff(sun_info.y, 50.0, 0.3) * dot(norm, sun_dir) * sun_info.x * shadow;
+            vec3 col_sun = suncol * falloff(sun_info.y, 50.0, 0.3) * dot(norm, sun_dir) * shadow.x * shadow;
 
 
             vec3 direct_color = cur_obj_color * (col_amb + col_sun);

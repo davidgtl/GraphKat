@@ -310,9 +310,9 @@ vector<IRenderable *> buildScene() {
 
 void snap_to_zero(vec3 &p) {
     float zero = 0.000001;
-    if (p.x < zero) p.x = 0;
-    if (p.y < zero) p.y = 0;
-    if (p.z < zero) p.z = 0;
+    if (abs(p.x) < zero) p.x = 0;
+    if (abs(p.y) < zero) p.y = 0;
+    if (abs(p.z) < zero) p.z = 0;
 }
 
 void gen_sphere() {
@@ -344,7 +344,7 @@ void gen_sphere() {
 
 
 int main(int argc, char *argv[]) {
-    //gen_sphere();
+    //gen_sphere(); exit(0);
     glfwSetErrorCallback(errorCallback);
 
     win_layout.updateWindowSize(vec2(1024, 1024));
