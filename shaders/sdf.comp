@@ -4,6 +4,7 @@
 #define deltaSunHit 0.01
 #define deltaAway 0.01
 #define deltaSun 0.001
+#define crispyShadows 0.05
 #define deltaLocalMax 0.001
 #define PI 3.1415927
 #define DEBUG true
@@ -68,6 +69,11 @@ vec3 suncol = vec3(1.0, 1.0, 1.0);
 vec3 ambient = vec3(0.12, 0.17, 0.2);
 float sunsize = 0.1;
 
+
+float smin(float x, float y, float smoothness){
+    float h = max(smoothness-abs(x-y), 0.0)/smoothness;
+    return min(x, y) - h*h*h*smoothness*(1.0/6.0);
+}
 
 float sd_aprx_sphere(vec3 pt){
     vec3 dir = normalize(pt);
@@ -296,8 +302,8 @@ vec3 sundist(vec3 p)
     {
         cdist = scDist(cp, cur_obj_color, cur_obj);
 
-        cp += cdist * dirSun;
-        tdist += cdist;
+        cp += min(cdist, crispyShadows) * dirSun;
+        tdist += min(cdist, crispyShadows);
 
         if (cdist < lastcdist)
         first = 1;
@@ -307,7 +313,7 @@ vec3 sundist(vec3 p)
 
         if (cur_obj != 3 && first == 1){
             minDist = min(cdist, minDist);
-            shadow = min(shadow, 30.0*cdist/tdist);
+            shadow = min(shadow, smoothstep(0.0, 1.0, atan(cdist, tdist)/(PI*0.04)));//min(shadow, 30.0*cdist/tdist);
             dist_to_obj = length(cp - p);
             if (DEBUG && gl_GlobalInvocationID.xy == DEBUG_PIXEL)
             {
