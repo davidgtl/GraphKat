@@ -17,12 +17,13 @@ private:
     float pitch, yaw;
     Texture texture;
     ProgramShader *sdf_prog;
+    GLuint obj_data, obj_index;
 
     void compute_axis(vec3 &right, vec3 &forward, vec3 &up);
 
 public:
 
-    SDF_Renderer(vec2 origin, vec2 size, float z);
+    SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size);
 
     void draw() override;
 

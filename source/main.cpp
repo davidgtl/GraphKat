@@ -45,6 +45,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include <tiny_obj_loader.h>
+#include "utils/oct_tree.h"
 
 using namespace std;
 using namespace glm;
@@ -221,7 +222,13 @@ float randf() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-void load_object() {
+struct vertex_data {
+    vec3 position;
+    vec3 normal;
+};
+
+
+void load_object(void *&index, int &index_size, void *&data, int &data_size) {
     std::string inputfile = "models/teapot.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -247,22 +254,57 @@ void load_object() {
     bool bound_init = false;
     vec3 bound_min;
     vec3 bound_max;
-    // Loop over shapes
+
+
     for (size_t s = 0; s < shapes.size(); s++) {
-        // Loop over faces(polygon)
         size_t index_offset = 0;
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
             int fv = shapes[s].mesh.num_face_vertices[f];
 
-            // Loop over vertices in the face.
+            assert(fv >= 3);
+            vector<vec3> points;
             for (size_t v_off = 0; v_off < fv; v_off++) {
-                // access to vertex
+
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v_off];
                 vec3 v = vec3(
                         attrib.vertices[3 * idx.vertex_index + 0],
                         attrib.vertices[3 * idx.vertex_index + 1],
                         attrib.vertices[3 * idx.vertex_index + 2]
                 ) + vec3(3, 0, 2);
+
+                if (bound_init) {
+                    bound_min = glm::min(bound_min, v);
+                    bound_max = glm::max(bound_max, v);
+                } else {
+                    bound_init = true;
+                    bound_min = v;
+                    bound_max = v;
+                }
+            }
+            index_offset += fv;
+        }
+    }
+
+    cout << format("bound_min: ", bound_min, ", bound_max: ", bound_max, "\n");
+
+    oct_tree<vertex_data> object_tree(bound_min, bound_max);
+
+    for (size_t s = 0; s < shapes.size(); s++) {
+        size_t index_offset = 0;
+        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+            int fv = shapes[s].mesh.num_face_vertices[f];
+
+            vector<vec3> points;
+
+            for (size_t v_off = 0; v_off < fv; v_off++) {
+                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v_off];
+                vec3 v = vec3(
+                        attrib.vertices[3 * idx.vertex_index + 0],
+                        attrib.vertices[3 * idx.vertex_index + 1],
+                        attrib.vertices[3 * idx.vertex_index + 2]
+                ) + vec3(3, 0, 2);
+
+                points.push_back(v);
                 /*vec3 n = vec3(
                         attrib.normals[3 * idx.normal_index + 0],
                         attrib.normals[3 * idx.normal_index + 1],
@@ -277,23 +319,38 @@ void load_object() {
                 // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
                 // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
 
-                if (bound_init) {
-                    bound_min = glm::min(bound_min, v);
-                    bound_max = glm::max(bound_max, v);
-                } else {
-                    bound_init = true;
-                    bound_min = v;
-                    bound_max = v;
-                }
             }
+
+            vec3 f_center(0, 0, 0);
+            vec3 f_normal(0, 0, 0);
+
+            for (auto &p :points) f_center += p;
+            f_center /= fv;
+
+            f_normal = glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
+
+            auto vd = new vertex_data{f_center, f_normal};
+            object_tree.put(vertex_data{f_center, f_normal}, f_center);
+
             index_offset += fv;
 
             // per-face material
-            shapes[s].mesh.material_ids[f];
+            // shapes[s].mesh.nnhhhhh[f];
         }
     }
 
-    cout << format("bound_min: ", bound_min, ", bound_max: ", bound_max, "\n");
+    data_size = object_tree.points();
+    auto *_data = new vertex_data[data_size];
+    data_size *= sizeof(vertex_data);
+
+    index_size = object_tree.splits();
+    auto *_index = new oct_tree<vertex_data>::branch_index[index_size];
+    index_size *= sizeof(oct_tree<vertex_data>::branch_index);
+
+    object_tree.generate_index_data(_data, _index);
+
+    data = _data;
+    index = _index;
 
 }
 
@@ -373,9 +430,12 @@ int main(int argc, char *argv[]) {
 
     renderables.push_back(&mouse_text);
 
-    load_object();
+    void *scene_index, *scene_data;
+    int scene_index_size, scene_data_size;
+    load_object(scene_index, scene_index_size, scene_data, scene_data_size);
 
-    auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0);
+    auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0, scene_index, scene_index_size, scene_data,
+            scene_data_size);
     Layouts::PopulateHitmap(*hitmap, &sdf_renderer);
     renderables.push_back(&sdf_renderer);
 

@@ -16,6 +16,8 @@ void SDF_Renderer::compute_axis(vec3 &right, vec3 &forward, vec3 &up) {
 
 void SDF_Renderer::draw() {
     texture.bindImage(0);//FIXME: query uniforms for location
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, obj_index);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, obj_data);
     sdf_prog->use();
 
     /*Calculate the forward rays for the corners of the camera projection screen*/
@@ -55,12 +57,21 @@ void SDF_Renderer::draw() {
     Image::draw();
 }
 
-SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z)
+SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size)
         : texture(1024, 1024, GL_RGBA32F), Image(&texture, origin, size, z),
           sdf_prog(&ShaderLoader::programMap["sdf"]) {
     eye_pos = vec3(0, 5, -5);
     pitch = -0.56;
     yaw = 1.68;
+
+    glGenBuffers(1, &obj_data);
+    glGenBuffers(1, &obj_index);
+
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obj_index);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, index_size, index, GL_DYNAMIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obj_data);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, data_size, data, GL_DYNAMIC_COPY);
 }
 
 void SDF_Renderer::on_move_captured(glm::vec2 dpos) {
