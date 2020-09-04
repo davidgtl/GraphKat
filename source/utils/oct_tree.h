@@ -21,6 +21,8 @@ private:
         T data;
         vec3 value;
         bool has_data;
+        bool has_ref_data;
+        int ref_index;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -28,21 +30,10 @@ private:
         }
     };
 
-    typedef struct FUCPP{
-        Node * pointer;
-        FUCPP(){
-            pointer = nullptr;
-        }
-
-        FUCPP(Node * ptr_val){
-            pointer = ptr_val;
-        }
-
-        ~FUCPP(){}
-    } FUCPP;
 
     int point_count;
     int split_count;
+    int max_depth = 0;
     Node root;
 
     int index(vec3 &value, vec3 &mid) {
@@ -66,6 +57,17 @@ private:
         else child_min.z = mid.z;
     }
 
+    void child_range(int index, vec3 &mid, vec3 &child_min, vec3 &child_max) {
+        if (index & 1) child_max.x = mid.x;
+        else child_min.x = mid.x;
+
+        if (index & 2) child_max.y = mid.y;
+        else child_min.y = mid.y;
+
+        if (index & 4) child_max.z = mid.z;
+        else child_min.z = mid.z;
+    }
+
     Node *find_value(Node *node, vec3 value, vec3 mini, vec3 maxi) {
         vec3 mid = (mini + maxi) / 2.0f;
 
@@ -81,7 +83,8 @@ private:
 
     }
 
-    void put_value(T data, Node *node, vec3 value, vec3 mini, vec3 maxi) {
+    void put_value(T data, Node *node, vec3 value, vec3 mini, vec3 maxi, int levels = 1) {
+        max_depth = max(max_depth, levels);
         vec3 mid = (mini + maxi) / 2.0f;
 
         int index = this->index(value, mid);
@@ -120,11 +123,33 @@ private:
                 }
             }
             return;
-        } else put_value(data, node->children[index], value, child_min, child_max);
+        } else put_value(data, node->children[index], value, child_min, child_max, levels + 1);
     }
 
-    void fill_empties(){
+    Node* fill_empties(vec3 bound_min = vec3(0,0,0), vec3 bound_max = vec3(0,0,0), Node * node = nullptr){
+        if(node == nullptr) {
+            node = &root;
+            bound_min = mini;
+            bound_max = maxi;
+        }
 
+        vec3 mid = (bound_min + bound_max) * 0.5f;
+
+        Node * best_found_node = nullptr;
+        for(int index = 0; index < 8; index++) {
+            vec3 child_min(bound_min);
+            vec3 child_max(bound_max);
+            child_range(index, mid, child_min, child_max);
+
+            if (node->children[index] != nullptr) {
+                Node* found_node = fill_empties(child_min, child_max, node->children[index]);
+
+                if(best_found_node == nullptr || glm::length(mid - found_node->value) < glm::length(mid - best_found_node->value))
+                    best_found_node = found_node;
+            }
+        }
+
+        return best_found_node;
     }
 
 public:
@@ -146,12 +171,10 @@ public:
         data = n->data;
         actual_value = *n->value;
     }
-    void generate_index_data(branch_index *&index_array, int &index_size, T *&data_array, int &data_size) {
+    void generate_index_data(branch_index *&index_array, int &index_size, T *&data_array, int &data_size, int& levels) {
         using namespace std;
 
         //allocate index_array and data_array
-
-        fill_empties();
 
         std::vector<Node*> index_map;
 
@@ -178,6 +201,7 @@ public:
         index_size = curr_index;
         index_array = (branch_index *)malloc(sizeof(branch_index) * index_size);
 
+        fill_empties();
 
         for(curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++){
             Node *curr = index_map[curr_index];
@@ -192,7 +216,7 @@ public:
                 bool found_child = false;
                 for(int child_index = curr_index; child_index < index_map.size(); child_index++)
                     if(index_map[child_index] == curr->children[i]) {
-                        bi.branch_index[i] = child_index;
+                        bi.branch_index[i] = child_index; //FIXME: set me as field in Node * and use me in fill_empties
                         found_child = true;
                         break;
                     }
@@ -210,8 +234,7 @@ public:
             curr_index++;
         }
 
-
-        printf("end.");
+        levels = max_depth;
     }
 
     int points() {

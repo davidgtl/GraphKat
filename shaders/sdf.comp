@@ -84,8 +84,9 @@ uniform vec3 ray00;
 uniform vec3 ray01;
 uniform vec3 ray10;
 uniform vec3 ray11;
-uniform vec3 data_size;
-uniform vec3 index_size;
+uniform vec3 bound_min;
+uniform vec3 bound_max;
+uniform int levels;
 
 vec3 sunpos = vec3(1.0, 2, 0.2) * 5;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
@@ -162,11 +163,28 @@ float differenceSDF(float distA, float distB) {
 
 float dist_obj(vec3 p){
     float minDist  = 1000.0f;
+    vec3 cb_min = bound_min;
+    vec3 cb_max = bound_max;
+    vec3 mid = (cb_max + cb_min) * 0.5;
 
-    for(int i = 0; i < 10; i++){
-        minDist = min(minDist, sdSphere(p, Obj_Data.data[i].origin, 2));
+    int index = 0;
+    int node = 0;
+
+    int data_index = 0;
+
+    for (int i = 0; i < max_depth; i++){ //FIXME: add me as uniform
+        index = 0;
+        index += p.x < mid.x ? 1 : 0;
+        index += p.y < mid.y ? 2 : 0;
+        index += p.z < mid.z ? 4 : 0;
+
+        if(Obj_Index.data[node].branch_index[index] == 0)
+            data_index = Obj_Index.data[node].data_index;
+        else
+            node = Obj_Index.data[node].branch_index[index];
     }
-    return minDist;
+
+    return sdInfiniplane(Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
 }
 
 //scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
@@ -239,7 +257,7 @@ float scDist(vec3 p, out vec3 color, out int object)
 
     /* my obj */
     minDist = min(minDist, dist_obj(p));
-    obj_comp(minDist, lastminDist, vec3(0.5,0.5,0.7), 5, final_color, final_object);
+    obj_comp(minDist, lastminDist, vec3(0.5, 0.5, 0.7), 5, final_color, final_object);
     lastminDist = minDist;
 
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));

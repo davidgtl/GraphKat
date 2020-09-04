@@ -94,6 +94,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     if (action == GLFW_RELEASE)
         keyPressed[key] = 0;
 
+    invalidate();
+
 }
 
 //dt is in seconds
@@ -228,7 +230,7 @@ struct vertex_data {
 };
 
 
-void load_object(void *&index, int &index_size, void *&data, int &data_size) {
+void load_object(void *&index, int &index_size, void *&data, int &data_size, vec3& bound_min, vec3& bound_max, int& levels) {
     std::string inputfile = "models/teapot.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -252,8 +254,6 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size) {
     }
 
     bool bound_init = false;
-    vec3 bound_min;
-    vec3 bound_max;
 
 
     for (size_t s = 0; s < shapes.size(); s++) {
@@ -340,7 +340,7 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size) {
     }
 
     object_tree.generate_index_data((oct_tree<vertex_data>::branch_index *&)(index), index_size,
-                                    (vertex_data *&)data, data_size);
+                                    (vertex_data *&)data, data_size, levels);
 
 
 }
@@ -423,10 +423,12 @@ int main(int argc, char *argv[]) {
 
     void *scene_index, *scene_data;
     int scene_index_size, scene_data_size;
-    load_object(scene_index, scene_index_size, scene_data, scene_data_size);
+    vec3 bound_min, bound_max;
+    int levels;
+    load_object(scene_index, scene_index_size, scene_data, scene_data_size, bound_min, bound_max, levels);
 
     auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0, scene_index, scene_index_size, scene_data,
-            scene_data_size);
+            scene_data_size, bound_min, bound_max, levels);
     Layouts::PopulateHitmap(*hitmap, &sdf_renderer);
     renderables.push_back(&sdf_renderer);
 
@@ -451,9 +453,7 @@ int main(int argc, char *argv[]) {
                 r->draw();
 
             glfwSwapBuffers(window);
-            //invalidated = false;
-        } else {
-            this_thread::sleep_for(chrono::milliseconds(10));
+            invalidated = false;
         }
         glfwPollEvents();
     }

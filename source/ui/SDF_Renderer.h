@@ -22,8 +22,10 @@ private:
     void compute_axis(vec3 &right, vec3 &forward, vec3 &up);
 
 public:
+    bool recompute = true;
 
-    SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size);
+    SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size,
+                 glm::vec3 bound_min, glm::vec3  bound_max, int levels);
 
     void draw() override;
 

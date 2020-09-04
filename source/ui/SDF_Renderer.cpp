@@ -52,13 +52,14 @@ void SDF_Renderer::draw() {
     sdf_prog->setUniform("ray11", forward + right + up);
     sdf_prog->setUniform("ray10", forward + right - up);
 
-
-    glDispatchCompute(texture.width / 8, texture.height / 8, 1); //1024 512^2 threads in blocks of 16^2*/
+    if(recompute)
+        glDispatchCompute(texture.width / 8, texture.height / 8, 1); //1024 512^2 threads in blocks of 16^2*/
 
     Image::draw();
 }
 
-SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size)
+SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size,
+                           glm::vec3 bound_min, glm::vec3  bound_max, int levels)
         : texture(1024, 1024, GL_RGBA32F), Image(&texture, origin, size, z),
           sdf_prog(&ShaderLoader::programMap["sdf"]) {
     sdf_prog->use();
@@ -76,6 +77,9 @@ SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int ind
     //FIXME: uncomment me after the uniforms are used
     //sdf_prog->setUniform("data_size", data_size);
     //sdf_prog->setUniform("index_size", index_size);
+    sdf_prog->setUniform("bound_min", bound_min);
+    sdf_prog->setUniform("bound_max", bound_max);
+    sdf_prog->setUniform("levels", levels);
 }
 
 void SDF_Renderer::on_move_captured(glm::vec2 dpos) {
