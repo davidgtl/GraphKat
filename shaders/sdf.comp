@@ -1,4 +1,4 @@
-#version 430 core
+#version 440 core
 #define deltaN 0.01
 #define delta 0.000001
 #define deltaSunHit 0.01
@@ -19,9 +19,9 @@ struct struct_obj_data{
     vec3 normal;
 };
 
-layout(std430, binding = 2) buffer obj_data {
-    struct_obj_data obj_data_data[];
-};
+layout(std430, binding = 3) readonly buffer obj_data {
+    struct_obj_data data[];
+} Obj_Data;
 
 
 struct struct_obj_index{
@@ -30,9 +30,9 @@ struct struct_obj_index{
     int data_index;
 };
 
-layout(std430, binding = 3) buffer obj_index {
-    struct_obj_index obj_index_data[];
-};
+layout(std430, binding = 2) readonly buffer obj_index {
+    struct_obj_index data[];
+} Obj_Index;
 
 
 struct Node{
@@ -84,6 +84,8 @@ uniform vec3 ray00;
 uniform vec3 ray01;
 uniform vec3 ray10;
 uniform vec3 ray11;
+uniform vec3 data_size;
+uniform vec3 index_size;
 
 vec3 sunpos = vec3(1.0, 2, 0.2) * 5;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
@@ -158,6 +160,15 @@ float differenceSDF(float distA, float distB) {
     return max(distA, -distB);
 }
 
+float dist_obj(vec3 p){
+    float minDist  = 1000.0f;
+
+    for(int i = 0; i < 10; i++){
+        minDist = min(minDist, sdSphere(p, Obj_Data.data[i].origin, 2));
+    }
+    return minDist;
+}
+
 //scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
 float scDist(vec3 p)
 {
@@ -176,6 +187,7 @@ float scDist(vec3 p)
     //float minDist = plane;
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     //minDist = min(minDist, sd_aprx_sphere(p));
+    minDist = min(minDist, dist_obj(p));
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
 
     return minDist;
@@ -225,6 +237,10 @@ float scDist(vec3 p, out vec3 color, out int object)
     obj_comp(minDist, lastminDist, vec3(0.5, 0.7, 0.9), 4, final_color, final_object);
     lastminDist = minDist;*/
 
+    /* my obj */
+    minDist = min(minDist, dist_obj(p));
+    obj_comp(minDist, lastminDist, vec3(0.5,0.5,0.7), 5, final_color, final_object);
+    lastminDist = minDist;
 
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
     obj_comp(minDist, lastminDist, suncol, 3, final_color, final_object);
@@ -489,6 +505,7 @@ void main(void) {
     imageStore(framebuffer, pix, vec4(1.0, 0.5, 0.5, 1.0));
     else
     imageStore(framebuffer, pix, color);
+
 
     //if (DEBUG)
     //imageStore(framebuffer, pix, vec4(dir, 1.0));

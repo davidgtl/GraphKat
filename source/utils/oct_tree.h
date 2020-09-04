@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <list>
 #include <unordered_map>
+#include <vector>
 
 using namespace glm;
 
@@ -26,6 +27,19 @@ private:
             has_data = false;
         }
     };
+
+    typedef struct FUCPP{
+        Node * pointer;
+        FUCPP(){
+            pointer = nullptr;
+        }
+
+        FUCPP(Node * ptr_val){
+            pointer = ptr_val;
+        }
+
+        ~FUCPP(){}
+    } FUCPP;
 
     int point_count;
     int split_count;
@@ -102,10 +116,15 @@ private:
                 } else {
                     node->data = data;
                     node->value = value;
+                    node->has_data = true;
                 }
             }
             return;
         } else put_value(data, node->children[index], value, child_min, child_max);
+    }
+
+    void fill_empties(){
+
     }
 
 public:
@@ -127,37 +146,41 @@ public:
         data = n->data;
         actual_value = *n->value;
     }
-
-    void generate_index_data(T *data_array, branch_index *index_array) {
+    void generate_index_data(branch_index *&index_array, int &index_size, T *&data_array, int &data_size) {
         using namespace std;
 
-        list<Node *> b_queue;
-        unordered_map<Node *, int> index_map;
+        //allocate index_array and data_array
 
-        b_queue.push_back(&root);
+        fill_empties();
 
+        std::vector<Node*> index_map;
+
+        index_map.push_back(&root);
         int curr_index = 0;
         int data_index = 0;
 
         // create index hashmap
-        while (!b_queue.empty()) {
-            Node *curr = b_queue.front();
-            b_queue.pop_front();
+        for(curr_index = 0; curr_index < index_map.size(); curr_index++){
+            Node *curr = index_map[curr_index];
 
             for (int i = 0; i < 8; i++) {
-                if (curr->children[i] == nullptr) continue;
-                b_queue.push_back(curr->children[i]);
+                if (curr->children[i] == nullptr)
+                    continue;
+                index_map.push_back(curr->children[i]);
             }
-            index_map[curr] = curr_index;
-            curr_index++;
+            if(curr->has_data)
+                data_index++;
         }
 
-        b_queue.push_back(&root);
+        data_size = data_index;
+        data_array = (T*)malloc(sizeof(T) * data_size);
 
-        while (!b_queue.empty()) {
-            Node *curr = b_queue.front();
-            b_queue.pop_front();
+        index_size = curr_index;
+        index_array = (branch_index *)malloc(sizeof(branch_index) * index_size);
 
+
+        for(curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++){
+            Node *curr = index_map[curr_index];
 
             branch_index bi;
 
@@ -166,16 +189,29 @@ public:
                     bi.branch_index[i] = 0;
                     continue;
                 }
-                b_queue.push_back(curr->children[i]);
-                bi.branch_index[i] = index_map[curr->children[i]];
-                if (curr->has_data) {
-                    bi.data_index = data_index; // think about overshooting due to large empty spaces
-                    data_array[data_index++] = curr->data;
+                bool found_child = false;
+                for(int child_index = curr_index; child_index < index_map.size(); child_index++)
+                    if(index_map[child_index] == curr->children[i]) {
+                        bi.branch_index[i] = child_index;
+                        found_child = true;
+                        break;
+                    }
+                if(!found_child){
+                    printf("I've lost my child!");
                 }
             }
+
+            if (curr->has_data) {
+                bi.data_index = data_index; // think about overshooting due to large empty spaces
+                data_array[data_index++] = curr->data;
+            }
+
             index_array[curr_index] = bi;
             curr_index++;
         }
+
+
+        printf("end.");
     }
 
     int points() {

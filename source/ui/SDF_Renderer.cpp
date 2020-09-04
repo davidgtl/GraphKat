@@ -52,6 +52,7 @@ void SDF_Renderer::draw() {
     sdf_prog->setUniform("ray11", forward + right + up);
     sdf_prog->setUniform("ray10", forward + right - up);
 
+
     glDispatchCompute(texture.width / 8, texture.height / 8, 1); //1024 512^2 threads in blocks of 16^2*/
 
     Image::draw();
@@ -60,6 +61,7 @@ void SDF_Renderer::draw() {
 SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int index_size, void *data, int data_size)
         : texture(1024, 1024, GL_RGBA32F), Image(&texture, origin, size, z),
           sdf_prog(&ShaderLoader::programMap["sdf"]) {
+    sdf_prog->use();
     eye_pos = vec3(0, 5, -5);
     pitch = -0.56;
     yaw = 1.68;
@@ -67,11 +69,13 @@ SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int ind
     glGenBuffers(1, &obj_data);
     glGenBuffers(1, &obj_index);
 
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obj_index);
     glBufferData(GL_SHADER_STORAGE_BUFFER, index_size, index, GL_DYNAMIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obj_data);
     glBufferData(GL_SHADER_STORAGE_BUFFER, data_size, data, GL_DYNAMIC_COPY);
+    //FIXME: uncomment me after the uniforms are used
+    //sdf_prog->setUniform("data_size", data_size);
+    //sdf_prog->setUniform("index_size", index_size);
 }
 
 void SDF_Renderer::on_move_captured(glm::vec2 dpos) {

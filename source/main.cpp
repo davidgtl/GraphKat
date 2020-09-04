@@ -185,7 +185,7 @@ GLFWwindow *initialize(int width, int height) {
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -339,18 +339,9 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size) {
         }
     }
 
-    data_size = object_tree.points();
-    auto *_data = new vertex_data[data_size];
-    data_size *= sizeof(vertex_data);
+    object_tree.generate_index_data((oct_tree<vertex_data>::branch_index *&)(index), index_size,
+                                    (vertex_data *&)data, data_size);
 
-    index_size = object_tree.splits();
-    auto *_index = new oct_tree<vertex_data>::branch_index[index_size];
-    index_size *= sizeof(oct_tree<vertex_data>::branch_index);
-
-    object_tree.generate_index_data(_data, _index);
-
-    data = _data;
-    index = _index;
 
 }
 

@@ -86,6 +86,8 @@ ProgramShader::ProgramShader(const vector<Shader> &shaders) {
             uniforms.emplace(std::string(uniform_name.get(), length), utype);
         }
     }
+    cout << "\n";
+
 }
 
 ProgramShader::ProgramShader(GLuint shader1, GLuint shader2, GLuint shader3){

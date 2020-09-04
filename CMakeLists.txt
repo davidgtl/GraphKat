@@ -87,5 +87,6 @@ target_link_libraries(${PROJECT_NAME} pugixml)
 
 # tiny obj loader
 set(TOL_DIR "${LIB_DIR}/tinyobjloader")
-add_subdirectory(${TOL_DIR})
-target_link_libraries(${PROJECT_NAME} tinyobjloader)
+#add_subdirectory(${TOL_DIR})
+#target_link_libraries(${PROJECT_NAME} tinyobjloader)
+target_include_directories(${PROJECT_NAME} PRIVATE "${TOL_DIR}")
