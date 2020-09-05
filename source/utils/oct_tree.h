@@ -86,7 +86,7 @@ private:
     }
 
     void put_value(T data, Node *node, vec3 value, vec3 mini, vec3 maxi, int levels = 1) {
-        max_depth = max(max_depth, levels);
+        max_depth = glm::max(max_depth, levels);
         vec3 mid = (mini + maxi) / 2.0f;
 
         int index = this->index(value, mid);
@@ -157,9 +157,11 @@ private:
             }
         }
 
-        if (!node->has_data) {
+        if (best_found_node != nullptr) {
             node->has_ref_data = true;
             node->ref_branch_index = best_found_node->branch_index;
+        } else{
+            node->has_data = true; //FIXME: nasty workaround please recheck put_value
         }
 
         return best_found_node;
