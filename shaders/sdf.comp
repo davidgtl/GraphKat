@@ -25,7 +25,6 @@ layout(std430, binding = 3) readonly buffer obj_data {
 
 
 struct struct_obj_index{
-    vec3 midpoint;
     int branch_index[8];
     int data_index;
 };
@@ -44,41 +43,6 @@ struct Plane{
     vec3 normal;
 };
 
-Plane aprx_sphere[32] = {
-{ { 0.678598, -0.678598, 0.281085 }, { 0.678598, -0.678598, 0.281085 } },
-{ { 0.281085, -0.678598, 0.678598 }, { 0.281085, -0.678598, 0.678598 } },
-{ { -0.281085, -0.678598, 0.678598 }, { -0.281085, -0.678598, 0.678598 } },
-{ { -0.678598, -0.678598, 0.281085 }, { -0.678598, -0.678598, 0.281085 } },
-{ { -0.678598, -0.678598, -0.281085 }, { -0.678598, -0.678598, -0.281085 } },
-{ { -0.281084, -0.678598, -0.678598 }, { -0.281084, -0.678598, -0.678598 } },
-{ { 0.281085, -0.678598, -0.678598 }, { 0.281085, -0.678598, -0.678598 } },
-{ { 0.678598, -0.678598, -0.281084 }, { 0.678598, -0.678598, -0.281084 } },
-{ { 0.862856, -0.357407, 0.357407 }, { 0.862856, -0.357407, 0.357407 } },
-{ { 0.357407, -0.357407, 0.862856 }, { 0.357407, -0.357407, 0.862856 } },
-{ { -0.357407, -0.357407, 0.862856 }, { -0.357407, -0.357407, 0.862856 } },
-{ { -0.862856, -0.357407, 0.357407 }, { -0.862856, -0.357407, 0.357407 } },
-{ { -0.862856, -0.357407, -0.357407 }, { -0.862856, -0.357407, -0.357407 } },
-{ { -0.357406, -0.357407, -0.862856 }, { -0.357406, -0.357407, -0.862856 } },
-{ { 0.357407, -0.357407, -0.862856 }, { 0.357407, -0.357407, -0.862856 } },
-{ { 0.862856, -0.357407, -0.357406 }, { 0.862856, -0.357407, -0.357406 } },
-{ { 0.862856, 0.357407, 0.357407 }, { 0.862856, 0.357407, 0.357407 } },
-{ { 0.357407, 0.357407, 0.862856 }, { 0.357407, 0.357407, 0.862856 } },
-{ { -0.357407, 0.357407, 0.862856 }, { -0.357407, 0.357407, 0.862856 } },
-{ { -0.862856, 0.357407, 0.357407 }, { -0.862856, 0.357407, 0.357407 } },
-{ { -0.862856, 0.357407, -0.357407 }, { -0.862856, 0.357407, -0.357407 } },
-{ { -0.357406, 0.357407, -0.862856 }, { -0.357406, 0.357407, -0.862856 } },
-{ { 0.357407, 0.357407, -0.862856 }, { 0.357407, 0.357407, -0.862856 } },
-{ { 0.862856, 0.357407, -0.357406 }, { 0.862856, 0.357407, -0.357406 } },
-{ { 0.678598, 0.678598, 0.281085 }, { 0.678598, 0.678598, 0.281085 } },
-{ { 0.281085, 0.678598, 0.678598 }, { 0.281085, 0.678598, 0.678598 } },
-{ { -0.281085, 0.678598, 0.678598 }, { -0.281085, 0.678598, 0.678598 } },
-{ { -0.678598, 0.678598, 0.281085 }, { -0.678598, 0.678598, 0.281085 } },
-{ { -0.678598, 0.678598, -0.281085 }, { -0.678598, 0.678598, -0.281085 } },
-{ { -0.281084, 0.678598, -0.678598 }, { -0.281084, 0.678598, -0.678598 } },
-{ { 0.281085, 0.678598, -0.678598 }, { 0.281085, 0.678598, -0.678598 } },
-{ { 0.678598, 0.678598, -0.281084 }, { 0.678598, 0.678598, -0.281084 } }
-};
-
 uniform vec3 eye;
 uniform vec3 ray00;
 uniform vec3 ray01;
@@ -87,6 +51,7 @@ uniform vec3 ray11;
 uniform vec3 bound_min;
 uniform vec3 bound_max;
 uniform int levels;
+uniform float cut_z;
 
 vec3 sunpos = vec3(1.0, 2, 0.2) * 5;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
@@ -99,36 +64,6 @@ float smin(float x, float y, float smoothness){
     return min(x, y) - h*h*h*smoothness*(1.0/6.0);
 }
 
-float sd_aprx_sphere(vec3 pt){
-    vec3 dir = normalize(pt);
-    float pitch = asin(dir.y);
-    float yaw = atan(dir.z, dir.x) + PI;
-
-    int p = int((pitch + PI / 2) / (PI / 4));
-    int y = int((yaw - 0) / (2 * PI / 8));
-    int index = p * 4 + y;
-
-    float minDist  = 0.0;
-    if (index >= 15)
-    return 1000.0;
-    /*int i = 0;
-    for(i = 0; i < 32; i++){
-        vec3 origin = aprx_sphere[i].origin;
-        vec3 normal = aprx_sphere[i].normal;
-        minDist = max(minDist, dot(pt - origin, normal));
-    }*/
-
-    if (index >= 0 && index < 32){
-        vec3 origin = aprx_sphere[index].origin;
-        vec3 normal = aprx_sphere[index].normal;
-
-        return dot(pt - origin, normal);
-        //return length(pt - origin)-0.1;
-    } else return 10000.0;
-    //return dot(pt - origin, normal);
-    //return minDist;
-}
-
 float sdInfiniplane(vec3 p, vec3 o, vec3 n)
 {
     vec3 dv = p - o;
@@ -136,7 +71,7 @@ float sdInfiniplane(vec3 p, vec3 o, vec3 n)
     return dist;
 }
 
-float sdCeby(vec3 p, vec3 o, float s)
+float sdCeby(vec3 p, vec3 o, vec3 s)
 {
     //vec3 d = abs(p-o) - s;
     //return max(max(d.x, d.y), d.z);
@@ -161,49 +96,68 @@ float differenceSDF(float distA, float distB) {
     return max(distA, -distB);
 }
 
+void child_range(int index, vec3 mid, inout vec3 child_min, inout vec3 child_max) {
+    if (index % 2 ==  1) child_max.x = mid.x;
+    else child_min.x = mid.x;
+
+    if ((index / 2) % 2 == 1) child_max.y = mid.y;
+    else child_min.y = mid.y;
+
+    if ((index / 4) % 2 == 1) child_max.z = mid.z;
+    else child_min.z = mid.z;
+}
+
 float dist_obj(vec3 p){
     float minDist  = 1000.0f;
     vec3 cb_min = bound_min;
     vec3 cb_max = bound_max;
-    vec3 mid = (cb_max + cb_min) * 0.5;
+    vec3 mid;
 
     int index = 0;
     int node = 0;
 
     int data_index = 0;
 
+    //index = int(min(3000, max(0, length((p-cb_min)/(cb_max-cb_min))*3000)));
+    /*if (any(lessThan(p, cb_min)) || any(greaterThan(p, cb_max)))
+    return sdCeby(p, Obj_Data.data[0].origin, vec3(1));*/
     for (int i = 0; i < levels; i++){
+        mid = (cb_max + cb_min) * 0.5;
         index = 0;
         index += p.x < mid.x ? 1 : 0;
         index += p.y < mid.y ? 2 : 0;
         index += p.z < mid.z ? 4 : 0;
 
-        if(Obj_Index.data[node].branch_index[index] == 0)
-            data_index = Obj_Index.data[node].data_index;
-        else
+        if (Obj_Index.data[node].branch_index[index] == 0)
+        data_index = Obj_Index.data[node].data_index;
+        else {
             node = Obj_Index.data[node].branch_index[index];
+            child_range(index, mid, cb_min, cb_max);
+        }
     }
 
-    return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
+    //return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
+    return sdCeby(p, Obj_Data.data[data_index].origin, vec3(2));
 }
 
 //scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
 float scDist(vec3 p)
 {
-    float minDist = intersectSDF(
+    float minDist = 1000;
+    /*float minDist = intersectSDF(
     sdCeby(p, vec3(0, 0.0, 0), 1.0),
     sdSphere(p, vec3(0, 0.0, 0), 1.3)
-    );
+    );*/
 
     float plane = intersectSDF(
-    sdCeby(p, vec3(0, 0.0, 0), 10.0),
+    sdCeby(p, vec3(0, 0.0, 0), vec3(10.0)),
     sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0))
     );
 
 
     minDist = min(minDist, plane);
     //float minDist = plane;
-    minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
+    //minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     //minDist = min(minDist, sd_aprx_sphere(p));
     minDist = min(minDist, dist_obj(p));
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
@@ -225,6 +179,7 @@ float scDist(vec3 p, out vec3 color, out int object)
     vec3 final_color = vec3(1.0, 0.0, 0.0);
     int final_object = 0;
 
+    float minDist = 1000;/*
     //object
     float minDist = intersectSDF(
     sdCeby(p, vec3(0, 0.0, 0), 1.0),
@@ -235,9 +190,9 @@ float scDist(vec3 p, out vec3 color, out int object)
     //if its ditance is used update the final color with its color
     obj_comp(minDist, lastminDist, vec3(0.8), 1, final_color, final_object);
     lastminDist = minDist;
-
+    */
     float plane = intersectSDF(
-    sdCeby(p, vec3(0, 0.0, 0), 10.0),
+    sdCeby(p, vec3(0, 0.0, 0), vec3(10.0)),
     sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0))
     );
 
@@ -246,7 +201,7 @@ float scDist(vec3 p, out vec3 color, out int object)
     obj_comp(minDist, lastminDist, vec3(0.019, 0.509, 1.0), 2, final_color, final_object);
     lastminDist = minDist;
 
-
+    /*
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     obj_comp(minDist, lastminDist, vec3(10, 0, 0), 2, final_color, final_object);
     lastminDist = minDist;
@@ -506,6 +461,60 @@ vec4 trace(vec3 origin, vec3 dir) {
 
 layout (local_size_x = 8, local_size_y = 8) in;
 
+vec3 debug_tree(vec2 pos){
+    float minDist  = 1000.0f;
+    vec3 cb_min = bound_min;
+    vec3 cb_max = bound_max;
+    vec3 mid;
+
+    int index = 0;
+    int node = 0;
+
+    int data_index = 0;
+
+    vec3 p = cb_min + vec3(pos.x, cut_z, pos.y) * (cb_max - cb_min);
+
+    //index = int(min(3000, max(0, length((p-cb_min)/(cb_max-cb_min))*3000)));
+    /*if (any(lessThan(p, cb_min)) || any(greaterThan(p, cb_max)))
+    return sdCeby(p, Obj_Data.data[0].origin, vec3(1));*/
+    int depth = 0;
+    for (int i = 0; i < 9; i++){
+        mid = (cb_max + cb_min) * 0.5;
+        index = 0;
+        index += p.x < mid.x ? 1 : 0;
+        index += p.y < mid.y ? 2 : 0;
+        index += p.z < mid.z ? 4 : 0;
+
+        if (Obj_Index.data[node].branch_index[index] == 0)
+            data_index = Obj_Index.data[node].data_index;
+        else {
+            node = Obj_Index.data[node].branch_index[index];
+            child_range(index, mid, cb_min, cb_max);
+            depth++;
+        }
+
+    }
+
+
+
+    float value;
+    value = 0.1;
+
+    vec3 color = vec3(0,0,0);
+    //color = vec3(value);
+    //color.r = depth / 8.0f;
+    //color.g = index / 7.0f;
+    color = vec3(length(Obj_Data.data[data_index].origin)/ 10);
+    //color = Obj_Data.data[data_index].origin/3;
+    //return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
+    return color;
+}
+
+int linearize(ivec2 pix, ivec2 size, ivec2 cell){
+    ivec2 pos = pix / cell;
+    return pos.x + pos.y * (size.x / cell.x);
+}
+
 void main(void) {
     ivec2 pix = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(framebuffer);
@@ -517,13 +526,19 @@ void main(void) {
     dir = normalize(dir - eye);
 
     vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
-    color = trace(eye, dir);
+    color.rgb  = debug_tree(pos);
+
+    //int data_index = Obj_Index.data[linearize(pix, size, ivec2(20,20))].data_index;
+    //vec3 origin = Obj_Data.data[data_index].normal;
+    //color.rgb = origin;
+
+    //color = trace(eye, dir);
     //color.xyz = pow(color.xyz, vec3(1.2));//adjust gamma
+
     if (DEBUG && pix == DEBUG_PIXEL)
     imageStore(framebuffer, pix, vec4(1.0, 0.5, 0.5, 1.0));
     else
     imageStore(framebuffer, pix, color);
-
 
     //if (DEBUG)
     //imageStore(framebuffer, pix, vec4(dir, 1.0));

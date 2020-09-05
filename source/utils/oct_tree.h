@@ -169,7 +169,6 @@ private:
 
 public:
     struct branch_index {
-        vec3 midpoint;
         int branch_index[8];
         int data_index;
     };
@@ -213,11 +212,11 @@ public:
             curr->branch_index = curr_index;
         }
 
-        data_size = data_index;
-        data_array = (T *) malloc(sizeof(T) * data_size);
+        data_size = sizeof(T) * data_index;
+        data_array = (T *) malloc(data_size);
 
-        index_size = curr_index;
-        index_array = (branch_index *) malloc(sizeof(branch_index) * index_size);
+        index_size = sizeof(branch_index) * curr_index;
+        index_array = (branch_index *) malloc(index_size);
 
         fill_empties(index_map);
 
@@ -255,7 +254,8 @@ public:
             } else {
                 bi.data_index = index_map[curr->ref_branch_index]->data_index;
             }
-
+            if(bi.data_index > 4900)
+                printf("Captain we have a problem");
             index_array[curr_index] = bi;
             curr_index++;
         }

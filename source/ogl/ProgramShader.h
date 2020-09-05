@@ -32,8 +32,9 @@ public:
 
     template<typename T>
     void setUniform(const string &name, T value) {
-        assert(uniforms.find(name) != uniforms.end());
-        Shaders::bind_uniform(uniforms[name], value);
+        //assert(uniforms.find(name) != uniforms.end());
+        if(uniforms.find(name) != uniforms.end())
+            Shaders::bind_uniform(uniforms[name], value);
     }
 };
 

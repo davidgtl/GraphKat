@@ -441,7 +441,7 @@ int main(int argc, char *argv[]) {
             resized = false;
         }
         if (invalidated) {
-
+            sdf_renderer.update_z(lxpos/1024.0);
             time.tick();
             sdf_renderer.on_tick(time.ms());
 

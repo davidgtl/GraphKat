@@ -32,6 +32,8 @@ public:
     void on_move_captured(glm::vec2 dpos) override;
 
     void on_tick(float dt_ms) override;
+
+    void update_z(float x);
 };
 
 
