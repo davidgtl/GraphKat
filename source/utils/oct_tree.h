@@ -20,9 +20,11 @@ private:
         Node *children[8];
         T data;
         vec3 value;
-        bool has_data;
-        bool has_ref_data;
-        int ref_index;
+        bool has_data = false;
+        bool has_ref_data = false;
+        int ref_branch_index = -1;
+        int branch_index = -1;
+        int data_index = -1;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -126,8 +128,10 @@ private:
         } else put_value(data, node->children[index], value, child_min, child_max, levels + 1);
     }
 
-    Node* fill_empties(vec3 bound_min = vec3(0,0,0), vec3 bound_max = vec3(0,0,0), Node * node = nullptr){
-        if(node == nullptr) {
+    Node *
+    fill_empties(const std::vector<Node *> &index_map, vec3 bound_min = vec3(0, 0, 0), vec3 bound_max = vec3(0, 0, 0),
+                 Node *node = nullptr) {
+        if (node == nullptr) {
             node = &root;
             bound_min = mini;
             bound_max = maxi;
@@ -135,18 +139,27 @@ private:
 
         vec3 mid = (bound_min + bound_max) * 0.5f;
 
-        Node * best_found_node = nullptr;
-        for(int index = 0; index < 8; index++) {
+        Node *best_found_node = nullptr;
+        if (node->has_ref_data)
+            best_found_node = index_map[node->ref_branch_index];
+
+        for (int index = 0; index < 8; index++) {
             vec3 child_min(bound_min);
             vec3 child_max(bound_max);
             child_range(index, mid, child_min, child_max);
 
             if (node->children[index] != nullptr) {
-                Node* found_node = fill_empties(child_min, child_max, node->children[index]);
+                Node *found_node = fill_empties(index_map, child_min, child_max, node->children[index]);
 
-                if(best_found_node == nullptr || glm::length(mid - found_node->value) < glm::length(mid - best_found_node->value))
+                if (best_found_node == nullptr ||
+                    glm::length(mid - found_node->value) < glm::length(mid - best_found_node->value))
                     best_found_node = found_node;
             }
+        }
+
+        if (!node->has_data) {
+            node->has_ref_data = true;
+            node->ref_branch_index = best_found_node->branch_index;
         }
 
         return best_found_node;
@@ -171,19 +184,20 @@ public:
         data = n->data;
         actual_value = *n->value;
     }
-    void generate_index_data(branch_index *&index_array, int &index_size, T *&data_array, int &data_size, int& levels) {
+
+    void generate_index_data(branch_index *&index_array, int &index_size, T *&data_array, int &data_size, int &levels) {
         using namespace std;
 
         //allocate index_array and data_array
 
-        std::vector<Node*> index_map;
+        std::vector<Node *> index_map;
 
         index_map.push_back(&root);
         int curr_index = 0;
         int data_index = 0;
 
         // create index hashmap
-        for(curr_index = 0; curr_index < index_map.size(); curr_index++){
+        for (curr_index = 0; curr_index < index_map.size(); curr_index++) {
             Node *curr = index_map[curr_index];
 
             for (int i = 0; i < 8; i++) {
@@ -191,19 +205,34 @@ public:
                     continue;
                 index_map.push_back(curr->children[i]);
             }
-            if(curr->has_data)
+            if (curr->has_data)
                 data_index++;
+
+            curr->branch_index = curr_index;
         }
 
         data_size = data_index;
-        data_array = (T*)malloc(sizeof(T) * data_size);
+        data_array = (T *) malloc(sizeof(T) * data_size);
 
         index_size = curr_index;
-        index_array = (branch_index *)malloc(sizeof(branch_index) * index_size);
+        index_array = (branch_index *) malloc(sizeof(branch_index) * index_size);
 
-        fill_empties();
+        fill_empties(index_map);
 
-        for(curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++){
+        /* data pass */
+        for (curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++) {
+            Node *curr = index_map[curr_index];
+
+            if (curr->has_data) {
+                curr->data_index = data_index;
+                data_array[data_index++] = curr->data;
+            }
+
+            curr_index++;
+        }
+
+        /* index pass */
+        for (curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++) {
             Node *curr = index_map[curr_index];
 
             branch_index bi;
@@ -213,21 +242,16 @@ public:
                     bi.branch_index[i] = 0;
                     continue;
                 }
-                bool found_child = false;
-                for(int child_index = curr_index; child_index < index_map.size(); child_index++)
-                    if(index_map[child_index] == curr->children[i]) {
-                        bi.branch_index[i] = child_index; //FIXME: set me as field in Node * and use me in fill_empties
-                        found_child = true;
-                        break;
-                    }
-                if(!found_child){
+                bi.branch_index[i] = curr->children[i]->branch_index;
+                if (curr->children[i]->branch_index == -1) {
                     printf("I've lost my child!");
                 }
             }
 
             if (curr->has_data) {
-                bi.data_index = data_index; // think about overshooting due to large empty spaces
-                data_array[data_index++] = curr->data;
+                bi.data_index = curr->data_index;
+            } else {
+                bi.data_index = index_map[curr->ref_branch_index]->data_index;
             }
 
             index_array[curr_index] = bi;
