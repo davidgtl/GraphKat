@@ -25,6 +25,8 @@ private:
         int ref_branch_index = -1;
         int branch_index = -1;
         int data_index = -1;
+        vec3 bound_max;
+        vec3 bound_min;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -86,6 +88,8 @@ private:
     }
 
     void put_value(T data, Node *node, vec3 value, vec3 mini, vec3 maxi, int levels = 1) {
+        if (glm::any(glm::isnan(value)))
+            printf("Captain we have a problem 92");
         max_depth = glm::max(max_depth, levels);
         vec3 mid = (mini + maxi) / 2.0f;
 
@@ -93,78 +97,70 @@ private:
 
         vec3 child_min(mini);
         vec3 child_max(maxi);
-        child_range(value, mid, child_min, child_max);
+        child_range(index, mid, child_min, child_max);
 
-        if (node->children[index] == nullptr) {
-            bool ok = true;
-            for (int i = 0; i < 8; i++) {
-                if (i == index) continue;
-                if (node->children[i] != nullptr)
-                    ok = false;
-            }
-            if (!ok) {
-                node->children[index] = new Node();
-                node->children[index]->data = data;
-                split_count++;
-            } else {
-                if (node->has_data) {
-                    int other_index = this->index(node->value, mid);
-                    node->children[other_index] = new Node();
-                    node->children[other_index]->data = node->data;
-                    node->children[other_index]->value = node->value;
+        if(glm::any(glm::lessThan(value, child_min)) || glm::any(glm::greaterThan(value, child_max)) )
+            printf("Captain we have a bounds problem 103");
 
-                    node->children[index] = new Node();
-                    node->children[index]->data = data;
-                    node->children[index]->value = value;
-                    split_count++;
+        bool has_children = false;
+        for (int i = 0; i < 8; i++) {
+            if (node->children[i] != nullptr)
+                has_children = true;
+        }
 
-                } else {
-                    node->data = data;
-                    node->value = value;
-                    node->has_data = true;
-                }
-            }
-            return;
-        } else put_value(data, node->children[index], value, child_min, child_max, levels + 1);
+        if (!has_children && !node->has_data) {
+            node->data = data;
+            node->value = value;
+            node->has_data = true;
+        } else if (!has_children && node->has_data) {
+            int other_index = this->index(node->value, mid);
+            node->children[other_index] = new Node();
+            node->children[other_index]->data = node->data;
+            node->children[other_index]->has_data = true;
+            node->children[other_index]->value = node->value;
+
+            node->children[index] = new Node();
+            node->children[index]->data = data;
+            node->children[index]->has_data = true;
+            node->children[index]->value = value;
+
+            node->has_data = false;
+            split_count++;
+        } // by now it has children for sure
+        else if (node->children[index] == nullptr) {
+            node->children[index] = new Node();
+            node->children[index]->data = data;
+            node->children[index]->has_data = true;
+            node->children[index]->value = value;
+        } else
+            put_value(data, node->children[index], value, child_min, child_max, levels + 1);
     }
 
     Node *
-    fill_empties(const std::vector<Node *> &index_map, vec3 bound_min = vec3(0, 0, 0), vec3 bound_max = vec3(0, 0, 0),
-                 Node *node = nullptr) {
-        if (node == nullptr) {
-            node = &root;
-            bound_min = mini;
-            bound_max = maxi;
-        }
+    fill_empties(const std::vector<Node *> &index_map) {
 
-        vec3 mid = (bound_min + bound_max) * 0.5f;
+        for (int i = 0; i < index_map.size(); ++i) {
+            Node *node = index_map[i];
 
-        Node *best_found_node = nullptr;
-        if (node->has_ref_data)
-            best_found_node = index_map[node->ref_branch_index];
+            if (node->has_data)
+                continue;
 
-        for (int index = 0; index < 8; index++) {
-            vec3 child_min(bound_min);
-            vec3 child_max(bound_max);
-            child_range(index, mid, child_min, child_max);
+            float closest_dist = 1000.0f;
 
-            if (node->children[index] != nullptr) {
-                Node *found_node = fill_empties(index_map, child_min, child_max, node->children[index]);
+            for (int j = 0; j < index_map.size(); ++j) {
+                if (!index_map[j]->has_data)
+                    continue;
 
-                if (best_found_node == nullptr ||
-                    glm::length(mid - found_node->value) < glm::length(mid - best_found_node->value))
-                    best_found_node = found_node;
+                float new_dist = glm::length(index_map[j]->value - node->value);
+                if (new_dist < closest_dist) {
+                    closest_dist = new_dist;
+                    node->data_index = index_map[j]->data_index;
+                    node->has_ref_data = true;
+                }
             }
+            if (node->data_index < 1)
+                printf("Captain we have a problem 162");
         }
-
-        if (best_found_node != nullptr) {
-            node->has_ref_data = true;
-            node->ref_branch_index = best_found_node->branch_index;
-        } else{
-            node->has_data = true; //FIXME: nasty workaround please recheck put_value
-        }
-
-        return best_found_node;
     }
 
 public:
@@ -206,8 +202,11 @@ public:
                     continue;
                 index_map.push_back(curr->children[i]);
             }
-            if (curr->has_data)
+
+            if (curr->has_data) {
+                curr->data_index = data_index;
                 data_index++;
+            }
 
             curr->branch_index = curr_index;
         }
@@ -218,19 +217,17 @@ public:
         index_size = sizeof(branch_index) * curr_index;
         index_array = (branch_index *) malloc(index_size);
 
-        fill_empties(index_map);
-
         /* data pass */
-        for (curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++) {
+        for (curr_index = 0; curr_index < index_map.size(); curr_index++) {
             Node *curr = index_map[curr_index];
 
-            if (curr->has_data) {
-                curr->data_index = data_index;
-                data_array[data_index++] = curr->data;
-            }
+            if (curr->has_data)
+                data_array[curr->data_index] = curr->data;
 
             curr_index++;
         }
+
+        //fill_empties(index_map);
 
         /* index pass */
         for (curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++) {
@@ -249,13 +246,12 @@ public:
                 }
             }
 
-            if (curr->has_data) {
-                bi.data_index = curr->data_index;
-            } else {
-                bi.data_index = index_map[curr->ref_branch_index]->data_index;
+            bi.data_index = curr->data_index;
+
+            if (bi.data_index < 1) {
+                printf("Captain we have a problem 252");
             }
-            if(bi.data_index > 4900)
-                printf("Captain we have a problem");
+
             index_array[curr_index] = bi;
             curr_index++;
         }
