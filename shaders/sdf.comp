@@ -17,21 +17,48 @@ writeonly uniform image2D framebuffer;//rgba32f
 struct struct_obj_data{
     vec3 origin;
     vec3 normal;
+    int cookie;
 };
 
-layout(std430, binding = 3) readonly buffer obj_data {
-    struct_obj_data data[];
-} Obj_Data;
+layout(std430, binding = 5) readonly buffer buffy5 {
+    float obj_data[];
+};
+
+
+vec3 obj_data_origin(int index){
+    return vec3(
+    obj_data[index * 6 + 0],
+    obj_data[index * 6 + 1],
+    obj_data[index * 6 + 2]
+    );
+}
+
+
+vec3 obj_data_normal(int index){
+    return vec3(
+    obj_data[index * 6 + 3],
+    obj_data[index * 6 + 4],
+    obj_data[index * 6 + 5]
+    );
+}
 
 
 struct struct_obj_index{
-    int branch_index[8];
     int data_index;
+    int branch_index[8];
 };
 
-layout(std430, binding = 2) readonly buffer obj_index {
-    struct_obj_index data[];
-} Obj_Index;
+layout(std430, binding = 4) readonly buffer buffy4 {
+    int obj_index[];
+};
+
+int obj_index_data_index(int index){
+    return obj_index[index * 9 + 0];
+}
+
+int obj_index_branch_index(int index, int branch_index){
+    return obj_index[index * 9 + 1 + branch_index];
+}
 
 
 struct Node{
@@ -128,16 +155,16 @@ float dist_obj(vec3 p){
         index += p.y < mid.y ? 2 : 0;
         index += p.z < mid.z ? 4 : 0;
 
-        if (Obj_Index.data[node].branch_index[index] == 0)
-        data_index = Obj_Index.data[node].data_index;
+        if (obj_index_branch_index(node, index) == 0)
+        data_index = obj_index_data_index(node);
         else {
-            node = Obj_Index.data[node].branch_index[index];
+            node = obj_index_branch_index(node, index);
             child_range(index, mid, cb_min, cb_max);
         }
     }
 
     //return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
-    return sdCeby(p, Obj_Data.data[data_index].origin, vec3(2));
+    return 0.0;//sdCeby(p, obj_data[data_index].origin, vec3(2));
 }
 
 //scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
@@ -462,6 +489,7 @@ vec4 trace(vec3 origin, vec3 dir) {
 layout (local_size_x = 8, local_size_y = 8) in;
 
 vec3 debug_tree(vec2 pos){
+    vec3 color = vec3(0, 0, 0);
     float minDist  = 1000.0f;
     vec3 cb_min = bound_min;
     vec3 cb_max = bound_max;
@@ -485,10 +513,11 @@ vec3 debug_tree(vec2 pos){
         index += p.y < mid.y ? 2 : 0;
         index += p.z < mid.z ? 4 : 0;
 
-        if (Obj_Index.data[node].branch_index[index] == 0){
-            data_index = Obj_Index.data[node].data_index;
+        data_index = obj_index_data_index(node);
+        if (obj_index_branch_index(node, index) == 0){
+
         } else {
-            node = Obj_Index.data[node].branch_index[index];
+            node = obj_index_branch_index(node, index) ;
             child_range(index, mid, cb_min, cb_max);
             depth++;
         }
@@ -500,20 +529,25 @@ vec3 debug_tree(vec2 pos){
     float value;
     value = 0.1;
 
-    vec3 point_pos = (Obj_Data.data[data_index].origin - bound_min)/(bound_max - bound_min);
-    vec3 point_rel_pos = (Obj_Data.data[data_index].origin - cb_min)/(cb_max - cb_min);
+    vec3 point_pos = (obj_data_origin(data_index) - bound_min)/(bound_max - bound_min);
+    // vec3 point_rel_pos = (obj_data[data_index].origin - cb_min)/(cb_max - cb_min);
 
-    vec3 color = vec3(0, 0, 0);
-    //color = vec3(data_index / 1000.0);
-    //color.r = depth / 8.0f;
+
+    //color = vec3(data_index / 100.0);
+    color.rgb = vec3(depth / 8.0f);
     //color.g = index / 7.0f;
-    //color = vec3(length(vec3(bound_min + bound_max)*0.5 - Obj_Data.data[data_index].origin) / 10);
-    color = vec3((vec3(4,4,4) - Obj_Data.data[data_index].normal).x/5);
+    color = vec3(length(vec3(bound_min + bound_max)*0.5 - obj_data_origin(data_index)) / 10);
+    //color = vec3((vec3(4,4,4) - Obj_Data.data[data_index].normal).x/5);
     //return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
 
+    //color = (Obj_Data.data[data_index].origin - mid) / 10;
+    //color = obj_index[node].mid / 6;
     //if (length(point_pos.xy - pos) < 0.1) color.rgb = vec3(1, 0, 0);
 
-    //color = cb_max - cb_min;
+    //if(any(lessThan(Obj_Data.data[data_index].origin, cb_min)) || any(greaterThan(Obj_Data.data[data_index].origin, cb_max)) )
+    //color = vec3(1,0,0);
+
+    //color = obj_data_origin(data_index) / 7.0;
 
     return color;
 }
@@ -541,13 +575,23 @@ void main(void) {
     //color.rgb = origin;
 
     //points test
-    /*
-    for (int i = 0; i < 5000; i++){
+    /*for (int i = 0; i < 5000; i++){
         vec3 point_pos = (Obj_Data.data[i].origin - bound_min)/(bound_max - bound_min);
-        if (length(point_pos.zy - pos) < 0.001)
+        if (length(point_pos.xy - pos) < 0.001)
         color.rgb = vec3(1, 0, 0);
         //color.rgb += vec3(length(point_pos.xy - pos)) * 100;
     }*/
+
+
+    //color.rgb = Obj_Index.data[linearize(pix, size, ivec2(20, 20))].mid;
+    /*if(Obj_Data.data[linearize(pix, size, ivec2(20,20))].cookie == 123)
+        color.g = 1;
+    else
+        color.r = 1;*/
+    //-1
+    //color.g = obj_index_branch_index(linearize(pix, size, ivec2(20, 20)), 6) / 1000.0;
+
+    //color.rgb += vec3(length(point_pos.xy - pos)) * 100;
 
 
     //color = trace(eye, dir);

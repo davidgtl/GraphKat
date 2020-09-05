@@ -224,10 +224,6 @@ float randf() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-struct vertex_data {
-    vec3 position;
-    vec3 normal;
-};
 
 
 void load_object(void *&index, int &index_size, void *&data, int &data_size, vec3& bound_min, vec3& bound_max, int& levels) {
@@ -287,7 +283,7 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
 
     cout << format("bound_min: ", bound_min, ", bound_max: ", bound_max, "\n");
 
-    oct_tree<vertex_data> object_tree(bound_min, bound_max);
+    oct_tree object_tree(bound_min, bound_max);
 
     for (size_t s = 0; s < shapes.size(); s++) {
         size_t index_offset = 0;
@@ -339,7 +335,7 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
         }
     }
 
-    object_tree.generate_index_data((oct_tree<vertex_data>::branch_index *&)(index), index_size,
+    object_tree.generate_index_data((oct_tree::branch_index *&)(index), index_size,
                                     (vertex_data *&)data, data_size, levels);
 
 

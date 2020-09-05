@@ -16,8 +16,8 @@ void SDF_Renderer::compute_axis(vec3 &right, vec3 &forward, vec3 &up) {
 
 void SDF_Renderer::draw() {
     texture.bindImage(0);//FIXME: query uniforms for location
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, obj_index);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, obj_data);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, obj_index);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, obj_data);
     sdf_prog->use();
 
     /*Calculate the forward rays for the corners of the camera projection screen*/
@@ -73,8 +73,12 @@ SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int ind
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obj_index);
     glBufferData(GL_SHADER_STORAGE_BUFFER, index_size, index, GL_DYNAMIC_COPY);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obj_data);
     glBufferData(GL_SHADER_STORAGE_BUFFER, data_size, data, GL_DYNAMIC_COPY);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
     //FIXME: uncomment me after the uniforms are used
     //sdf_prog->setUniform("data_size", data_size);
     //sdf_prog->setUniform("index_size", index_size);

@@ -11,22 +11,25 @@
 
 using namespace glm;
 
-template<typename T>
+struct vertex_data {
+    vec3 position;
+    vec3 normal;
+};
+
 class oct_tree {
 private:
     vec3 mini, maxi;
 
     struct Node {
         Node *children[8];
-        T data;
+        vertex_data data;
         vec3 value;
         bool has_data = false;
         bool has_ref_data = false;
         int ref_branch_index = -1;
         int branch_index = -1;
         int data_index = -1;
-        vec3 bound_max;
-        vec3 bound_min;
+        vec3 mid;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -83,11 +86,11 @@ private:
 
         if (node->children[index] == nullptr)
             return node;
-        else return findValue(node->children[index], value, child_min, child_max);
+        else return find_value(node->children[index], value, child_min, child_max);
 
     }
 
-    void put_value(T data, Node *node, vec3 value, vec3 mini, vec3 maxi, int levels = 1) {
+    void put_value(vertex_data data, Node *node, vec3 value, vec3 mini, vec3 maxi, int levels = 1) {
         if (glm::any(glm::isnan(value)))
             printf("Captain we have a problem 92");
         max_depth = glm::max(max_depth, levels);
@@ -99,7 +102,8 @@ private:
         vec3 child_max(maxi);
         child_range(index, mid, child_min, child_max);
 
-        if(glm::any(glm::lessThan(value, child_min)) || glm::any(glm::greaterThan(value, child_max)) )
+
+        if (glm::any(glm::lessThan(value, child_min)) || glm::any(glm::greaterThan(value, child_max)))
             printf("Captain we have a bounds problem 103");
 
         bool has_children = false;
@@ -112,6 +116,7 @@ private:
             node->data = data;
             node->value = value;
             node->has_data = true;
+            node->mid = mid;
         } else if (!has_children && node->has_data) {
             int other_index = this->index(node->value, mid);
             node->children[other_index] = new Node();
@@ -123,6 +128,7 @@ private:
             node->children[index]->data = data;
             node->children[index]->has_data = true;
             node->children[index]->value = value;
+            node->children[index]->mid = (child_min + child_max) * vec3(0.5);
 
             node->has_data = false;
             split_count++;
@@ -132,57 +138,67 @@ private:
             node->children[index]->data = data;
             node->children[index]->has_data = true;
             node->children[index]->value = value;
+            node->children[index]->mid = (child_min + child_max) * vec3(0.5);
         } else
             put_value(data, node->children[index], value, child_min, child_max, levels + 1);
     }
 
-    Node *
-    fill_empties(const std::vector<Node *> &index_map) {
-
+    void fill_empties(const std::vector<Node *> &index_map) {
+        float max_dist = 0;
         for (int i = 0; i < index_map.size(); ++i) {
             Node *node = index_map[i];
 
-            if (node->has_data)
+            if (node->has_data) {
+                if (node->data_index < 1)
+                    printf("Captain we have a problem 146");
                 continue;
+            }
 
             float closest_dist = 1000.0f;
 
             for (int j = 0; j < index_map.size(); ++j) {
-                if (!index_map[j]->has_data)
+                Node *other = index_map[j];
+                if (!other->has_data)
                     continue;
 
-                float new_dist = glm::length(index_map[j]->value - node->value);
+                float new_dist = glm::length(other->value - node->value);
                 if (new_dist < closest_dist) {
                     closest_dist = new_dist;
-                    node->data_index = index_map[j]->data_index;
+                    node->data_index = other->data_index;
                     node->has_ref_data = true;
                 }
             }
+            max_dist = glm::max(max_dist, glm::length(node->mid - node->value));
             if (node->data_index < 1)
                 printf("Captain we have a problem 162");
         }
+
+        printf("max dist: %f\n", max_dist);
     }
 
 public:
     struct branch_index {
-        int branch_index[8];
         int data_index;
+        int branch_index[8];
     };
 
-    oct_tree(vec3 mini, vec3 maxi);
+    oct_tree(vec3 mini, vec3 maxi) : split_count(1), point_count(0), mini(mini), maxi(maxi) {
+    }
 
-    void put(T data, vec3 value) {
+
+    void put(vertex_data data, vec3 value) {
         point_count++;
         put_value(data, &root, value, mini, maxi);
     }
 
-    void find(vec3 value, T &data, vec3 &actual_value) {
+    void find(vec3 value, vertex_data &data, vec3 &actual_value) {
         Node *n = find_value(&root, value, mini, maxi);
         data = n->data;
-        actual_value = *n->value;
+        actual_value = n->value;
     }
 
-    void generate_index_data(branch_index *&index_array, int &index_size, T *&data_array, int &data_size, int &levels) {
+    void generate_index_data(branch_index *&index_array, int &index_size, vertex_data *&data_array, int &data_size,
+                             int &levels) {
         using namespace std;
 
         //allocate index_array and data_array
@@ -211,26 +227,29 @@ public:
             curr->branch_index = curr_index;
         }
 
-        data_size = sizeof(T) * data_index;
-        data_array = (T *) malloc(data_size);
+        data_size = sizeof(vertex_data) * data_index;
+        data_array = (vertex_data *) malloc(data_size);
 
         index_size = sizeof(branch_index) * curr_index;
         index_array = (branch_index *) malloc(index_size);
+
+        printf("data_index: %d\n", data_index);
+        printf("curr_index: %d\n", curr_index);
 
         /* data pass */
         for (curr_index = 0; curr_index < index_map.size(); curr_index++) {
             Node *curr = index_map[curr_index];
 
-            if (curr->has_data)
+            if (curr->has_data) {
                 data_array[curr->data_index] = curr->data;
-
-            curr_index++;
+                //data_array[curr->data_index].cookie = curr->data_index;
+            }
         }
 
-        //fill_empties(index_map);
+        fill_empties(index_map);
 
         /* index pass */
-        for (curr_index = 0, data_index = 0; curr_index < index_map.size(); curr_index++) {
+        for (curr_index = 0; curr_index < index_map.size(); curr_index++) {
             Node *curr = index_map[curr_index];
 
             branch_index bi;
@@ -247,13 +266,11 @@ public:
             }
 
             bi.data_index = curr->data_index;
-
             if (bi.data_index < 1) {
                 printf("Captain we have a problem 252");
             }
 
             index_array[curr_index] = bi;
-            curr_index++;
         }
 
         levels = max_depth;
@@ -267,10 +284,3 @@ public:
         return split_count;
     }
 };
-
-template<typename T>
-oct_tree<T>::oct_tree(vec3 mini, vec3 maxi):  split_count(1), point_count(0), mini(mini), maxi(maxi) {
-}
-
-
-
