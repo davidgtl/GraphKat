@@ -12,8 +12,7 @@
 using namespace glm;
 
 struct vertex_data {
-    vec3 position;
-    vec3 normal;
+    vec3 position_normal[8];
 };
 
 class oct_tree {

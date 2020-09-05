@@ -46,6 +46,7 @@
 
 #include <tiny_obj_loader.h>
 #include "utils/oct_tree.h"
+#include <unordered_map>
 
 using namespace std;
 using namespace glm;
@@ -225,8 +226,8 @@ float randf() {
 }
 
 
-
-void load_object(void *&index, int &index_size, void *&data, int &data_size, vec3& bound_min, vec3& bound_max, int& levels) {
+void
+load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bound_min, vec3 &bound_max, int &levels) {
     std::string inputfile = "models/teapot.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -251,6 +252,12 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
 
     bool bound_init = false;
 
+    typedef struct {
+        vec3 origin;
+        vec3 normal;
+    } face;
+
+    map<std::pair<int, int>, std::list<face>> edges_face;
 
     for (size_t s = 0; s < shapes.size(); s++) {
         size_t index_offset = 0;
@@ -259,6 +266,7 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
 
             assert(fv >= 3);
             vector<vec3> points;
+            vector<int> point_index;
             for (size_t v_off = 0; v_off < fv; v_off++) {
 
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v_off];
@@ -267,6 +275,9 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
                         attrib.vertices[3 * idx.vertex_index + 1],
                         attrib.vertices[3 * idx.vertex_index + 2]
                 ) + vec3(3, 0, 2);
+
+                points.push_back(v);
+                point_index.push_back(idx.vertex_index);
 
                 if (bound_init) {
                     bound_min = glm::min(bound_min, v);
@@ -277,6 +288,22 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
                     bound_max = v;
                 }
             }
+
+            vec3 f_center(0, 0, 0);
+            vec3 f_normal(0, 0, 0);
+
+            for (auto &p :points) f_center += p;
+            f_center /= fv;
+
+            f_normal = glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
+
+            edges_face[{point_index[0], point_index[1]}].push_back({f_center, f_normal});
+            edges_face[{point_index[1], point_index[0]}].push_back({f_center, f_normal});
+            edges_face[{point_index[1], point_index[2]}].push_back({f_center, f_normal});
+            edges_face[{point_index[2], point_index[1]}].push_back({f_center, f_normal});
+            edges_face[{point_index[2], point_index[0]}].push_back({f_center, f_normal});
+            edges_face[{point_index[0], point_index[2]}].push_back({f_center, f_normal});
+
             index_offset += fv;
         }
     }
@@ -291,6 +318,7 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
             int fv = shapes[s].mesh.num_face_vertices[f];
 
             vector<vec3> points;
+            vector<int> point_index;
 
             for (size_t v_off = 0; v_off < fv; v_off++) {
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v_off];
@@ -301,6 +329,8 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
                 ) + vec3(3, 0, 2);
 
                 points.push_back(v);
+                point_index.push_back(idx.vertex_index);
+
                 /*vec3 n = vec3(
                         attrib.normals[3 * idx.normal_index + 0],
                         attrib.normals[3 * idx.normal_index + 1],
@@ -326,7 +356,31 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
             f_normal = glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
 
             auto vd = new vertex_data{f_center, f_normal};
-            object_tree.put(vertex_data{f_center, f_normal}, f_center);
+            std::vector<face> local_face_group;
+            for(auto& f: edges_face[{point_index[0], point_index[1]}]){
+                if(f.origin != f_center && f.normal != f_normal)
+                    local_face_group.push_back(f);
+            }
+            for(auto& f: edges_face[{point_index[1], point_index[2]}]){
+                if(f.origin != f_center && f.normal != f_normal)
+                    local_face_group.push_back(f);
+            }
+            for(auto& f: edges_face[{point_index[2], point_index[0]}]){
+                if(f.origin != f_center && f.normal != f_normal)
+                    local_face_group.push_back(f);
+            }
+
+            if(local_face_group.size() < 3) {
+                printf("Captain we have a problem");
+                while(local_face_group.size() < 3){
+                    local_face_group.push_back({f_center, f_normal});
+                }
+            }
+
+            object_tree.put(vertex_data{f_center, f_normal,
+                                        local_face_group[0].origin,local_face_group[0].normal,
+                                        local_face_group[1].origin,local_face_group[1].normal,
+                                        local_face_group[2].origin,local_face_group[2].normal}, f_center);
 
             index_offset += fv;
 
@@ -335,8 +389,8 @@ void load_object(void *&index, int &index_size, void *&data, int &data_size, vec
         }
     }
 
-    object_tree.generate_index_data((oct_tree::branch_index *&)(index), index_size,
-                                    (vertex_data *&)data, data_size, levels);
+    object_tree.generate_index_data((oct_tree::branch_index *&) (index), index_size,
+                                    (vertex_data *&) data, data_size, levels);
 
 
 }
@@ -377,9 +431,9 @@ void gen_sphere() {
             snap_to_zero(cp);
 
             cout << format("{",
-                    "{", cp.x, ",", cp.y, ",", cp.z, "},",
-                    "{", normal.x, ",", normal.y, ",", normal.z, "}",
-                    "},\n");
+                           "{", cp.x, ",", cp.y, ",", cp.z, "},",
+                           "{", normal.x, ",", normal.y, ",", normal.z, "}",
+                           "},\n");
         }
 
     cout << "\n\n";
@@ -413,7 +467,7 @@ int main(int argc, char *argv[]) {
     auto renderables = buildScene();
 
     auto mouse_text = Text(textRenderer, "uninit",
-            win_layout.sisc(80, 80), win_layout.sisc(8), 0.1f, vec4(1, 0.8, 0.5, 1), -1);
+                           win_layout.sisc(80, 80), win_layout.sisc(8), 0.1f, vec4(1, 0.8, 0.5, 1), -1);
 
     renderables.push_back(&mouse_text);
 
@@ -424,7 +478,7 @@ int main(int argc, char *argv[]) {
     load_object(scene_index, scene_index_size, scene_data, scene_data_size, bound_min, bound_max, levels);
 
     auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0, scene_index, scene_index_size, scene_data,
-            scene_data_size, bound_min, bound_max, levels);
+                                     scene_data_size, bound_min, bound_max, levels);
     Layouts::PopulateHitmap(*hitmap, &sdf_renderer);
     renderables.push_back(&sdf_renderer);
 
@@ -433,11 +487,11 @@ int main(int argc, char *argv[]) {
     while (!glfwWindowShouldClose(window)) {
         if (resized) {
             printf("win: %f %f screen: %f %f\n", win_layout.windowSize.x, win_layout.windowSize.y,
-                    win_layout.screenSize.x, win_layout.screenSize.y);
+                   win_layout.screenSize.x, win_layout.screenSize.y);
             resized = false;
         }
         if (invalidated) {
-            sdf_renderer.update_z(lxpos/1024.0);
+            sdf_renderer.update_z(lxpos / 1024.0);
             time.tick();
             sdf_renderer.on_tick(time.ms());
 

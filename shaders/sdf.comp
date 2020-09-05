@@ -25,23 +25,22 @@ layout(std430, binding = 5) readonly buffer buffy5 {
 };
 
 
-vec3 obj_data_origin(int index){
+vec3 obj_data_origin(int index, int face){
     return vec3(
-    obj_data[index * 6 + 0],
-    obj_data[index * 6 + 1],
-    obj_data[index * 6 + 2]
+    obj_data[index * 24 + face * 6 + 0],
+    obj_data[index * 24 + face * 6 + 1],
+    obj_data[index * 24 + face * 6 + 2]
     );
 }
 
 
-vec3 obj_data_normal(int index){
+vec3 obj_data_normal(int index, int face){
     return vec3(
-    obj_data[index * 6 + 3],
-    obj_data[index * 6 + 4],
-    obj_data[index * 6 + 5]
+    obj_data[index * 24 + face * 6 + 3],
+    obj_data[index * 24 + face * 6 + 4],
+    obj_data[index * 24 + face * 6 + 5]
     );
 }
-
 
 struct struct_obj_index{
     int data_index;
@@ -132,6 +131,19 @@ void child_range(int index, vec3 mid, inout vec3 child_min, inout vec3 child_max
 
     if ((index / 4) % 2 == 1) child_max.z = mid.z;
     else child_min.z = mid.z;
+}
+
+
+float face_group_dist(vec3 p, int index){
+    float minDist = 1000;
+    float k = 0.2;
+
+    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 0), obj_data_normal(index, 0)), k);
+    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 1), obj_data_normal(index, 1)), k);
+    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 2), obj_data_normal(index, 2)), k);
+    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 3), obj_data_normal(index, 3)), k);
+
+    return minDist;
 }
 
 float dist_obj(vec3 p){
@@ -517,7 +529,7 @@ vec3 debug_tree(vec2 pos){
         if (obj_index_branch_index(node, index) == 0){
 
         } else {
-            node = obj_index_branch_index(node, index) ;
+            node = obj_index_branch_index(node, index);
             child_range(index, mid, cb_min, cb_max);
             depth++;
         }
@@ -529,14 +541,14 @@ vec3 debug_tree(vec2 pos){
     float value;
     value = 0.1;
 
-    vec3 point_pos = (obj_data_origin(data_index) - bound_min)/(bound_max - bound_min);
+    vec3 point_pos = (obj_data_origin(data_index, 0) - bound_min)/(bound_max - bound_min);
     // vec3 point_rel_pos = (obj_data[data_index].origin - cb_min)/(cb_max - cb_min);
 
 
     //color = vec3(data_index / 100.0);
-    color.rgb = vec3(depth / 8.0f);
+    //color.rgb = vec3(depth / 8.0f);
     //color.g = index / 7.0f;
-    color = vec3(length(vec3(bound_min + bound_max)*0.5 - obj_data_origin(data_index)) / 10);
+    color.g = face_group_dist(vec3(bound_min + bound_max)*0.5, data_index) / 10.0;
     //color = vec3((vec3(4,4,4) - Obj_Data.data[data_index].normal).x/5);
     //return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
 
