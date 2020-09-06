@@ -29,6 +29,8 @@ private:
         int branch_index = -1;
         int data_index = -1;
         vec3 mid;
+        vec3 bound_min;
+        vec3 bound_max;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -116,21 +118,32 @@ private:
             node->value = value;
             node->has_data = true;
             node->mid = mid;
+            node->bound_min = mini;
+            node->bound_max = maxi;
             return node->children[index];
         } else if (!has_children && (node->has_data || node->has_ref_data)) {
+            node->children[index] = new Node();
+            node->children[index]->data = data;
+            node->children[index]->has_data = true;
+            node->children[index]->value = value;
+            node->children[index]->mid = (child_min + child_max) * vec3(0.5);
+            node->children[index]->bound_min = child_min;
+            node->children[index]->bound_max = child_max;
+
             int other_index = this->index(node->value, mid);
+            child_min = mini;
+            child_max = maxi;
+            child_range(other_index, mid, child_min, child_max);
+
             node->children[other_index] = new Node();
             node->children[other_index]->data = node->data;
             node->children[other_index]->data_index = node->data_index;
             node->children[other_index]->has_data = node->has_data;
             node->children[other_index]->has_ref_data = node->has_ref_data;
             node->children[other_index]->value = node->value;
+            node->children[other_index]->bound_min = child_min;
+            node->children[other_index]->bound_max = child_max;
 
-            node->children[index] = new Node();
-            node->children[index]->data = data;
-            node->children[index]->has_data = true;
-            node->children[index]->value = value;
-            node->children[index]->mid = (child_min + child_max) * vec3(0.5);
 
             node->has_data = false;
             node->has_ref_data = false;
@@ -143,6 +156,9 @@ private:
             node->children[index]->has_data = true;
             node->children[index]->value = value;
             node->children[index]->mid = (child_min + child_max) * vec3(0.5);
+            node->children[index]->bound_min = child_min;
+            node->children[index]->bound_max = child_max;
+
             return node->children[index];
         } else
             return put_value(data, node->children[index], value, child_min, child_max, levels + 1);
@@ -159,6 +175,33 @@ private:
         }
     }
 
+
+    float smin(float x, float y, float smoothness){
+        float h = glm::max(smoothness-abs(x-y), 0.0f)/smoothness;
+        return glm::min(x, y) - h*h*h*smoothness*(1.0f/6.0f);
+    }
+
+
+    float face_group_dist(vec3 p, vertex_data &data){
+        float minDist = 1000;
+        float k = 0.2;
+
+        //FIXME: with points and origins
+        //    minDist = smin(minDist, sdInfiniplane(p, obj_data_point(index, 0), obj_data_normal(index, 0)), k);
+        //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 0), obj_data_normal(index, 1)), k);
+        //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 1), obj_data_normal(index, 2)), k);
+        //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 2), obj_data_normal(index, 3)), k);
+
+        minDist = dot(data.position_normal[3], p - data.position_normal[0]);
+        minDist = smin(minDist, dot(data.position_normal[5], p - data.position_normal[4]), k);
+        minDist = smin(minDist, dot(data.position_normal[7], p - data.position_normal[6]), k);
+        minDist = smin(minDist, dot(data.position_normal[9], p - data.position_normal[8]), k);
+
+        //minDist = sdSphere(p, obj_data_point(data_index, 0), 0.5);
+
+        return minDist;
+    }
+
     void fill_empties(const std::vector<Node *> &index_map, vertex_data *data_array, int data_size) {
         float max_dist = 0;
 
@@ -170,23 +213,29 @@ private:
                     printf("Captain we have a problem 146");
                 continue;
             }
+            vec3 mid = (node->bound_min + node->bound_max) * vec3(0.5);
+            std::vector<vec3> check_points = {
+                    vec3(node->bound_min.x, mid.y, mid.z),
+                    vec3(mid.x, node->bound_min.y, mid.z),
+                    vec3(mid.x, mid.y, node->bound_min.z),
+                    vec3(node->bound_max.x, mid.y, mid.z),
+                    vec3(mid.x, node->bound_max.y, mid.z),
+                    vec3(mid.x, mid.y, node->bound_max.z)
+            };
 
             float closest_dist = 1000.0f;
 
             for (int j = 0; j < data_size; j++) {
                 vertex_data &data = data_array[j];
 
-                vec3 value =
-                        data.position_normal[0] * vec3(0.33) +
-                        data.position_normal[1] * vec3(0.33) +
-                        data.position_normal[2] * vec3(0.33);
-
-
-                float new_dist = glm::length(value - node->value);
-                if (new_dist < closest_dist) {
-                    closest_dist = new_dist;
-                    node->data_index = j;
-                    node->has_ref_data = true;
+                float new_dist;
+                for(auto & check_point : check_points) {
+                    new_dist = face_group_dist(check_point, data);
+                    if (new_dist > 0 && new_dist < closest_dist) {
+                        closest_dist = new_dist;
+                        node->data_index = j;
+                        node->has_ref_data = true;
+                    }
                 }
             }
 

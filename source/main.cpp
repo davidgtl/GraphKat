@@ -266,6 +266,7 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
 
             assert(fv >= 3);
             vector<vec3> points;
+            vector<vec3> normals;
             vector<int> point_index;
             for (size_t v_off = 0; v_off < fv; v_off++) {
 
@@ -278,6 +279,14 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
 
                 points.push_back(v);
                 point_index.push_back(idx.vertex_index);
+
+                vec3 n = vec3(
+                        attrib.normals[3 * idx.normal_index + 0],
+                        attrib.normals[3 * idx.normal_index + 1],
+                        attrib.normals[3 * idx.normal_index + 2]
+                );
+                normals.push_back(n);
+
 
                 if (bound_init) {
                     bound_min = glm::min(bound_min, v);
@@ -296,6 +305,9 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
             f_center /= fv;
 
             f_normal = glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
+
+            if(glm::dot(f_normal, normals[0]) < 0)
+                f_normal = -f_normal;
 
             edges_face[{point_index[0], point_index[1]}].push_back({f_center, f_normal});
             edges_face[{point_index[1], point_index[0]}].push_back({f_center, f_normal});
@@ -318,6 +330,7 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
             int fv = shapes[s].mesh.num_face_vertices[f];
 
             vector<vec3> points;
+            vector<vec3> normals;
             vector<int> point_index;
 
             for (size_t v_off = 0; v_off < fv; v_off++) {
@@ -331,11 +344,13 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
                 points.push_back(v);
                 point_index.push_back(idx.vertex_index);
 
-                /*vec3 n = vec3(
+                vec3 n = vec3(
                         attrib.normals[3 * idx.normal_index + 0],
                         attrib.normals[3 * idx.normal_index + 1],
                         attrib.normals[3 * idx.normal_index + 2]
                 );
+                normals.push_back(n);
+                /*
                 vec2 t = vec2(
                         attrib.texcoords[2 * idx.texcoord_index + 0],
                         attrib.texcoords[2 * idx.texcoord_index + 1]
@@ -354,6 +369,9 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
             f_center /= fv;
 
             f_normal = glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
+
+            if(glm::dot(f_normal, normals[0]) < 0)
+                f_normal = -f_normal;
 
             auto vd = new vertex_data{f_center, f_normal};
             std::vector<face> local_face_group;
