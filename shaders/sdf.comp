@@ -564,8 +564,8 @@ vec3 debug_tree(vec2 pos){
             //minDist = face_group_dist(p, data_index);
         }
 
-        //minDist = obj_index_min_dist(node);
-        minDist = face_group_dist(p, data_index);
+        minDist = obj_index_min_dist(node);
+        //minDist = face_group_dist(p, data_index);
 
     }
 

@@ -206,6 +206,33 @@ private:
         return minDist;
     }
 
+    float dot2(vec3 v) { return dot(v, v); }
+
+    float udTriangle(vec3 v1, vec3 v2, vec3 v3, vec3 p) {
+        // prepare data
+        vec3 v21 = v2 - v1;
+        vec3 p1 = p - v1;
+        vec3 v32 = v3 - v2;
+        vec3 p2 = p - v2;
+        vec3 v13 = v1 - v3;
+        vec3 p3 = p - v3;
+        vec3 nor = cross(v21, v13);
+
+        return sqrt( // inside/outside test
+                (sign(dot(cross(v21, nor), p1)) +
+                 sign(dot(cross(v32, nor), p2)) +
+                 sign(dot(cross(v13, nor), p3)) < 2.0)
+                ?
+                // 3 edges
+                glm::min(glm::min(
+                        dot2(v21 * glm::clamp(dot(v21, p1) / dot2(v21), 0.0f, 1.0f) - p1),
+                        dot2(v32 * glm::clamp(dot(v32, p2) / dot2(v32), 0.0f, 1.0f) - p2)),
+                    dot2(v13 * glm::clamp(dot(v13, p3) / dot2(v13), 0.0f, 1.0f) - p3))
+                :
+                // 1 face
+                dot(nor, p1) * dot(nor, p1) / dot2(nor));
+    }
+
     void fill_empties(const std::vector<Node *> &index_map, vertex_data *data_array, int data_size) {
         float max_dist = 0;
 
@@ -231,81 +258,27 @@ private:
                     vec3(mid.x, mid.y, node->bound_max.z)*/
             };
 
+            float closest_dist = 1000.0f;
 
             for (int j = 0; j < data_size; j++) {
                 vertex_data &data = data_array[j];
+                vec3 &p0 = data.position_normal[0];
+                vec3 &p1 = data.position_normal[1];
+                vec3 &p2 = data.position_normal[2];
 
                 float new_dist;
                 for (auto &check_point : check_points) {
-                    vec3 &p0 = data.position_normal[0];
-                    vec3 &p1 = data.position_normal[1];
-                    vec3 &p2 = data.position_normal[2];
-
-                    vec3 &n = data.position_normal[3];
-                    vec3 &n0 = data.position_normal[5];
-                    vec3 &n1 = data.position_normal[7];
-                    vec3 &n2 = data.position_normal[9];
-
-                    vec3 &o0 = data.position_normal[4];
-                    vec3 &o1 = data.position_normal[5];
-                    vec3 &o2 = data.position_normal[8];
-
-                    vec3 hn0 = glm::normalize(n + n0);
-                    vec3 hn1 = glm::normalize(n + n1);
-                    vec3 hn2 = glm::normalize(n + n2);
-
-                    vec3 apn0 = glm::cross(p1 - p0, hn0);
-                    if (glm::dot(apn0, p2 - p0) < 0)
-                        apn0 = -apn0;
-
-                    vec3 apn1 = glm::cross(p2 - p1, hn1);
-                    if (glm::dot(apn1, p0 - p1) < 0)
-                        apn1 = -apn1;
-
-                    vec3 apn2 = glm::cross(p0 - p2, hn2);
-                    if (glm::dot(apn2, p1 - p2) < 0)
-                        apn2 = -apn2;
-
-
-                    /*if (glm::dot(check_point - p0, n0) < glm::dot(check_point - p0, n) &&
-                        glm::dot(check_point - p1, n1) < glm::dot(check_point - p1, n) &&
-                        glm::dot(check_point - p2, n2) < glm::dot(check_point - p2, n)) {
-                        relevant_faces.push_back(j);
-                    }*/
-
-                    if (glm::dot(check_point - p0, apn0) > 0 &&
-                        glm::dot(check_point - p1, apn1) > 0 &&
-                        glm::dot(check_point - p2, apn2) > 0) {
-                        relevant_faces.push_back(j);
-                    }
-                }
-            }
-
-            float closest_dist = 1000.0f;
-
-            if (relevant_faces.empty())
-                printf("Captain, we have a problem.");
-
-            for (int fi : relevant_faces) {
-                vertex_data &data = data_array[fi];
-
-                for (auto &check_point : check_points) {
-                    float new_dist = face_group_dist(check_point, data);
-
-                    if (new_dist > 0 && new_dist < closest_dist) {
+                    new_dist = udTriangle(p0, p1, p2, check_point);
+                    if(new_dist < closest_dist){
                         closest_dist = new_dist;
                         if (!node->has_data) {
-                            node->data_index = fi;
+                            node->data_index = j;
                             node->has_ref_data = true;
                         }
                         node->min_dist = (int) (closest_dist * 1000.0f);
                     }
                 }
             }
-
-            float value;
-            //value = node->bound_min.x;
-            value = closest_dist;
 
             max_dist = glm::max(max_dist, closest_dist);
             if (node->data_index < 0)
