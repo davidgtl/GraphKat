@@ -46,12 +46,11 @@ void SDF_Renderer::draw() {
     forward = eye_pos + forward * screen_dist;
     up *= tan(fovy / 2) * screen_dist * size().y / size().x;
 
-    //FIXME: uncomment me after the uniforms are used
-    /*sdf_prog->setUniform("eye", eye_pos);
+    sdf_prog->setUniform("eye", eye_pos);
     sdf_prog->setUniform("ray00", forward - right - up);
     sdf_prog->setUniform("ray01", forward - right + up);
     sdf_prog->setUniform("ray11", forward + right + up);
-    sdf_prog->setUniform("ray10", forward + right - up);*/
+    sdf_prog->setUniform("ray10", forward + right - up);
 
     //if(recompute)
         glDispatchCompute(texture.width / 8, texture.height / 8, 1); //1024 512^2 threads in blocks of 16^2*/

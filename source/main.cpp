@@ -228,7 +228,7 @@ float randf() {
 
 void
 load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bound_min, vec3 &bound_max, int &levels) {
-    std::string inputfile = "models/teapot.obj";
+    std::string inputfile = "models/monkey_0.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -274,7 +274,7 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
                         attrib.vertices[3 * idx.vertex_index + 0],
                         attrib.vertices[3 * idx.vertex_index + 1],
                         attrib.vertices[3 * idx.vertex_index + 2]
-                ) + vec3(3, 0, 2);
+                ) + vec3(2, 1, 1);
 
                 points.push_back(v);
                 point_index.push_back(idx.vertex_index);
@@ -326,7 +326,7 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
                         attrib.vertices[3 * idx.vertex_index + 0],
                         attrib.vertices[3 * idx.vertex_index + 1],
                         attrib.vertices[3 * idx.vertex_index + 2]
-                ) + vec3(3, 0, 2);
+                ) + vec3(2, 1, 1);
 
                 points.push_back(v);
                 point_index.push_back(idx.vertex_index);
@@ -357,31 +357,32 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
 
             auto vd = new vertex_data{f_center, f_normal};
             std::vector<face> local_face_group;
-            for(auto& f: edges_face[{point_index[0], point_index[1]}]){
-                if(f.origin != f_center && f.normal != f_normal)
+            for (auto &f: edges_face[{point_index[0], point_index[1]}]) {
+                if (f.origin != f_center && f.normal != f_normal)
                     local_face_group.push_back(f);
             }
-            for(auto& f: edges_face[{point_index[1], point_index[2]}]){
-                if(f.origin != f_center && f.normal != f_normal)
+            for (auto &f: edges_face[{point_index[1], point_index[2]}]) {
+                if (f.origin != f_center && f.normal != f_normal)
                     local_face_group.push_back(f);
             }
-            for(auto& f: edges_face[{point_index[2], point_index[0]}]){
-                if(f.origin != f_center && f.normal != f_normal)
+            for (auto &f: edges_face[{point_index[2], point_index[0]}]) {
+                if (f.origin != f_center && f.normal != f_normal)
                     local_face_group.push_back(f);
             }
 
-            if(local_face_group.size() < 3) {
-                printf("Captain we have a problem");
-                while(local_face_group.size() < 3){
+            if (local_face_group.size() != 3) {
+                printf("Captain we have a local_face_group problem");
+                /*while (local_face_group.size() < 3) {
                     local_face_group.push_back({f_center, f_normal});
-                }
+                }*/
+            } else {
+
+                object_tree.put(vertex_data{points[0], points[1], points[2],
+                                            f_normal,
+                                            local_face_group[0].origin, local_face_group[0].normal,
+                                            local_face_group[1].origin, local_face_group[1].normal,
+                                            local_face_group[2].origin, local_face_group[2].normal}, f_center);
             }
-
-            object_tree.put(vertex_data{f_center, f_normal,
-                                        local_face_group[0].origin,local_face_group[0].normal,
-                                        local_face_group[1].origin,local_face_group[1].normal,
-                                        local_face_group[2].origin,local_face_group[2].normal}, f_center);
-
             index_offset += fv;
 
             // per-face material
