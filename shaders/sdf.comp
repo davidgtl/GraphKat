@@ -60,13 +60,16 @@ layout(std430, binding = 4) readonly buffer buffy4 {
 };
 
 int obj_index_data_index(int index){
-    return obj_index[index * 9 + 0];
+    return obj_index[index * 10 + 0];
 }
 
 int obj_index_branch_index(int index, int branch_index){
-    return obj_index[index * 9 + 1 + branch_index];
+    return obj_index[index * 10 + 1 + branch_index];
 }
 
+float obj_index_min_dist(int index){
+    return obj_index[index * 10 + 9] / 1000.0;
+}
 
 struct Node{
     int chilren[8];
@@ -122,6 +125,11 @@ float intersectSDF(float distA, float distB) {
     return max(distA, distB);
 }
 
+float opSmoothIntersection( float d1, float d2, float k ) {
+    float h = clamp( 0.5 - 0.5*(d2-d1)/k, 0.0, 1.0 );
+    return mix( d2, d1, h ) + k*h*(1.0-h);
+}
+
 float unionSDF(float distA, float distB) {
     return min(distA, distB);
 }
@@ -153,9 +161,9 @@ float face_group_dist(vec3 p, int data_index){
     //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 2), obj_data_normal(index, 3)), k);
 
     minDist = dot(obj_data_normal(data_index, 0), p - obj_data_point(data_index, 0));
-    minDist = smin(minDist, dot(obj_data_normal(data_index, 1), p - obj_data_origin(data_index, 0)), k);
-    minDist = smin(minDist, dot(obj_data_normal(data_index, 2), p - obj_data_origin(data_index, 1)), k);
-    minDist = smin(minDist, dot(obj_data_normal(data_index, 3), p - obj_data_origin(data_index, 2)), k);
+    minDist = max(minDist, dot(obj_data_normal(data_index, 1), p - obj_data_origin(data_index, 0)));
+    minDist = max(minDist, dot(obj_data_normal(data_index, 2), p - obj_data_origin(data_index, 1)));
+    minDist = max(minDist, dot(obj_data_normal(data_index, 3), p - obj_data_origin(data_index, 2)));
 
     //minDist = sdSphere(p, obj_data_point(data_index, 0), 0.5);
 
@@ -170,6 +178,7 @@ float dist_obj(vec3 p){
 
     int index = 0;
     int node = 0;
+    int depth = 0;
 
     int data_index = 0;
 
@@ -188,6 +197,7 @@ float dist_obj(vec3 p){
         if (obj_index_branch_index(node, index) != 0){
             node = obj_index_branch_index(node, index);
             child_range(index, mid, cb_min, cb_max);
+            depth++;
         }
     }
 
@@ -530,47 +540,50 @@ vec3 debug_tree(vec2 pos){
 
     int index = 0;
     int node = 0;
-
-    int data_index = 3;
+    int data_index = 0;
 
     vec3 p = cb_min + vec3(pos.x, pos.y, cut_z) * (cb_max - cb_min);
 
-    //index = int(min(3000, max(0, length((p-cb_min)/(cb_max-cb_min))*3000)));
-    /*if (any(lessThan(p, cb_min)) || any(greaterThan(p, cb_max)))
-    return sdCeby(p, Obj_Data.data[0].origin, vec3(1));*/
     int depth = 0;
-    for (int i = 0; i < 9; i++){
+    for (int i = 0; i < levels; i++){
         mid = (cb_max + cb_min) * 0.5;
         index = 0;
         index += p.x < mid.x ? 1 : 0;
         index += p.y < mid.y ? 2 : 0;
         index += p.z < mid.z ? 4 : 0;
 
-        data_index = obj_index_data_index(node);
-        if (obj_index_branch_index(node, index) == 0){
 
-        } else {
+        if (obj_index_branch_index(node, index) != -1){
             node = obj_index_branch_index(node, index);
             child_range(index, mid, cb_min, cb_max);
             depth++;
+            //color.r = 0;
         }
+        else {
+            //minDist = face_group_dist(p, data_index);
+            //color.r = 1;
+        }
+
+        data_index = obj_index_data_index(node);
+        minDist = obj_index_min_dist(node);
 
     }
 
 
-
+    //color.g = node /1000.0f;
     float value;
     value = 0.1;
 
     vec3 point_pos = (obj_data_origin(data_index, 0) - bound_min)/(bound_max - bound_min);
     // vec3 point_rel_pos = (obj_data[data_index].origin - cb_min)/(cb_max - cb_min);
 
-    minDist = face_group_dist(p, data_index);
+    //minDist = face_group_dist(p, data_index);
     //color = vec3(data_index / 835.0);
-    //color.rgb = vec3(depth / 8.0f)
-    color.b = depth / 8.0f;
-    //color.g = index / 7.0f;
-    color.g = minDist / 0.5;
+    //color.rgb = vec3(depth / 8.0f);
+    //color.b = length(p - (obj_data_point(data_index, 0) + obj_data_point(data_index, 1) + obj_data_point(data_index, 2))/3);
+    //color.g = obj_index_branch_index(0, index)/8.0;
+    color.g = minDist / 1.0;
+
 
     if(minDist < 0)
     color.r = -minDist/0.5;
@@ -611,7 +624,7 @@ void main(void) {
     dir = normalize(dir - eye);
 
     vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    //color.rgb  = debug_tree(pos);
+    color.rgb  = debug_tree(pos);
 
     //int data_index = Obj_Index.data[linearize(pix, size, ivec2(20,20))].data_index;
     //vec3 origin = Obj_Data.data[data_index].normal;
@@ -632,12 +645,12 @@ void main(void) {
     else
         color.r = 1;*/
     //-1
-    //color.g = obj_index_branch_index(linearize(pix, size, ivec2(20, 20)), 6) / 1000.0;
+    //color.g = obj_index_min_dist(linearize(pix, size, ivec2(10, 10))) / 4.0;
 
     //color.rgb += vec3(length(point_pos.xy - pos)) * 100;
 
 
-    color = trace(eye, dir);
+    //color = trace(eye, dir);
     //color.xyz = pow(color.xyz, vec3(1.2));//adjust gamma
 
     if (DEBUG && pix == DEBUG_PIXEL)

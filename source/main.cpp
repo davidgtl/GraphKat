@@ -395,6 +395,10 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
                 }*/
             } else {
 
+                if(points[0] == vec3(0) && points[1] == vec3(0)&& points[2] == vec3(0))
+                    printf("Captain we have a serious problem");
+
+
                 object_tree.put(vertex_data{points[0], points[1], points[2],
                                             f_normal,
                                             local_face_group[0].origin, local_face_group[0].normal,

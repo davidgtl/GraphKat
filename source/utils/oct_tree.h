@@ -31,6 +31,7 @@ private:
         vec3 mid;
         vec3 bound_min;
         vec3 bound_max;
+        int min_dist = 200;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -176,13 +177,13 @@ private:
     }
 
 
-    float smin(float x, float y, float smoothness){
-        float h = glm::max(smoothness-abs(x-y), 0.0f)/smoothness;
-        return glm::min(x, y) - h*h*h*smoothness*(1.0f/6.0f);
+    float smin(float x, float y, float smoothness) {
+        float h = glm::max(smoothness - abs(x - y), 0.0f) / smoothness;
+        return glm::min(x, y) - h * h * h * smoothness * (1.0f / 6.0f);
     }
 
 
-    float face_group_dist(vec3 p, vertex_data &data){
+    float face_group_dist(vec3 p, vertex_data &data) {
         float minDist = 1000;
         float k = 0.2;
 
@@ -193,9 +194,12 @@ private:
         //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 2), obj_data_normal(index, 3)), k);
 
         minDist = dot(data.position_normal[3], p - data.position_normal[0]);
-        minDist = smin(minDist, dot(data.position_normal[5], p - data.position_normal[4]), k);
-        minDist = smin(minDist, dot(data.position_normal[7], p - data.position_normal[6]), k);
-        minDist = smin(minDist, dot(data.position_normal[9], p - data.position_normal[8]), k);
+//        minDist = length(data.position_normal[0] - p);
+//        minDist = glm::min(minDist, length(data.position_normal[1] - p));
+//        minDist = glm::min(minDist, length(data.position_normal[2] - p));
+        //minDist = glm::max(minDist, dot(data.position_normal[5], p - data.position_normal[4]));
+        //minDist = glm::max(minDist, dot(data.position_normal[7], p - data.position_normal[6]));
+        //minDist = glm::max(minDist, dot(data.position_normal[9], p - data.position_normal[8]));
 
         //minDist = sdSphere(p, obj_data_point(data_index, 0), 0.5);
 
@@ -208,19 +212,21 @@ private:
         for (int i = 0; i < index_map.size(); i++) {
             Node *node = index_map[i];
 
-            if (node->has_data || node->has_ref_data) {
+            /*if (node->has_data || node->has_ref_data) {
                 if (node->data_index < 0)
                     printf("Captain we have a problem 146");
                 continue;
-            }
+            }*/
+
             vec3 mid = (node->bound_min + node->bound_max) * vec3(0.5);
             std::vector<vec3> check_points = {
-                    vec3(node->bound_min.x, mid.y, mid.z),
+                    mid
+                    /*vec3(node->bound_min.x, mid.y, mid.z),
                     vec3(mid.x, node->bound_min.y, mid.z),
                     vec3(mid.x, mid.y, node->bound_min.z),
                     vec3(node->bound_max.x, mid.y, mid.z),
                     vec3(mid.x, node->bound_max.y, mid.z),
-                    vec3(mid.x, mid.y, node->bound_max.z)
+                    vec3(mid.x, mid.y, node->bound_max.z)*/
             };
 
             float closest_dist = 1000.0f;
@@ -229,17 +235,40 @@ private:
                 vertex_data &data = data_array[j];
 
                 float new_dist;
-                for(auto & check_point : check_points) {
+                for (auto &check_point : check_points) {
+                    vec3 &p0 = data.position_normal[0];
+                    vec3 &p1 = data.position_normal[1];
+                    vec3 &p2 = data.position_normal[2];
+
+                    float ax1 = glm::dot(p1 - p0, check_point - p0) / (glm::pow(glm::length(p1 - p0), 2));
+                    float ax2 = glm::dot(p2 - p0, check_point - p0) / (glm::pow(glm::length(p2 - p0), 2));
+
+                    if (ax1 > 1 || ax1 < 0 || ax2 > 1 || ax2 < 0)
+                       continue; // faces which shouldn't affect check_point
+
+
                     new_dist = face_group_dist(check_point, data);
+                    //new_dist = glm::length(check_point - vec3(1,1,1));
+
+                    if (p0 == vec3(0) && p1 == vec3(0) && p2 == vec3(0))
+                        printf("Captain we have a serious problem");
+
                     if (new_dist > 0 && new_dist < closest_dist) {
                         closest_dist = new_dist;
-                        node->data_index = j;
-                        node->has_ref_data = true;
+                        if (!node->has_data) {
+                            node->data_index = j;
+                            node->has_ref_data = true;
+                        }
+                        node->min_dist = (int)(closest_dist*1000.0f);
                     }
                 }
             }
 
-            max_dist = glm::max(max_dist, glm::length(node->mid - node->value));
+            float value;
+            //value = node->bound_min.x;
+            value = closest_dist;
+
+            max_dist = glm::max(max_dist, closest_dist);
             if (node->data_index < 0)
                 printf("Captain we have a problem 162");
         }
@@ -251,6 +280,7 @@ public:
     struct branch_index {
         int data_index;
         int branch_index[8];
+        int min_dist;
     };
 
     oct_tree(vec3 mini, vec3 maxi) : split_count(1), point_count(0), mini(mini), maxi(maxi) {
@@ -275,11 +305,13 @@ public:
         //allocate index_array and data_array
 
         std::vector<Node *> index_map;
+        std::vector<vertex_data> data_map;
 
         index_map.push_back(&root);
         int curr_index = 0;
         int data_index = 0;
 
+        printf("\nfirst pass\n");
         /* node generation along faces */
         for (curr_index = 0; curr_index < index_map.size(); curr_index++) {
             Node *curr = index_map[curr_index];
@@ -309,6 +341,12 @@ public:
                     data->position_normal[2] * vec3(0.8);
             fill_node(value, data, data_index);
 
+            if (data->position_normal[0] == vec3(0) && data->position_normal[1] == vec3(0) &&
+                data->position_normal[2] == vec3(0))
+                printf("Captain we have a serious problem");
+
+            data_map.push_back(*data);
+
             data_index++;
         }
 
@@ -330,24 +368,14 @@ public:
 
         data_size = sizeof(vertex_data) * data_index;
         data_array = (vertex_data *) malloc(data_size);
+        for (int i = 0; i < data_index; i++)
+            data_array[i] = data_map[i];
 
         index_size = sizeof(branch_index) * curr_index;
         index_array = (branch_index *) malloc(index_size);
 
         printf("data_index: %d\n", data_index);
         printf("curr_index: %d\n", curr_index);
-
-        // data pass
-        for (curr_index = 0; curr_index < index_map.size(); curr_index++) {
-            Node *curr = index_map[curr_index];
-
-            if (curr->has_data) {
-                if (curr->data_index < 0) {
-                    printf("Captain we have a data_index < 0 problem");
-                }
-                data_array[curr->data_index] = curr->data;
-            }
-        }
 
         fill_empties(index_map, data_array, data_index);
 
@@ -359,7 +387,7 @@ public:
 
             for (int i = 0; i < 8; i++) {
                 if (curr->children[i] == nullptr) {
-                    bi.branch_index[i] = 0;
+                    bi.branch_index[i] = -1;
                     continue;
                 }
                 bi.branch_index[i] = curr->children[i]->branch_index;
@@ -369,6 +397,7 @@ public:
             }
 
             bi.data_index = curr->data_index;
+            bi.min_dist = curr->min_dist;
             if (bi.data_index < 0) {
                 printf("Captain we have a problem 252");
             }
