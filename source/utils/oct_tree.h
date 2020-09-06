@@ -12,7 +12,7 @@
 using namespace glm;
 
 struct vertex_data {
-    vec3 position_normal[8];
+    vec3 position_normal[7];
 };
 
 class oct_tree {
@@ -142,6 +142,51 @@ private:
             put_value(data, node->children[index], value, child_min, child_max, levels + 1);
     }
 
+    float smin(float x, float y, float smoothness) {
+        float h = glm::max(smoothness - glm::abs(x - y), 0.0f) / smoothness;
+        return glm::min(x, y) - h * h * h * smoothness * (1.0f / 6.0f);
+    }
+
+    glm::vec3 obj_data_origin(vertex_data &d, int face){
+        return d.position_normal[face * 2 + 0];
+    }
+
+    glm::vec3 obj_data_normal(vertex_data &d, int face){
+        return d.position_normal[face * 2 + 1];
+    }
+
+    float sdInfiniplane(vec3 p, vec3 o, vec3 n)
+    {
+        vec3 dv = p - o;
+        float dist = dot(dv, n);
+        if(dist < 0) return 1000.0f;
+        return dist;
+    }
+
+    float calc_dist(vec3 &p, vertex_data &d) {
+        float minDist  = 1000.0f;
+        float k = 0.01;
+
+        vec3 p0 = d.position_normal[1];
+        vec3 p1 = d.position_normal[2];
+        vec3 p2 = d.position_normal[3];
+        vec3 dp = p - p0;
+        vec3 ax1 = p1 - p0;
+        vec3 ax2 = p2 - p0;
+
+        float planeDist = dot(dp, d.position_normal[0]);
+
+        minDist = planeDist;
+
+        vec2 coords = vec2(glm::dot(dp, ax1) / glm::pow(glm::length(ax1), 2),
+                           glm::dot(dp, ax2) / glm::pow(glm::length(ax2), 2));
+
+        if(any(lessThan(coords, vec2(0))) || any(greaterThan(coords, vec2(1))))
+            minDist = length(p0 + (ax1 + ax2) * vec3(0.5));
+
+        return minDist;
+    }
+
     void fill_empties(const std::vector<Node *> &index_map) {
         float max_dist = 0;
         for (int i = 0; i < index_map.size(); ++i) {
@@ -159,15 +204,14 @@ private:
                 Node *other = index_map[j];
                 if (!other->has_data)
                     continue;
-
-                float new_dist = glm::length(other->value - node->value);
+                float new_dist = calc_dist(node->value, other->data);
                 if (new_dist < closest_dist) {
                     closest_dist = new_dist;
                     node->data_index = other->data_index;
                     node->has_ref_data = true;
                 }
             }
-            max_dist = glm::max(max_dist, glm::length(node->mid - node->value));
+            max_dist = glm::max(max_dist, closest_dist);
             if (node->data_index < 1)
                 printf("Captain we have a problem 162");
         }

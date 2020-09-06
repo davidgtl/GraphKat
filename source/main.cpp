@@ -228,7 +228,7 @@ float randf() {
 
 void
 load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bound_min, vec3 &bound_max, int &levels) {
-    std::string inputfile = "models/teapot.obj";
+    std::string inputfile = "models/monkey_0.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -253,8 +253,7 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
     bool bound_init = false;
 
     typedef struct {
-        vec3 origin;
-        vec3 normal;
+        vec3 left_over;
     } face;
 
     map<std::pair<int, int>, std::list<face>> edges_face;
@@ -264,7 +263,7 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
             int fv = shapes[s].mesh.num_face_vertices[f];
 
-            assert(fv >= 3);
+            assert(fv == 3);
             vector<vec3> points;
             vector<int> point_index;
             for (size_t v_off = 0; v_off < fv; v_off++) {
@@ -297,12 +296,12 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
 
             f_normal = glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
 
-            edges_face[{point_index[0], point_index[1]}].push_back({f_center, f_normal});
-            edges_face[{point_index[1], point_index[0]}].push_back({f_center, f_normal});
-            edges_face[{point_index[1], point_index[2]}].push_back({f_center, f_normal});
-            edges_face[{point_index[2], point_index[1]}].push_back({f_center, f_normal});
-            edges_face[{point_index[2], point_index[0]}].push_back({f_center, f_normal});
-            edges_face[{point_index[0], point_index[2]}].push_back({f_center, f_normal});
+            edges_face[{point_index[0], point_index[1]}].push_back({points[2]});
+            edges_face[{point_index[1], point_index[0]}].push_back({points[2]});
+            edges_face[{point_index[1], point_index[2]}].push_back({points[0]});
+            edges_face[{point_index[2], point_index[1]}].push_back({points[0]});
+            edges_face[{point_index[2], point_index[0]}].push_back({points[1]});
+            edges_face[{point_index[0], point_index[2]}].push_back({points[1]});
 
             index_offset += fv;
         }
@@ -357,30 +356,29 @@ load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bo
 
             auto vd = new vertex_data{f_center, f_normal};
             std::vector<face> local_face_group;
-            for(auto& f: edges_face[{point_index[0], point_index[1]}]){
-                if(f.origin != f_center && f.normal != f_normal)
+            for (auto &f: edges_face[{point_index[0], point_index[1]}]) {
+                if (f.left_over != points[2])
                     local_face_group.push_back(f);
             }
-            for(auto& f: edges_face[{point_index[1], point_index[2]}]){
-                if(f.origin != f_center && f.normal != f_normal)
+            for (auto &f: edges_face[{point_index[1], point_index[2]}]) {
+                if (f.left_over != points[0])
                     local_face_group.push_back(f);
             }
-            for(auto& f: edges_face[{point_index[2], point_index[0]}]){
-                if(f.origin != f_center && f.normal != f_normal)
+            for (auto &f: edges_face[{point_index[2], point_index[0]}]) {
+                if (f.left_over != points[1])
                     local_face_group.push_back(f);
             }
 
-            if(local_face_group.size() < 3) {
+            if (local_face_group.size() < 3) {
                 printf("Captain we have a problem");
-                while(local_face_group.size() < 3){
-                    local_face_group.push_back({f_center, f_normal});
-                }
-            }
+            } else {
 
-            object_tree.put(vertex_data{f_center, f_normal,
-                                        local_face_group[0].origin,local_face_group[0].normal,
-                                        local_face_group[1].origin,local_face_group[1].normal,
-                                        local_face_group[2].origin,local_face_group[2].normal}, f_center);
+                object_tree.put(vertex_data{f_normal,
+                                            points[0], points[1], points[2],
+                                            local_face_group[0].left_over,
+                                            local_face_group[1].left_over,
+                                            local_face_group[2].left_over}, f_center);
+            }
 
             index_offset += fv;
 
