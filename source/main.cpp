@@ -192,7 +192,7 @@ GLFWwindow *initialize(int width, int height) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(width, height, "GraphKat", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(width, height, "SDF demo", nullptr, nullptr);
     if (!window) {
         fprintf(stderr, "Unable to create GLFW window\n");
         glfwTerminate();
@@ -426,7 +426,8 @@ vector<IRenderable *> buildScene() {
 
     Layouts::PopulateHitmap(*hitmap, {p2});
 
-    return {p2};
+    //return {p2};
+    return {};
 }
 
 void snap_to_zero(vec3 &p) {
@@ -492,7 +493,7 @@ int main(int argc, char *argv[]) {
     auto mouse_text = Text(textRenderer, "uninit",
                            win_layout.sisc(80, 80), win_layout.sisc(8), 0.1f, vec4(1, 0.8, 0.5, 1), -1);
 
-    renderables.push_back(&mouse_text);
+    //renderables.push_back(&mouse_text);
 
     void *scene_index, *scene_data;
     int scene_index_size, scene_data_size;
@@ -500,7 +501,7 @@ int main(int argc, char *argv[]) {
     int levels;
     load_object(scene_index, scene_index_size, scene_data, scene_data_size, bound_min, bound_max, levels);
 
-    auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.3), vec2(0.65, 0.65), 0, scene_index, scene_index_size, scene_data,
+    auto sdf_renderer = SDF_Renderer(vec2(0.05, 0.05), vec2(0.9, 0.9), 0, scene_index, scene_index_size, scene_data,
                                      scene_data_size, bound_min, bound_max, levels);
     Layouts::PopulateHitmap(*hitmap, &sdf_renderer);
     renderables.push_back(&sdf_renderer);

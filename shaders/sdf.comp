@@ -184,7 +184,6 @@ float face_group_dist(vec3 p, int data_index){
     //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 0), obj_data_normal(index, 1)), k);
     //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 1), obj_data_normal(index, 2)), k);
     //    minDist = smin(minDist, sdInfiniplane(p, obj_data_origin(index, 2), obj_data_normal(index, 3)), k);
-
     return udTriangle(obj_data_point(data_index, 0), obj_data_point(data_index, 1), obj_data_point(data_index, 2), p);
 
     minDist = dot(obj_data_normal(data_index, 0), p - obj_data_point(data_index, 0));
@@ -209,9 +208,7 @@ float dist_obj(vec3 p){
 
     int data_index = 0;
 
-    //index = int(min(3000, max(0, length((p-cb_min)/(cb_max-cb_min))*3000)));
-    /*if (any(lessThan(p, cb_min)) || any(greaterThan(p, cb_max)))
-    return sdCeby(p, Obj_Data.data[0].origin, vec3(1));*/
+
     for (int i = 0; i < levels; i++){
         mid = (cb_max + cb_min) * 0.5;
         index = 0;
@@ -219,17 +216,22 @@ float dist_obj(vec3 p){
         index += p.y < mid.y ? 2 : 0;
         index += p.z < mid.z ? 4 : 0;
 
-        data_index = obj_index_data_index(node);
 
-        if (obj_index_branch_index(node, index) != 0){
+        if (obj_index_branch_index(node, index) != -1){
             node = obj_index_branch_index(node, index);
+            data_index = obj_index_data_index(node);
             child_range(index, mid, cb_min, cb_max);
             depth++;
         }
+
+        //minDist = obj_index_min_dist(node);
+        minDist = face_group_dist(p, data_index);
+
     }
 
+
     //return sdInfiniplane(p, Obj_Data.data[data_index].origin, Obj_Data.data[data_index].normal);
-    return face_group_dist(p, data_index);//sdCeby(p, obj_data[data_index].origin, vec3(2));
+    return minDist;//sdCeby(p, obj_data[data_index].origin, vec3(2));
 }
 
 //scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
@@ -480,9 +482,8 @@ vec4 trace(vec3 origin, vec3 dir) {
     for (int i = 0; i < 100 && tdist < 50.0; i++)
     {
         cdist = scDist(cp, cur_obj_color, cur_obj);
-        if (cdist < 0){
-            return vec4(1, 0, 0, 1);
-        }
+        if (cdist < 0)
+        return vec4(1, 0, 0, 1);
         cp = cp + cdist * dir;
         tdist += cdist;
 
@@ -531,13 +532,11 @@ vec4 trace(vec3 origin, vec3 dir) {
             //return vec4(finalColor, 1.0);
 
 
-
-
             dir = normalize(reflect(dir, norm));
             cp = cp + deltaAway * dir;//run away from the current point to avoid multiple tiny iterations
 
 
-            if (collisions > 1.5f)//0.5 = first hit, 1.5 = second hit, etc.
+            if (collisions > 0.5f)//0.5 = first hit, 1.5 = second hit, etc.
             break;//stop at nth bounce
             //return vec4(vec3(1.0,1.0,1.0) * (1.0 - dDist * 0.01), 1.0);//hit distance,
             //return vec4(currColor, 1.0);//hit color
@@ -570,6 +569,8 @@ vec3 debug_tree(vec2 pos){
     int data_index = obj_index_data_index(node);
 
     vec3 p = cb_min + vec3(pos.x, pos.y, cut_z) * (cb_max - cb_min);
+    minDist = dist_obj(p);
+    return vec3(minDist);
 
     int depth = 0;
     for (int i = 0; i < levels; i++){
@@ -651,7 +652,7 @@ void main(void) {
     dir = normalize(dir - eye);
 
     vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    color.rgb  = debug_tree(pos);
+    //color.rgb  = debug_tree(pos);
 
     //int data_index = Obj_Index.data[linearize(pix, size, ivec2(20,20))].data_index;
     //vec3 origin = Obj_Data.data[data_index].normal;
@@ -677,7 +678,7 @@ void main(void) {
     //color.rgb += vec3(length(point_pos.xy - pos)) * 100;
 
 
-    //color = trace(eye, dir);
+    color = trace(eye, dir);
     //color.xyz = pow(color.xyz, vec3(1.2));//adjust gamma
 
     if (DEBUG && pix == DEBUG_PIXEL)

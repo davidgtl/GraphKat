@@ -265,10 +265,12 @@ private:
                 vec3 &p0 = data.position_normal[0];
                 vec3 &p1 = data.position_normal[1];
                 vec3 &p2 = data.position_normal[2];
+                vec3 &n = data.position_normal[3];
 
                 float new_dist;
                 for (auto &check_point : check_points) {
                     new_dist = udTriangle(p0, p1, p2, check_point);
+
                     if(new_dist < closest_dist){
                         closest_dist = new_dist;
                         if (!node->has_data) {
@@ -342,15 +344,15 @@ public:
             vec3 value;
 
             value = data->position_normal[0] * vec3(0.8) + data->position_normal[1] * vec3(0.1) +
-                    data->position_normal[2] * vec3(0.1);
+                    data->position_normal[2] * vec3(0.1) + data->position_normal[3] * vec3(0.01);
             fill_node(value, data, data_index);
 
             value = data->position_normal[0] * vec3(0.1) + data->position_normal[1] * vec3(0.8) +
-                    data->position_normal[2] * vec3(0.1);
+                    data->position_normal[2] * vec3(0.1) + data->position_normal[3] * vec3(0.0);
             fill_node(value, data, data_index);
 
             value = data->position_normal[0] * vec3(0.1) + data->position_normal[1] * vec3(0.1) +
-                    data->position_normal[2] * vec3(0.8);
+                    data->position_normal[2] * vec3(0.8) + data->position_normal[3] * vec3(0.0);
             fill_node(value, data, data_index);
 
             if (data->position_normal[0] == vec3(0) && data->position_normal[1] == vec3(0) &&
