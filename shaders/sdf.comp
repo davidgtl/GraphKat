@@ -540,7 +540,7 @@ vec3 debug_tree(vec2 pos){
 
     int index = 0;
     int node = 0;
-    int data_index = 0;
+    int data_index = obj_index_data_index(node);
 
     vec3 p = cb_min + vec3(pos.x, pos.y, cut_z) * (cb_max - cb_min);
 
@@ -555,17 +555,17 @@ vec3 debug_tree(vec2 pos){
 
         if (obj_index_branch_index(node, index) != -1){
             node = obj_index_branch_index(node, index);
+            data_index = obj_index_data_index(node);
             child_range(index, mid, cb_min, cb_max);
             depth++;
-            //color.r = 0;
+
         }
         else {
             //minDist = face_group_dist(p, data_index);
-            //color.r = 1;
         }
 
-        data_index = obj_index_data_index(node);
-        minDist = obj_index_min_dist(node);
+        //minDist = obj_index_min_dist(node);
+        minDist = face_group_dist(p, data_index);
 
     }
 
@@ -582,11 +582,11 @@ vec3 debug_tree(vec2 pos){
     //color.rgb = vec3(depth / 8.0f);
     //color.b = length(p - (obj_data_point(data_index, 0) + obj_data_point(data_index, 1) + obj_data_point(data_index, 2))/3);
     //color.g = obj_index_branch_index(0, index)/8.0;
-    color.g = minDist / 1.0;
+    color.g = minDist / 1.5;
 
 
     if(minDist < 0)
-    color.r = -minDist/0.5;
+    color.r = -minDist/1.5;
 
     //    color.g = dot(-obj_data_normal(data_index, 0), p - obj_data_point(data_index, 0));
     //    color.g = min(color.g, dot(-obj_data_normal(data_index, 1), p - obj_data_origin(data_index, 0)));

@@ -209,8 +209,10 @@ private:
     void fill_empties(const std::vector<Node *> &index_map, vertex_data *data_array, int data_size) {
         float max_dist = 0;
 
+        std::vector<int> relevant_faces;
         for (int i = 0; i < index_map.size(); i++) {
             Node *node = index_map[i];
+            relevant_faces.clear();
 
             /*if (node->has_data || node->has_ref_data) {
                 if (node->data_index < 0)
@@ -229,7 +231,6 @@ private:
                     vec3(mid.x, mid.y, node->bound_max.z)*/
             };
 
-            float closest_dist = 1000.0f;
 
             for (int j = 0; j < data_size; j++) {
                 vertex_data &data = data_array[j];
@@ -240,26 +241,64 @@ private:
                     vec3 &p1 = data.position_normal[1];
                     vec3 &p2 = data.position_normal[2];
 
-                    float ax1 = glm::dot(p1 - p0, check_point - p0) / (glm::pow(glm::length(p1 - p0), 2));
-                    float ax2 = glm::dot(p2 - p0, check_point - p0) / (glm::pow(glm::length(p2 - p0), 2));
+                    vec3 &n = data.position_normal[3];
+                    vec3 &n0 = data.position_normal[5];
+                    vec3 &n1 = data.position_normal[7];
+                    vec3 &n2 = data.position_normal[9];
 
-                    if (ax1 > 1 || ax1 < 0 || ax2 > 1 || ax2 < 0)
-                       continue; // faces which shouldn't affect check_point
+                    vec3 &o0 = data.position_normal[4];
+                    vec3 &o1 = data.position_normal[5];
+                    vec3 &o2 = data.position_normal[8];
+
+                    vec3 hn0 = glm::normalize(n + n0);
+                    vec3 hn1 = glm::normalize(n + n1);
+                    vec3 hn2 = glm::normalize(n + n2);
+
+                    vec3 apn0 = glm::cross(p1 - p0, hn0);
+                    if (glm::dot(apn0, p2 - p0) < 0)
+                        apn0 = -apn0;
+
+                    vec3 apn1 = glm::cross(p2 - p1, hn1);
+                    if (glm::dot(apn1, p0 - p1) < 0)
+                        apn1 = -apn1;
+
+                    vec3 apn2 = glm::cross(p0 - p2, hn2);
+                    if (glm::dot(apn2, p1 - p2) < 0)
+                        apn2 = -apn2;
 
 
-                    new_dist = face_group_dist(check_point, data);
-                    //new_dist = glm::length(check_point - vec3(1,1,1));
+                    /*if (glm::dot(check_point - p0, n0) < glm::dot(check_point - p0, n) &&
+                        glm::dot(check_point - p1, n1) < glm::dot(check_point - p1, n) &&
+                        glm::dot(check_point - p2, n2) < glm::dot(check_point - p2, n)) {
+                        relevant_faces.push_back(j);
+                    }*/
 
-                    if (p0 == vec3(0) && p1 == vec3(0) && p2 == vec3(0))
-                        printf("Captain we have a serious problem");
+                    if (glm::dot(check_point - p0, apn0) > 0 &&
+                        glm::dot(check_point - p1, apn1) > 0 &&
+                        glm::dot(check_point - p2, apn2) > 0) {
+                        relevant_faces.push_back(j);
+                    }
+                }
+            }
+
+            float closest_dist = 1000.0f;
+
+            if (relevant_faces.empty())
+                printf("Captain, we have a problem.");
+
+            for (int fi : relevant_faces) {
+                vertex_data &data = data_array[fi];
+
+                for (auto &check_point : check_points) {
+                    float new_dist = face_group_dist(check_point, data);
 
                     if (new_dist > 0 && new_dist < closest_dist) {
                         closest_dist = new_dist;
                         if (!node->has_data) {
-                            node->data_index = j;
+                            node->data_index = fi;
                             node->has_ref_data = true;
                         }
-                        node->min_dist = (int)(closest_dist*1000.0f);
+                        node->min_dist = (int) (closest_dist * 1000.0f);
                     }
                 }
             }
