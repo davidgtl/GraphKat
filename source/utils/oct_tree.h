@@ -343,17 +343,17 @@ public:
             vertex_data *data = &curr->data;
             vec3 value;
 
-            value = data->position_normal[0] * vec3(0.8) + data->position_normal[1] * vec3(0.1) +
-                    data->position_normal[2] * vec3(0.1) + data->position_normal[3] * vec3(0.01);
-            fill_node(value, data, data_index);
+            value = data->position_normal[0] * vec3(1.2) + data->position_normal[1] * vec3(-0.1) +
+                    data->position_normal[2] * vec3(-0.1) + data->position_normal[3] * vec3(0.01);
+            //fill_node(value, data, data_index);
 
-            value = data->position_normal[0] * vec3(0.1) + data->position_normal[1] * vec3(0.8) +
-                    data->position_normal[2] * vec3(0.1) + data->position_normal[3] * vec3(0.0);
-            fill_node(value, data, data_index);
+            value = data->position_normal[0] * vec3(-0.1) + data->position_normal[1] * vec3(1.2) +
+                    data->position_normal[2] * vec3(-0.1) + data->position_normal[3] * vec3(0.01);
+            //fill_node(value, data, data_index);
 
-            value = data->position_normal[0] * vec3(0.1) + data->position_normal[1] * vec3(0.1) +
-                    data->position_normal[2] * vec3(0.8) + data->position_normal[3] * vec3(0.0);
-            fill_node(value, data, data_index);
+            value = data->position_normal[0] * vec3(-0.1) + data->position_normal[1] * vec3(-0.1) +
+                    data->position_normal[2] * vec3(1.2) + data->position_normal[3] * vec3(0.01);
+            //fill_node(value, data, data_index);
 
             if (data->position_normal[0] == vec3(0) && data->position_normal[1] == vec3(0) &&
                 data->position_normal[2] == vec3(0))

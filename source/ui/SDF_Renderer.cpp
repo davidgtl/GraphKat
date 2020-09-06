@@ -63,9 +63,9 @@ SDF_Renderer::SDF_Renderer(vec2 origin, vec2 size, float z, void *index, int ind
         : texture(1024, 1024, GL_RGBA32F), Image(&texture, origin, size, z),
           sdf_prog(&ShaderLoader::programMap["sdf"]) {
     sdf_prog->use();
-    eye_pos = vec3(0, 5, -5);
+    eye_pos = vec3(-2, 2, 5);
     pitch = -0.56;
-    yaw = 1.68;
+    yaw = -0.5;
 
     glGenBuffers(1, &obj_data);
     glGenBuffers(1, &obj_index);

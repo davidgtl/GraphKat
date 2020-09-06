@@ -228,7 +228,7 @@ float randf() {
 
 void
 load_object(void *&index, int &index_size, void *&data, int &data_size, vec3 &bound_min, vec3 &bound_max, int &levels) {
-    std::string inputfile = "models/monkey_0.obj";
+    std::string inputfile = "models/monkey_2.obj";
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;

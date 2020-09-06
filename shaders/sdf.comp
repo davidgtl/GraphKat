@@ -1,6 +1,6 @@
 #version 440 core
-#define deltaN 0.01
-#define delta 0.0001
+#define deltaN 0.00001
+#define delta 0.00001
 #define deltaSunHit 0.01
 #define deltaAway 0.01
 #define deltaSun 0.001
@@ -90,7 +90,7 @@ uniform vec3 bound_max;
 uniform int levels;
 uniform float cut_z;
 
-vec3 sunpos = vec3(1.0, 2, 0.2) * 5;
+vec3 sunpos = vec3(1.0, 1, 2) * 5;
 vec3 suncol = vec3(1.0, 1.0, 1.0);
 vec3 ambient = vec3(0.12, 0.17, 0.2);
 float sunsize = 0.1;
@@ -249,7 +249,7 @@ float scDist(vec3 p)
     );
 
 
-    minDist = min(minDist, plane);
+    //minDist = min(minDist, plane);
     //float minDist = plane;
     //minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     //minDist = min(minDist, sd_aprx_sphere(p));
@@ -290,11 +290,11 @@ float scDist(vec3 p, out vec3 color, out int object)
     sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0))
     );
 
-    minDist = min(minDist, plane);
+    /*minDist = min(minDist, plane);
     //float minDist = plane;
     obj_comp(minDist, lastminDist, vec3(0.019, 0.509, 1.0), 2, final_color, final_object);
     lastminDist = minDist;
-
+*/
     /*
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     obj_comp(minDist, lastminDist, vec3(10, 0, 0), 2, final_color, final_object);
@@ -479,11 +479,13 @@ vec4 trace(vec3 origin, vec3 dir) {
 
     float fresnel = 0;
 
-    for (int i = 0; i < 100 && tdist < 50.0; i++)
+    for (int i = 0; i < 10000 && tdist < 50.0; i++)
     {
-        cdist = scDist(cp, cur_obj_color, cur_obj);
-        if (cdist < 0)
+        if (i>=5000)
         return vec4(1, 0, 0, 1);
+        cdist = scDist(cp, cur_obj_color, cur_obj);// / 60.0;
+        if (cdist < 0.5)
+        cdist /= 200;
         cp = cp + cdist * dir;
         tdist += cdist;
 
@@ -569,7 +571,7 @@ vec3 debug_tree(vec2 pos){
     int data_index = obj_index_data_index(node);
 
     vec3 p = cb_min + vec3(pos.x, pos.y, cut_z) * (cb_max - cb_min);
-    minDist = dist_obj(p);
+    minDist = dist_obj(p) / 0.1;
     return vec3(minDist);
 
     int depth = 0;
@@ -652,7 +654,7 @@ void main(void) {
     dir = normalize(dir - eye);
 
     vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    //color.rgb  = debug_tree(pos);
+    color.rgb  = debug_tree(pos);
 
     //int data_index = Obj_Index.data[linearize(pix, size, ivec2(20,20))].data_index;
     //vec3 origin = Obj_Data.data[data_index].normal;
@@ -678,7 +680,7 @@ void main(void) {
     //color.rgb += vec3(length(point_pos.xy - pos)) * 100;
 
 
-    color = trace(eye, dir);
+    //color = trace(eye, dir);
     //color.xyz = pow(color.xyz, vec3(1.2));//adjust gamma
 
     if (DEBUG && pix == DEBUG_PIXEL)
