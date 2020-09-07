@@ -1,0 +1,139 @@
+
+struct struct_obj_data{
+    vec3 origin;
+    vec3 normal;
+    int cookie;
+};
+
+layout(std430, binding = 5) readonly buffer buffy5 {
+    float obj_data[];
+};
+
+
+vec3 obj_data_point(int index, int point){
+    return vec3(
+    obj_data[index * 30 + point * 3 + 0],
+    obj_data[index * 30 + point * 3 + 1],
+    obj_data[index * 30 + point * 3 + 2]
+    );
+}
+
+vec3 obj_data_origin(int index, int face){
+    return vec3(
+    obj_data[index * 30 + face * 6 + 12],
+    obj_data[index * 30 + face * 6 + 13],
+    obj_data[index * 30 + face * 6 + 14]
+    );
+}
+
+
+vec3 obj_data_normal(int index, int face){
+    return vec3(
+    obj_data[index * 30 + face * 6 + 9],
+    obj_data[index * 30 + face * 6 + 10],
+    obj_data[index * 30 + face * 6 + 11]
+    );
+}
+
+struct struct_obj_index{
+    int data_index;
+    int branch_index[8];
+};
+
+layout(std430, binding = 4) readonly buffer buffy4 {
+    int obj_index[];
+};
+
+int obj_index_data_index(int index){
+    return obj_index[index * 10 + 0];
+}
+
+int obj_index_branch_index(int index, int branch_index){
+    return obj_index[index * 10 + 1 + branch_index];
+}
+
+float obj_index_min_dist(int index){
+    return obj_index[index * 10 + 9] / 1000.0;
+}
+
+
+void child_range(int index, vec3 mid, inout vec3 child_min, inout vec3 child_max) {
+    if (index % 2 ==  1) child_max.x = mid.x;
+    else child_min.x = mid.x;
+
+    if ((index / 2) % 2 == 1) child_max.y = mid.y;
+    else child_min.y = mid.y;
+
+    if ((index / 4) % 2 == 1) child_max.z = mid.z;
+    else child_min.z = mid.z;
+}
+
+float smin(float x, float y, float smoothness){
+    float h = max(smoothness-abs(x-y), 0.0)/smoothness;
+    return min(x, y) - h*h*h*smoothness*(1.0/6.0);
+}
+
+float dot2(in vec3 v) { return dot(v, v); }
+
+float udTriangle(in vec3 v1, in vec3 v2, in vec3 v3, in vec3 p)
+{
+    // prepare data
+    vec3 v21 = v2 - v1; vec3 p1 = p - v1;
+    vec3 v32 = v3 - v2; vec3 p2 = p - v2;
+    vec3 v13 = v1 - v3; vec3 p3 = p - v3;
+    vec3 nor = cross(v21, v13);
+
+    return sqrt(// inside/outside test
+    (sign(dot(cross(v21, nor), p1)) +
+    sign(dot(cross(v32, nor), p2)) +
+    sign(dot(cross(v13, nor), p3))<2.0)
+    ?
+    // 3 edges
+    min(min(
+    dot2(v21*clamp(dot(v21, p1)/dot2(v21), 0.0, 1.0)-p1),
+    dot2(v32*clamp(dot(v32, p2)/dot2(v32), 0.0, 1.0)-p2)),
+    dot2(v13*clamp(dot(v13, p3)/dot2(v13), 0.0, 1.0)-p3))
+    :
+    // 1 face
+    dot(nor, p1)*dot(nor, p1)/dot2(nor));
+}
+
+
+float face_group_dist(vec3 p, int data_index){
+    return udTriangle(obj_data_point(data_index, 0), obj_data_point(data_index, 1), obj_data_point(data_index, 2), p);
+}
+
+float dist_obj(vec3 p){
+    float minDist  = 1000.0f;
+    vec3 cb_min = bound_min;
+    vec3 cb_max = bound_max;
+    vec3 mid;
+
+    int index = 0;
+    int node = 0;
+    int depth = 0;
+
+    int data_index = 0;
+
+
+    for (int i = 0; i < levels; i++){
+        mid = (cb_max + cb_min) * 0.5;
+        index = 0;
+        index += p.x < mid.x ? 1 : 0;
+        index += p.y < mid.y ? 2 : 0;
+        index += p.z < mid.z ? 4 : 0;
+
+
+        if (obj_index_branch_index(node, index) != -1){
+            node = obj_index_branch_index(node, index);
+            data_index = obj_index_data_index(node);
+            child_range(index, mid, cb_min, cb_max);
+            depth++;
+        }
+
+        minDist = face_group_dist(p, data_index);
+
+    }
+
+    return minDist;
+}
