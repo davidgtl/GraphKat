@@ -64,5 +64,4 @@ inline void glCheckError_(const char *file, int line) {
         printf("%s | %s (%d)\n", error.c_str(), file, line);
         fatal_error();
     }
-
 }

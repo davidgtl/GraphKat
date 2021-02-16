@@ -11,8 +11,9 @@ set(SOURCES libraries/stb_image.h source/io.h source/messages.h source/ogl/Point
         source/wmgr/LayoutConstraint.cpp source/wmgr/LayoutConstraint.h source/ogl/ShaderLoader.cpp source/ogl/ShaderLoader.h
         source/ogl/UniformType.cpp source/ogl/UniformType.h
         source/nodeprims/Layouts.cpp source/nodeprims/Layouts.h source/nodeprims/Math.cpp source/nodeprims/Math.h
-        source/nodeprims/macro_shenanigans.h source/utils/Randoms.cpp source/utils/Randoms.h source/nodeprims/Shaders.h source/testbench.cpp
-        source/testbench.h source/utils/BitSet.cpp source/utils/BitSet.h source/utils/BitMap2D.h
+        source/nodeprims/macro_shenanigans.h source/utils/Randoms.cpp source/utils/Randoms.h source/nodeprims/Shaders.h
+        /# source/testbench.cpp source/testbench.h
+        source/utils/BitSet.cpp source/utils/BitSet.h source/utils/BitMap2D.h
         source/utils/std_colors.h source/Foo.cpp source/Foo.h source/Bar.cpp source/Bar.h source/typing/TypeInfo.cpp source/typing/TypeInfo.h source/typing/templates.h
         source/typing/iterator.cpp source/typing/iterator.h source/typing/TypeInfos.h source/ogl/IRenderable.h source/ui/IMouseInteractable.h source/ui/Slider.cpp source/ui/Slider.h source/ui/g_uniforms.h source/ui/IPlanePrimitive.h source/ui/Button.cpp source/ui/Button.h source/ui/Text.cpp source/ui/Text.h source/ui/Marker.cpp source/ui/Marker.h source/ui/FMouseStateMgr.h source/ui/SDF_Renderer.cpp source/ui/SDF_Renderer.h source/ui/Image.cpp source/ui/Image.h source/ui/IKeyboardEvents.h source/ui/IUpdateTick.h source/utils/Timer.h source/inputs/Mouse.cpp source/inputs/Mouse.h source/inputs/Keyboard.cpp source/inputs/Keyboard.h source/sdf_library/oct_tree.h)
 

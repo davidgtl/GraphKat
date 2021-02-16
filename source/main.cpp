@@ -26,7 +26,6 @@
 #include <map>
 #include <boost/any.hpp>
 #include <boost/variant.hpp>
-#include <testbench.h>
 #include <utils/BitMap2D.h>
 #include <Foo.h>
 #include <Bar.h>

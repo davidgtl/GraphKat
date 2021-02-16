@@ -56,7 +56,6 @@ float obj_index_min_dist(int index){
     return obj_index[index * 10 + 9] / 1000.0;
 }
 
-
 void child_range(int index, vec3 mid, inout vec3 child_min, inout vec3 child_max) {
     if (index % 2 ==  1) child_max.x = mid.x;
     else child_min.x = mid.x;
@@ -97,7 +96,6 @@ float udTriangle(in vec3 v1, in vec3 v2, in vec3 v3, in vec3 p)
     // 1 face
     dot(nor, p1)*dot(nor, p1)/dot2(nor));
 }
-
 
 float face_group_dist(vec3 p, int data_index){
     return udTriangle(obj_data_point(data_index, 0), obj_data_point(data_index, 1), obj_data_point(data_index, 2), p);

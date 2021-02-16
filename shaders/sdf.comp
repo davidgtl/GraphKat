@@ -237,11 +237,11 @@ float dist_obj(vec3 p){
 //scDist(vec3 p) must have the same objects and parameters as scDist(vec3 p, out vec3 color)
 float scDist(vec3 p)
 {
-    float minDist = 1000;
-    /*float minDist = intersectSDF(
-    sdCeby(p, vec3(0, 0.0, 0), 1.0),
+    //float minDist = 1000;
+    float minDist = intersectSDF(
+    sdCeby(p, vec3(0, 0.0, 0), vec3(1.0)),
     sdSphere(p, vec3(0, 0.0, 0), 1.3)
-    );*/
+    );
 
     float plane = intersectSDF(
     sdCeby(p, vec3(0, 0.0, 0), vec3(10.0)),
@@ -249,11 +249,11 @@ float scDist(vec3 p)
     );
 
 
-    //minDist = min(minDist, plane);
+    minDist = min(minDist, plane);
     //float minDist = plane;
-    //minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
+    minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     //minDist = min(minDist, sd_aprx_sphere(p));
-    minDist = min(minDist, dist_obj(p));
+    //minDist = min(minDist, dist_obj(p));
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
 
     return minDist;
@@ -273,10 +273,10 @@ float scDist(vec3 p, out vec3 color, out int object)
     vec3 final_color = vec3(1.0, 0.0, 0.0);
     int final_object = 0;
 
-    float minDist = 1000;/*
+    //float minDist = 1000;
     //object
     float minDist = intersectSDF(
-    sdCeby(p, vec3(0, 0.0, 0), 1.0),
+    sdCeby(p, vec3(0, 0.0, 0), vec3(1.0)),
     sdSphere(p, vec3(0, 0.0, 0), 1.3)
     );
 
@@ -284,18 +284,18 @@ float scDist(vec3 p, out vec3 color, out int object)
     //if its ditance is used update the final color with its color
     obj_comp(minDist, lastminDist, vec3(0.8), 1, final_color, final_object);
     lastminDist = minDist;
-    */
+
     float plane = intersectSDF(
     sdCeby(p, vec3(0, 0.0, 0), vec3(10.0)),
-    sdInfiniplane(p, vec3(0, -1.0, 0), vec3(0, 1, 0))
+    sdInfiniplane(p, vec3(0, -1, 0), vec3(0, 1, 0))
     );
 
-    /*minDist = min(minDist, plane);
+    minDist = min(minDist, plane);
     //float minDist = plane;
     obj_comp(minDist, lastminDist, vec3(0.019, 0.509, 1.0), 2, final_color, final_object);
     lastminDist = minDist;
-*/
-    /*
+
+
     minDist = min(minDist, sdSphere(p, vec3(0, 3.0, 0), 1.0));
     obj_comp(minDist, lastminDist, vec3(10, 0, 0), 2, final_color, final_object);
     lastminDist = minDist;
@@ -305,9 +305,9 @@ float scDist(vec3 p, out vec3 color, out int object)
     lastminDist = minDist;*/
 
     /* my obj */
-    minDist = min(minDist, dist_obj(p));
-    obj_comp(minDist, lastminDist, vec3(0.5, 0.5, 0.7), 5, final_color, final_object);
-    lastminDist = minDist;
+//    minDist = min(minDist, dist_obj(p));
+//    obj_comp(minDist, lastminDist, vec3(0.5, 0.5, 0.7), 5, final_color, final_object);
+//    lastminDist = minDist;
 
     minDist = min(minDist, sdSphere(p, sunpos, sunsize));
     obj_comp(minDist, lastminDist, suncol, 3, final_color, final_object);

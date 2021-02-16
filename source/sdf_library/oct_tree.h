@@ -31,7 +31,7 @@ private:
         vec3 mid;
         vec3 bound_min;
         vec3 bound_max;
-        int min_dist = 200;
+        int min_dist = 0;
 
         Node() {
             for (int i = 0; i < 8; i++) children[i] = nullptr;
@@ -176,12 +176,10 @@ private:
         }
     }
 
-
     float smin(float x, float y, float smoothness) {
         float h = glm::max(smoothness - abs(x - y), 0.0f) / smoothness;
         return glm::min(x, y) - h * h * h * smoothness * (1.0f / 6.0f);
     }
-
 
     float face_group_dist(vec3 p, vertex_data &data) {
         float minDist = 1000;
@@ -299,7 +297,6 @@ public:
 
     oct_tree(vec3 mini, vec3 maxi) : split_count(1), point_count(0), mini(mini), maxi(maxi) {
     }
-
 
     void put(vertex_data data, vec3 value) {
         point_count++;
